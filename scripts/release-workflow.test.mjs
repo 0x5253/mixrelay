@@ -156,3 +156,11 @@ test('each pull request workflow reports one required check that skipped work pa
     assert.match(passed, /contains\(needs\.\*\.result, 'failure'\) \|\| contains\(needs\.\*\.result, 'cancelled'\)/, name);
   }
 });
+
+test('workflows that report required checks run on every pull request', () => {
+  // A path-filtered workflow never reports on unrelated PRs, so it cannot be required.
+  for (const name of ['pr-title', 'ui-quality', 'native-lab', 'pr-build']) {
+    const triggers = workflow(name).split('\npermissions:')[0];
+    assert.doesNotMatch(triggers, /paths(-ignore)?:/, name);
+  }
+});
