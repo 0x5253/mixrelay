@@ -143,6 +143,10 @@ test('only a merged release PR tags a version and starts the official build', ()
   const config = JSON.parse(readFileSync(new URL('../release-please-config.json', import.meta.url), 'utf8')).packages['.'];
   assert.equal(config['pull-request-title-pattern'], 'chore: release ${version}');
   assert.equal(config.draft, true);
+  // Merging the release PR is the approval; the header must not promise another one.
+  assert.doesNotMatch(config['pull-request-header'], /approv/i);
+  // release-please writes '---' on the next line; without a blank line the header renders as a heading.
+  assert.match(config['pull-request-header'], /[^\n]\n$/);
 });
 
 test('each pull request workflow reports one required check that skipped work passes', () => {
