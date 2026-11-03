@@ -2,13 +2,13 @@ use super::super::*;
 #[cfg(feature = "native-lab")]
 use mixrelay_audio_graph::NodeConfig;
 #[cfg(feature = "native-lab")]
-use mixrelay_engine::default_duplex_document;
+use mixrelay_engine_core::default_duplex_document;
 
 #[test]
 fn driver_readiness_does_not_require_a_graph_attachment() {
     use mixrelay_control_protocol::DriverState as Observed;
-    use mixrelay_driver_control::DriverState;
-    use mixrelay_engine::RuntimeStatusBackend;
+    use mixrelay_driver_core::DriverState;
+    use mixrelay_engine_core::RuntimeStatusBackend;
 
     let status = AdapterRuntimeStatus::new(
         adapter_profile(),
@@ -61,7 +61,7 @@ fn native_pipewire_live_session_format_transaction() {
         )
         .with_graph_format_control(),
     );
-    let config = mixrelay_engine::test_util::configuration(render_format());
+    let config = mixrelay_engine_core::test_util::configuration(render_format());
     let meters = config.meters.clone();
     let processor =
         create_initial_processor(&initial_document, meters.clone(), render_format()).unwrap();
@@ -90,7 +90,7 @@ fn native_pipewire_live_session_format_transaction() {
         run_audio_worker(processor, worker_exchange, &worker_backend, &worker_status)
             .expect("native PipeWire worker failed");
     });
-    let guard = mixrelay_engine_runtime::AudioWorker::new(status.clone(), worker);
+    let guard = mixrelay_engine_host::AudioWorker::new(status.clone(), worker);
     thread::sleep(Duration::from_millis(100));
     let mut document = default_duplex_document(1, None);
     let fixture = attach_fixture(&mut document);
@@ -234,13 +234,17 @@ fn wait_for_audio(controller: &EngineGraphController, exchange: &ProcessorExchan
         let meters = controller.meters();
         if exchange.revisions().active == revision
             && meters.revision == revision
-            && ["rate-fixture", mixrelay_engine::DEFAULT_ENDPOINT_NODE_ID]
-                .iter()
-                .all(|id| {
-                    meters.nodes.iter().any(|node| {
-                        node.node_id == *id && node.peaks.iter().any(|peak| *peak > 0.05)
-                    })
-                })
+            && [
+                "rate-fixture",
+                mixrelay_engine_core::DEFAULT_ENDPOINT_NODE_ID,
+            ]
+            .iter()
+            .all(|id| {
+                meters
+                    .nodes
+                    .iter()
+                    .any(|node| node.node_id == *id && node.peaks.iter().any(|peak| *peak > 0.05))
+            })
         {
             break;
         }

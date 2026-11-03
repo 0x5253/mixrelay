@@ -10,7 +10,7 @@ const compare = (source, suite, truncated = false) => compareSuiteSource({ sourc
 });
 
 test('frozen installers can be exercised by changed suite code and documentation', () => {
-  const runtime = entry('apps/service/src/main.rs');
+  const runtime = entry('apps/engine-service/src/main.rs');
   const result = compare([runtime, entry('scripts/e2e/installed.mjs')],
     [runtime, entry('scripts/e2e/installed.mjs', 'b'.repeat(40)), entry('docs/validation/current.md'),
       entry('.github/workflows/installed-evidence.yml')]);
@@ -30,7 +30,7 @@ test('runtime, package recipes and build tools require installers from the chang
 });
 
 test('deleted or moved product files, executable mode changes and submodule changes remain product differences', () => {
-  const path = 'apps/service/src/main.rs';
+  const path = 'apps/engine-service/src/main.rs';
   assert.equal(compare([entry(path)], [entry('scripts/e2e/moved.rs')]).productSourceMatches, false);
   assert.equal(compare([entry(path)], [entry(path, 'a'.repeat(40), '100755')]).productSourceMatches, false);
   assert.equal(compare([entry('vendor/plugin', 'a'.repeat(40), '160000', 'commit')],

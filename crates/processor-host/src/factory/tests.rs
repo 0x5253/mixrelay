@@ -92,7 +92,7 @@ impl HostedAudioProcessor for Owner {
     fn set_active(&mut self, active: bool) {
         self.control.active_owner.store(active, Ordering::Release);
     }
-    fn reuse_identity(&self) -> Option<&mixrelay_audio_engine::HostedProcessorIdentity> {
+    fn reuse_identity(&self) -> Option<&mixrelay_render::HostedProcessorIdentity> {
         Some(&self.control.adoption_identity)
     }
 }
@@ -366,7 +366,7 @@ impl HostedProcessorFactory for PreparedOwner {
 fn render_holder(
     revision: u64,
     processor: Box<dyn HostedAudioProcessor>,
-) -> Box<mixrelay_audio_engine::BlockProcessor> {
+) -> Box<mixrelay_render::BlockProcessor> {
     let node = mixrelay_audio_graph::NodeSpec {
         id: NodeId::from("effect"),
         label: None,
@@ -388,9 +388,9 @@ fn render_holder(
         )
         .unwrap();
     let owner = PreparedOwner(Mutex::new(Some(processor)));
-    let prepared = mixrelay_audio_engine::BlockProcessor::prepare_with_hosted_processors(
+    let prepared = mixrelay_render::BlockProcessor::prepare_with_hosted_processors(
         &execution,
-        Arc::new(mixrelay_audio_engine::PeakMeterBank::new(8, 2)),
+        Arc::new(mixrelay_render::PeakMeterBank::new(8, 2)),
         &owner,
     )
     .unwrap();
@@ -433,7 +433,7 @@ fn independent_registries_never_adopt_each_others_numeric_instance() {
         .unwrap()
         .unwrap();
     let mut current = render_holder(1, original);
-    let exchange = mixrelay_audio_engine::ProcessorExchange::new(1);
+    let exchange = mixrelay_render::ProcessorExchange::new(1);
     exchange.submit(render_holder(2, foreign_reuse)).unwrap();
     assert!(
         !exchange

@@ -26,9 +26,6 @@ use std::{
 };
 
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
-use mixrelay_audio_engine::{
-    BlockProcessor, PeakMeterBank, ProcessorExchange, RuntimeControlUpdate,
-};
 use mixrelay_audio_graph::{
     AUDIO_PORT_ID, AudioDeviceInputConfig, AudioDeviceOutputConfig, AudioEndpoint, ChannelMapping,
     ChannelRoute, CompileContext, CompileLimits, DeviceSelector, EdgeId, EdgeSpec, GraphCompiler,
@@ -44,6 +41,7 @@ use mixrelay_processor_host::{
     PLUGIN_WORKER_ARGUMENT, ProcessorCatalog, ProcessorControlRegistry, RackFormat, RackLocator,
 };
 use mixrelay_processor_state::StateRef;
+use mixrelay_render::{BlockProcessor, PeakMeterBank, ProcessorExchange, RuntimeControlUpdate};
 use truce_rack_core::{info::PluginCategory, scanner::PluginScanner};
 
 #[derive(Clone)]

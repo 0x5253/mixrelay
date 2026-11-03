@@ -25,7 +25,7 @@ if (process.platform === 'darwin') {
   ], { env: { ...process.env, DEVELOPER_DIR: developer }, stdio: 'inherit' });
   if (result.error || result.status !== 0) throw new Error(result.error?.message || 'Apple icon compilation failed.');
   if (!existsSync(join(output, 'Assets.car'))) throw new Error('Apple icon asset catalog was not produced.');
-  const icon = join(root, 'apps/desktop/src-tauri/icons/icon.icns');
+  const icon = join(root, 'apps/desktop-shell/src-tauri/icons/icon.icns');
   copyFileSync(join(output, 'MixRelay.icns'), icon);
   canonicalIcns(icon);
 }

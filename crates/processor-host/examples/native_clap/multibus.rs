@@ -2,7 +2,6 @@
 
 use std::{sync::Arc, time::Duration};
 
-use mixrelay_audio_engine::{BlockProcessor, PeakMeterBank};
 use mixrelay_audio_graph::{
     AudioDeviceInputConfig, AudioDeviceOutputConfig, AudioEndpoint, ChannelMapping, CompileContext,
     CompileLimits, DeviceSelector, EdgeSpec, GraphCompiler, GraphDocument, NodeConfig, NodeId,
@@ -10,6 +9,7 @@ use mixrelay_audio_graph::{
 };
 use mixrelay_control_protocol::ExternalProcessorDescriptor;
 use mixrelay_processor_host::{CatalogNodeResolver, ExternalProcessorFactory, ProcessorCatalog};
+use mixrelay_render::{BlockProcessor, PeakMeterBank};
 
 use super::qualification::NativeResources;
 

@@ -33,8 +33,8 @@ test('every macOS build and the Installer share the supported minimum macOS vers
   const paths = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '-z', '--', 'apps', 'crates', 'native', 'scripts'], { cwd: root, encoding: 'utf8' }).split('\0').filter(path => path && !deleted.has(path));
   // Shipped native code without a floor would build for the SDK's default instead.
   const shipped = new Set([
-    'native/macos/engine/build.rs', 'native/macos/common/build.rs', 'native/macos/process-tap/build.rs',
-    'native/macos/driver-control/build.rs', 'native/macos/hal-driver/bundle/src/build.rs',
+    'native/macos/engine/build.rs', 'native/macos/transport/build.rs', 'native/macos/process-tap/build.rs',
+    'native/macos/driver/build.rs', 'native/macos/hal-driver/bundle/src/build.rs',
   ]);
   for (const path of paths.filter(path => /\.(?:rs|sh|mjs|yml|json|plist)$/.test(path))) {
     const source = readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');

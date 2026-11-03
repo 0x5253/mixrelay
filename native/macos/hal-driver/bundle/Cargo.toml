@@ -1,5 +1,5 @@
 [package]
-name = "mixrelay-hal-bundle"
+name = "mixrelay-macos-hal-bundle"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

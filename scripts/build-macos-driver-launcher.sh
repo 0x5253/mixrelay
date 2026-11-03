@@ -17,7 +17,7 @@ task_dir="$(mktemp -d "$output_dir/.driver-launcher.XXXXXX")"
 trap 'rm -rf "$task_dir"' EXIT
 for arch in arm64 x86_64; do
   xcrun --sdk macosx clang -arch "$arch" "-mmacosx-version-min=$minimum_macos" \
-    -Wall -Wextra -Werror -O2 "$repo_root/native/macos/common/MRDriverRuntimeLauncher.c" \
+    -Wall -Wextra -Werror -O2 "$repo_root/native/macos/transport/MRDriverRuntimeLauncher.c" \
     -o "$task_dir/$arch"
 done
 xcrun lipo -create "$task_dir/arm64" "$task_dir/x86_64" -output "$task_dir/mixrelay-driver-launcher"

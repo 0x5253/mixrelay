@@ -6,11 +6,11 @@ use super::AudioContext;
 mod continuity_tests;
 mod ownership;
 use crate::macos_devices::direct::{Binding, Descriptor, DirectPlan};
-use mixrelay_audio_engine::{BlockProcessor, ExternalBinding, ExternalIo, RenderPlan};
 use mixrelay_audio_io::{
     process::{ClockDomain, InputActivity, ProcessCycle, TransferOutcome},
     session::ClockAuthority,
 };
+use mixrelay_render::{BlockProcessor, ExternalBinding, ExternalIo, RenderPlan};
 use ownership::PreparedRenderer;
 use std::{
     ffi::c_void,
@@ -60,8 +60,8 @@ impl ExternalIo for CallbackIo<'_> {
     fn begin_cycle(
         &mut self,
         _cycle: &ProcessCycle,
-        controls: mixrelay_audio_engine::ExternalControlState<'_>,
-    ) -> mixrelay_audio_engine::CycleAdmission {
+        controls: mixrelay_render::ExternalControlState<'_>,
+    ) -> mixrelay_render::CycleAdmission {
         if let Some((devices, _)) = self.bridged {
             for (binding, enabled) in controls.sources() {
                 devices.set_binding_active(binding.node_id().as_str(), true, enabled);
@@ -70,7 +70,7 @@ impl ExternalIo for CallbackIo<'_> {
                 devices.set_binding_active(binding.node_id().as_str(), false, enabled);
             }
         }
-        mixrelay_audio_engine::CycleAdmission::Process
+        mixrelay_render::CycleAdmission::Process
     }
     fn read_source(
         &mut self,
@@ -140,7 +140,7 @@ struct Renderer<'a> {
     clock_id: u32,
     epoch: u64,
     native_clock: Option<(&'a DirectPlan, u64)>,
-    status: &'a mixrelay_engine::session::AdapterRuntimeStatus,
+    status: &'a mixrelay_engine_core::session::AdapterRuntimeStatus,
     /// The first frame expected next, in the timeline last used; `None` restarts it.
     position: Option<u64>,
     progress: &'a AtomicU64,
@@ -491,7 +491,7 @@ pub(crate) fn render_directly<R>(
     processor: &mut Box<BlockProcessor>,
     drive: impl FnOnce() -> R,
 ) -> R {
-    let status = mixrelay_engine::session::AdapterRuntimeStatus::new(
+    let status = mixrelay_engine_core::session::AdapterRuntimeStatus::new(
         super::adapter_profile(),
         std::sync::Arc::new(mixrelay_time::ManualClock::default()),
     );
@@ -526,7 +526,7 @@ mod tests {
     use mixrelay_audio_graph::{
         CompileContext, CompileLimits, GraphCompiler, GraphDocument, RenderFormat,
     };
-    use mixrelay_engine::RuntimeStatusBackend;
+    use mixrelay_engine_core::RuntimeStatusBackend;
     use std::sync::Arc;
 
     pub(super) fn stereo_bindings() -> [Binding; 2] {
@@ -662,7 +662,7 @@ mod tests {
                 channels: 2,
             });
         }
-        let status = mixrelay_engine::session::AdapterRuntimeStatus::new(
+        let status = mixrelay_engine_core::session::AdapterRuntimeStatus::new(
             crate::macos::adapter_profile(),
             std::sync::Arc::new(mixrelay_time::ManualClock::default()),
         );
@@ -718,7 +718,7 @@ mod tests {
     #[test]
     fn switching_between_fallback_and_native_timestamps_never_stops_rendering() {
         let mut processor = processor_at(32, 48000);
-        let status = mixrelay_engine::session::AdapterRuntimeStatus::new(
+        let status = mixrelay_engine_core::session::AdapterRuntimeStatus::new(
             crate::macos::adapter_profile(),
             std::sync::Arc::new(mixrelay_time::ManualClock::default()),
         );
@@ -787,7 +787,7 @@ mod tests {
     fn synchronous_callback_preserves_every_sample_at_all_product_buffers() {
         for &block_frames in mixrelay_audio_io::formats::BUFFER_SIZES {
             let mut processor = processor_at(block_frames, 48000);
-            let status = mixrelay_engine::session::AdapterRuntimeStatus::new(
+            let status = mixrelay_engine_core::session::AdapterRuntimeStatus::new(
                 crate::macos::adapter_profile(),
                 std::sync::Arc::new(mixrelay_time::ManualClock::default()),
             );

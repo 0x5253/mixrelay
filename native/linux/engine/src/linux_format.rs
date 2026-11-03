@@ -5,7 +5,7 @@ use super::{
     LinuxResourceUpdate, LinuxVirtualEndpointBackend, Ordering, PipeWireCaptureSet, RenderFormat,
     thread,
 };
-use mixrelay_engine::PreparedGraphFormat;
+use mixrelay_engine_core::PreparedGraphFormat;
 #[cfg(test)]
 #[path = "linux_format_tests.rs"]
 mod tests;
@@ -70,7 +70,7 @@ impl Monitor {
         let stop = Arc::new(AtomicBool::new(false));
         let stopping = stop.clone();
         let worker = thread::Builder::new()
-            .name("mixrelay-pipewire-format-monitor".into())
+            .name("mixrelay-linux-pipewire-format-monitor".into())
             .spawn(move || {
                 while !stopping.load(Ordering::Acquire) {
                     let Some(status) = status.upgrade() else {
@@ -97,7 +97,7 @@ impl Monitor {
 
 fn observe_driver(
     status: &super::AdapterRuntimeStatus,
-    observed: Option<mixrelay_driver_control::DriverState>,
+    observed: Option<mixrelay_driver_core::DriverState>,
 ) {
     match observed {
         Some(state) => status.observe_driver_state(state),

@@ -108,7 +108,7 @@ fn retained_latency_mapping_keeps_the_namespace_until_its_last_view_closes() {
         mailbox,
         Arc::new(mixrelay_time::ManualClock::default()),
     ));
-    let reader: Arc<dyn mixrelay_audio_engine::HostedLatencySource> = control.clone();
+    let reader: Arc<dyn mixrelay_render::HostedLatencySource> = control.clone();
     drop(paths);
     drop(audio);
     drop(control);

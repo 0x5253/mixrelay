@@ -6,10 +6,10 @@ pub(crate) mod runtime_latency;
 mod worker;
 mod worker_runtime;
 use external_io::{application_epoch, binding_sources, binding_token, read_application};
-use mixrelay_audio_engine::{BlockProcessor, PeakMeterBank, RenderPlan};
 use mixrelay_audio_graph::{CompileContext, CompileLimits, GraphCompiler, RenderFormat};
-use mixrelay_engine::session::AdapterRuntimeStatus;
-use mixrelay_engine::worker_completion;
+use mixrelay_engine_core::session::AdapterRuntimeStatus;
+use mixrelay_engine_core::worker_completion;
+use mixrelay_render::{BlockProcessor, PeakMeterBank, RenderPlan};
 use std::sync::Arc;
 pub use worker::{Error as AudioWorkerError, start as start_audio_worker};
 
@@ -23,9 +23,9 @@ use crate::macos_pacing::{ApplicationClockSnapshot, ApplicationPacer, Pace};
 #[cfg(test)]
 use external_io::{MacEngineExternalIo, source_token};
 #[cfg(test)]
-use mixrelay_audio_engine::{ExternalBinding, ExternalIo};
-#[cfg(test)]
 use mixrelay_audio_io::process::{ProcessCycle, TransferOutcome};
+#[cfg(test)]
+use mixrelay_render::{ExternalBinding, ExternalIo};
 #[cfg(test)]
 use std::time::Duration;
 use worker::AudioContext;
@@ -35,13 +35,13 @@ use worker::{
 };
 
 #[cfg(any(test, feature = "test-util"))]
-pub(crate) fn adapter_profile() -> mixrelay_engine::session::AdapterProfile {
+pub(crate) fn adapter_profile() -> mixrelay_engine_core::session::AdapterProfile {
     format::profile(mixrelay_audio_io::formats::SAMPLE_RATES.to_vec())
 }
 
 /// Creates native processing status before admitting any graph resources.
 pub fn prepare_runtime(
-    time: Arc<dyn mixrelay_engine::session::ProcessingTime>,
+    time: Arc<dyn mixrelay_engine_core::session::ProcessingTime>,
 ) -> AdapterRuntimeStatus {
     AdapterRuntimeStatus::new(
         format::profile(mixrelay_audio_io::formats::SAMPLE_RATES.to_vec()),

@@ -1,6 +1,6 @@
 //! Driver activation accepts only the committed version and its current launchd owner.
 
-use mixrelay_driver_control::DriverState;
+use mixrelay_driver_core::DriverState;
 use mixrelay_time::{Deadline, MonotonicClock, Sleeper};
 use std::time::Duration;
 

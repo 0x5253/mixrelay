@@ -114,7 +114,7 @@ export function buildPlan({ profile, target, platform, rootDir = REPO_ROOT, env 
   const fileName = ENGINE_BINARY_NAME;
   const cargoProfile = profile === "release" ? "release" : "debug";
   const output = join(targetRoot(rootDir, env), target, cargoProfile, fileName);
-  const sidecar = join(rootDir, "apps", "desktop", "src-tauri", "binaries", `${ENGINE_BINARY_NAME}-${target}`);
+  const sidecar = join(rootDir, "apps", "desktop-shell", "src-tauri", "binaries", `${ENGINE_BINARY_NAME}-${target}`);
   const copies = [sidecar];
   const devAdjacent = profile === "dev" ? join(targetRoot(rootDir, env), "debug", fileName) : undefined;
   if (devAdjacent) copies.push(devAdjacent);

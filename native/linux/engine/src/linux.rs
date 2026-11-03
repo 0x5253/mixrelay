@@ -1,5 +1,4 @@
 //! Linux runtime assembly and atomic publication of native resources.
-use mixrelay_audio_engine::{BlockProcessor, PeakMeterBank, ProcessorExchange, RenderPlan};
 use mixrelay_audio_graph::{
     ApplicationCaptureRequest, CompileContext, CompileLimits, GraphCompiler, GraphDocument,
     RenderFormat,
@@ -9,10 +8,11 @@ use mixrelay_audio_io::{
     HostAudioBackendError, VirtualEndpointBackend, VirtualEndpointCapabilities, VirtualEndpointSpec,
 };
 #[cfg(test)]
-use mixrelay_engine::default_peak_meter_bank;
+use mixrelay_engine_core::default_peak_meter_bank;
 #[cfg(all(test, feature = "native-lab"))]
-use mixrelay_engine::{EngineGraphController, EngineGraphControllerConfig};
-use mixrelay_engine::{GraphResourceBackend, session::AdapterRuntimeStatus};
+use mixrelay_engine_core::{EngineGraphController, EngineGraphControllerConfig};
+use mixrelay_engine_core::{GraphResourceBackend, session::AdapterRuntimeStatus};
+use mixrelay_render::{BlockProcessor, PeakMeterBank, ProcessorExchange, RenderPlan};
 
 use std::{
     ptr,
@@ -37,7 +37,7 @@ mod driver_monitor;
 mod endpoints;
 #[path = "linux_format.rs"]
 mod format;
-use mixrelay_pipewire as native;
+use mixrelay_linux_pipewire as native;
 #[path = "linux_processing.rs"]
 mod processing;
 #[path = "linux_recovery.rs"]
@@ -53,15 +53,15 @@ use applications::{CaptureSet as PipeWireCaptureSet, CaptureWatch};
 use devices::{DeviceStreams, DeviceWatch};
 use endpoints::{EndpointControls, EndpointEdit, EndpointSet, EndpointSpecs};
 use mixrelay_audio_io::recovery::RecoveryMailbox;
-use mixrelay_engine::resource_requirements::{DeviceRequirements, ResourceRequirements};
+use mixrelay_engine_core::resource_requirements::{DeviceRequirements, ResourceRequirements};
 use native::NativeStream;
 #[cfg(all(test, feature = "native-lab"))]
 use processing::LinuxProcessState;
 const ENGINE_BLOCK_FRAMES: u32 = CURRENT_TIMER_FORMAT.block_frames;
 /// Describes the native `PipeWire` processing capabilities.
 #[must_use]
-pub fn adapter_profile() -> mixrelay_engine::session::AdapterProfile {
-    mixrelay_engine::session::AdapterProfile {
+pub fn adapter_profile() -> mixrelay_engine_core::session::AdapterProfile {
+    mixrelay_engine_core::session::AdapterProfile {
         initial_format: mixrelay_audio_io::session::CURRENT_TIMER_FORMAT,
         capabilities: mixrelay_audio_io::session::AudioSessionCapabilities {
             backend: AudioBackendKind::PipeWire,
@@ -97,19 +97,19 @@ pub trait EndpointDriver: Send + Sync {
     /// Returns the original Driver transport or protocol failure.
     fn snapshot(
         &self,
-    ) -> Result<mixrelay_driver_control::DriverSnapshot, mixrelay_driver_control::DriverError>;
+    ) -> Result<mixrelay_driver_core::DriverSnapshot, mixrelay_driver_core::DriverError>;
     /// # Errors
     /// Returns stale revisions, unsupported formats or transport failure.
     fn mutate(
         &self,
-        command: &mixrelay_driver_control::DriverCommand,
-    ) -> Result<mixrelay_driver_control::DriverSnapshot, mixrelay_driver_control::DriverError>;
+        command: &mixrelay_driver_core::DriverCommand,
+    ) -> Result<mixrelay_driver_core::DriverSnapshot, mixrelay_driver_core::DriverError>;
 }
 
 /// Creates status policy with this backend's independently owned endpoint observations.
 #[must_use]
 pub fn prepare_runtime(
-    time: Arc<dyn mixrelay_engine::session::ProcessingTime>,
+    time: Arc<dyn mixrelay_engine_core::session::ProcessingTime>,
     observation: Arc<EndpointObservation>,
 ) -> AdapterRuntimeStatus {
     AdapterRuntimeStatus::new(adapter_profile(), time)
@@ -157,10 +157,10 @@ const fn render_format() -> RenderFormat {
 pub fn spawn_reclaimers(
     exchange: &Arc<ProcessorExchange>,
     endpoints: &Arc<LinuxVirtualEndpointBackend>,
-) -> Result<mixrelay_engine_runtime::resource_reclaimer::ResourceReclaimer, String> {
+) -> Result<mixrelay_engine_host::resource_reclaimer::ResourceReclaimer, String> {
     let weak_exchange = Arc::downgrade(exchange);
     let weak_endpoints = Arc::downgrade(endpoints);
-    mixrelay_engine_runtime::resource_reclaimer::ResourceReclaimer::start(
+    mixrelay_engine_host::resource_reclaimer::ResourceReclaimer::start(
         "mixrelay-linux-reclaimer",
         move || {
             let Some(exchange) = weak_exchange.upgrade() else {
@@ -197,7 +197,7 @@ pub struct LinuxVirtualEndpointBackend {
     application_watch: Mutex<Option<CaptureWatch>>,
     application_recovery: RecoveryMailbox<PipeWireCaptureSet>,
     // Weak, control-only access. None is initial setup, never shutdown fallback.
-    graph_inputs: Mutex<Option<mixrelay_pipewire::GraphInputs>>,
+    graph_inputs: Mutex<Option<mixrelay_linux_pipewire::GraphInputs>>,
     playback: source_mute::PlaybackController,
     #[cfg(test)]
     automatic_device_outputs: bool,
@@ -462,10 +462,10 @@ impl LinuxVirtualEndpointBackend {
 
     fn register_inputs(
         &self,
-        inputs: &mixrelay_pipewire::GraphInputs,
-    ) -> Result<(), mixrelay_pipewire::DriverError> {
+        inputs: &mixrelay_linux_pipewire::GraphInputs,
+    ) -> Result<(), mixrelay_linux_pipewire::DriverError> {
         let mut registered = self.graph_inputs.lock().map_err(|_| {
-            mixrelay_pipewire::DriverError::Input("driver registration poisoned".into())
+            mixrelay_linux_pipewire::DriverError::Input("driver registration poisoned".into())
         })?;
         let pending = self.pending.load(Ordering::Acquire);
         if !pending.is_null() {
@@ -474,7 +474,7 @@ impl LinuxVirtualEndpointBackend {
             // The unique pending envelope remains owned by the existing mailbox.
             unsafe { &mut *pending }
                 .bind_inputs(inputs)
-                .map_err(mixrelay_pipewire::DriverError::Input)?;
+                .map_err(mixrelay_linux_pipewire::DriverError::Input)?;
         }
         *registered = Some(inputs.clone());
         Ok(())
@@ -622,11 +622,11 @@ impl VirtualEndpointBackend for LinuxVirtualEndpointBackend {
         let mut selection = None;
         for (direction, formats) in [
             (
-                mixrelay_driver_control::NativeDirection::Render,
+                mixrelay_driver_core::NativeDirection::Render,
                 &device.native_formats.render,
             ),
             (
-                mixrelay_driver_control::NativeDirection::Capture,
+                mixrelay_driver_core::NativeDirection::Capture,
                 &device.native_formats.capture,
             ),
         ] {
@@ -651,7 +651,7 @@ impl VirtualEndpointBackend for LinuxVirtualEndpointBackend {
         // The Driver's clock is shared by both native directions. One revision-checked
         // mutation updates their rate together, preserving each PCM representation.
         client
-            .mutate(&mixrelay_driver_control::DriverCommand::SetFormat {
+            .mutate(&mixrelay_driver_core::DriverCommand::SetFormat {
                 expected_revision: snapshot.revision,
                 endpoint_id: id.clone(),
                 direction,
@@ -709,9 +709,9 @@ fn driver_failure(error: impl std::fmt::Display) -> HostAudioBackendError {
 impl LinuxVirtualEndpointBackend {
     fn driver_snapshot(
         &self,
-    ) -> Result<mixrelay_driver_control::DriverSnapshot, HostAudioBackendError> {
+    ) -> Result<mixrelay_driver_core::DriverSnapshot, HostAudioBackendError> {
         let snapshot = self.driver.snapshot().map_err(driver_failure)?;
-        if snapshot.state != mixrelay_driver_control::DriverState::Ready {
+        if snapshot.state != mixrelay_driver_core::DriverState::Ready {
             return Err(driver_failure("Driver service is not ready"));
         }
         Ok(snapshot)
@@ -740,10 +740,10 @@ impl GraphResourceBackend for LinuxVirtualEndpointBackend {
     fn prepare_format_change(
         &self,
         document: &mixrelay_audio_graph::GraphDocument,
-        playback: mixrelay_engine::PlaybackBindings<'_>,
+        playback: mixrelay_engine_core::PlaybackBindings<'_>,
         _current: RenderFormat,
         requested: RenderFormat,
-    ) -> Result<Box<dyn mixrelay_engine::PreparedGraphFormat>, HostAudioBackendError> {
+    ) -> Result<Box<dyn mixrelay_engine_core::PreparedGraphFormat>, HostAudioBackendError> {
         let playback = source_mute::OwnedPlan::prepare(&playback)
             .map_err(|capability| HostAudioBackendError::CapabilityUnavailable { capability })?;
         format::prepare(self, document, requested, playback)
@@ -751,7 +751,7 @@ impl GraphResourceBackend for LinuxVirtualEndpointBackend {
     fn reconcile(
         &self,
         document: &mixrelay_audio_graph::GraphDocument,
-        playback: mixrelay_engine::PlaybackBindings<'_>,
+        playback: mixrelay_engine_core::PlaybackBindings<'_>,
     ) -> Result<(), HostAudioBackendError> {
         let playback = source_mute::OwnedPlan::prepare(&playback)
             .map_err(|capability| HostAudioBackendError::CapabilityUnavailable { capability })?;
@@ -867,7 +867,7 @@ struct LinuxResourceUpdate {
 }
 
 impl LinuxResourceUpdate {
-    fn bind_inputs(&mut self, inputs: &mixrelay_pipewire::GraphInputs) -> Result<(), String> {
+    fn bind_inputs(&mut self, inputs: &mixrelay_linux_pipewire::GraphInputs) -> Result<(), String> {
         inputs.ensure_live().map_err(|error| error.to_string())?;
         if let Some(endpoints) = &mut self.endpoints {
             endpoints.bind_inputs(inputs)?;
@@ -914,26 +914,26 @@ fn test_driver() -> Arc<dyn EndpointDriver> {
     impl EndpointDriver for Driver {
         fn snapshot(
             &self,
-        ) -> Result<mixrelay_driver_control::DriverSnapshot, mixrelay_driver_control::DriverError>
+        ) -> Result<mixrelay_driver_core::DriverSnapshot, mixrelay_driver_core::DriverError>
         {
             #[cfg(feature = "native-lab")]
             return self.0.snapshot_blocking();
             #[cfg(not(feature = "native-lab"))]
-            Err(mixrelay_driver_control::DriverError::Unavailable(
+            Err(mixrelay_driver_core::DriverError::Unavailable(
                 "fixture has no Driver".into(),
             ))
         }
         fn mutate(
             &self,
-            command: &mixrelay_driver_control::DriverCommand,
-        ) -> Result<mixrelay_driver_control::DriverSnapshot, mixrelay_driver_control::DriverError>
+            command: &mixrelay_driver_core::DriverCommand,
+        ) -> Result<mixrelay_driver_core::DriverSnapshot, mixrelay_driver_core::DriverError>
         {
             #[cfg(feature = "native-lab")]
             return self.0.mutate_blocking(command);
             #[cfg(not(feature = "native-lab"))]
             {
                 let _ = command;
-                Err(mixrelay_driver_control::DriverError::Unavailable(
+                Err(mixrelay_driver_core::DriverError::Unavailable(
                     "fixture has no Driver".into(),
                 ))
             }

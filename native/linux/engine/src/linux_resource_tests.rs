@@ -24,7 +24,7 @@ impl Resources {
 
     fn apply(&mut self, document: &GraphDocument) -> usize {
         self.backend
-            .reconcile(document, mixrelay_engine::PlaybackBindings::Preserve)
+            .reconcile(document, mixrelay_engine_core::PlaybackBindings::Preserve)
             .unwrap();
         let staged = resource_serials().len();
         let mut result = Ok(());
@@ -242,7 +242,7 @@ fn rejected_device_edit(resources: &mut Resources) {
     assert!(
         resources
             .backend
-            .reconcile(&invalid, mixrelay_engine::PlaybackBindings::Preserve)
+            .reconcile(&invalid, mixrelay_engine_core::PlaybackBindings::Preserve)
             .is_err()
     );
     assert!(resources.backend.pending.load(Ordering::Acquire).is_null());

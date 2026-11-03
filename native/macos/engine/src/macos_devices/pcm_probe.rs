@@ -362,7 +362,7 @@ impl Client {
 /// watchdog prevents an entire marker period being silently lost or replayed.
 #[cfg(feature = "native-lab")]
 pub(crate) fn installed_driver_pcm_soak(
-    mut snapshot: impl FnMut() -> mixrelay_driver_control::DriverSnapshot,
+    mut snapshot: impl FnMut() -> mixrelay_driver_core::DriverSnapshot,
 ) {
     let seconds: u64 = std::env::var("MIXRELAY_TEST_SOAK_SECONDS")
         .unwrap()
@@ -494,7 +494,7 @@ fn looping_words_validate_wrap_and_reject_a_gap_or_repeat_at_the_boundary() {
 }
 
 #[cfg(feature = "native-lab")]
-fn selection(snapshot: &mixrelay_driver_control::DriverSnapshot) -> Spec {
+fn selection(snapshot: &mixrelay_driver_core::DriverSnapshot) -> Spec {
     let uid = std::env::var("MIXRELAY_TEST_DRIVER_UID")
         .expect("explicit canonical installed Driver UID required");
     let channels: u16 = std::env::var("MIXRELAY_TEST_DRIVER_CHANNELS")

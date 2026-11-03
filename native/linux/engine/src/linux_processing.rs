@@ -4,15 +4,15 @@ use super::{
     driver_monitor,
 };
 use crate::processing_failure::{Failure, FailureMailbox};
-use mixrelay_audio_engine::{BlockProcessor, ExternalBinding, ExternalIo, ProcessorExchange};
 use mixrelay_audio_graph::{FROM_OS_PORT_ID, TO_OS_PORT_ID};
 use mixrelay_audio_io::{
     process::{CycleBlocks, ProcessCycle, ProcessReport, TransferOutcome},
     recovery::RecoveryConsumer,
     session::ClockAuthority,
 };
-use mixrelay_engine::session::AdapterRuntimeStatus;
-use mixrelay_pipewire::{DriverCycle, DriverFormat, DriverProcess, GraphDriver};
+use mixrelay_engine_core::session::AdapterRuntimeStatus;
+use mixrelay_linux_pipewire::{DriverCycle, DriverFormat, DriverProcess, GraphDriver};
+use mixrelay_render::{BlockProcessor, ExternalBinding, ExternalIo, ProcessorExchange};
 use std::sync::Arc;
 
 #[derive(Debug, thiserror::Error)]
@@ -22,11 +22,11 @@ pub enum WorkerError {
     #[error("{0} recovery already has an audio consumer")]
     RecoveryConsumer(&'static str),
     #[error("could not prepare PipeWire graph driver format: {0}")]
-    DriverFormat(#[source] mixrelay_pipewire::DriverError),
+    DriverFormat(#[source] mixrelay_linux_pipewire::DriverError),
     #[error("could not prepare PipeWire graph timeline: {0}")]
     Timeline(#[source] mixrelay_audio_io::process::CycleError),
     #[error("could not start PipeWire graph driver: {0}")]
-    Driver(#[source] mixrelay_pipewire::DriverError),
+    Driver(#[source] mixrelay_linux_pipewire::DriverError),
     #[error(transparent)]
     Runtime(#[from] driver_monitor::Error),
 }
@@ -102,17 +102,17 @@ pub fn run_audio_worker(
 impl DriverProcess for LinuxProcessState<'_> {
     fn prepare_inputs(
         &mut self,
-        inputs: &mixrelay_pipewire::GraphInputs,
-    ) -> Result<(), mixrelay_pipewire::DriverError> {
+        inputs: &mixrelay_linux_pipewire::GraphInputs,
+    ) -> Result<(), mixrelay_linux_pipewire::DriverError> {
         self.endpoints
             .bind_inputs(inputs)
-            .map_err(mixrelay_pipewire::DriverError::Input)?;
+            .map_err(mixrelay_linux_pipewire::DriverError::Input)?;
         self.captures
             .bind_inputs(inputs)
-            .map_err(mixrelay_pipewire::DriverError::Input)?;
+            .map_err(mixrelay_linux_pipewire::DriverError::Input)?;
         self.devices
             .bind_inputs(inputs)
-            .map_err(mixrelay_pipewire::DriverError::Input)?;
+            .map_err(mixrelay_linux_pipewire::DriverError::Input)?;
         self.endpoint_backend.register_inputs(inputs)
     }
     fn process(&mut self, native: &DriverCycle) {

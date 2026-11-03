@@ -1,7 +1,7 @@
 //! Owned native format observation and off-audio-thread reclamation.
 use crate::MacDevices;
-use mixrelay_audio_engine::ProcessorExchange;
-use mixrelay_engine::session::AdapterRuntimeStatus;
+use mixrelay_engine_core::session::AdapterRuntimeStatus;
+use mixrelay_render::ProcessorExchange;
 use std::{
     sync::{
         Arc, Weak,
@@ -30,7 +30,7 @@ impl MaintenanceWorker {
         self.request_stop();
         self.thread
             .take()
-            .map_or(Ok(()), mixrelay_engine_runtime::join_worker)
+            .map_or(Ok(()), mixrelay_engine_host::join_worker)
     }
 
     pub fn request_stop(&self) {
@@ -120,7 +120,7 @@ pub fn start_format_monitor(
             };
             if endpoint
                 .snapshot()
-                .is_ok_and(|snapshot| snapshot.state == mixrelay_driver_control::DriverState::Ready)
+                .is_ok_and(|snapshot| snapshot.state == mixrelay_driver_core::DriverState::Ready)
             {
                 status.observe_endpoint(true);
             } else {

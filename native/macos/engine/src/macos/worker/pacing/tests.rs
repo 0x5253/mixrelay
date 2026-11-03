@@ -202,7 +202,7 @@ fn only_a_running_device_clock_takes_the_head_from_an_application_paced_plan() {
         MacDevices,
         callback_fixture::{CallbackTime, NativeOwner, publish},
     };
-    use mixrelay_engine::session::AdapterRuntimeStatus;
+    use mixrelay_engine_core::session::AdapterRuntimeStatus;
     let plan = plan(Some(false), true);
     let v1 = token(&plan, V1);
     let resources = MacDevices::new(

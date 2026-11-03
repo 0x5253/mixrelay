@@ -1,0 +1,25 @@
+[package]
+name = "mixrelay-driver-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[features]
+test-util = ["dep:parking_lot", "mixrelay-time/test-util"]
+
+[dependencies]
+mixrelay-audio-io.workspace = true
+mixrelay-time = { path = "../time" }
+parking_lot = { workspace = true, optional = true }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+mixrelay-test-support = { path = "../test-support" }
+mixrelay-time = { path = "../time", features = ["test-util"] }
+parking_lot.workspace = true
+tokio.workspace = true
+
+[lints]
+workspace = true

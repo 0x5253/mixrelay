@@ -9,7 +9,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use mixrelay_driver_control::{
+use mixrelay_driver_core::{
     DriverDeviceConfig, DriverError, JSON_LIMIT, SettingsStore, StoredSettings,
 };
 

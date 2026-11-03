@@ -16,16 +16,16 @@ use super::{
 use super::{RenderFormat, aggregate, direct, ffi, tests, worker_retirement};
 #[cfg(test)]
 use super::{ffi::mr_device_io_quantum, native::Native};
-use mixrelay_audio_engine::{BlockProcessor, ProcessorExchange};
 #[cfg(test)]
 use mixrelay_audio_graph::{
     AudioDeviceInputConfig, AudioDeviceOutputConfig, DeviceSelector, NodeConfig, NodeSpec,
 };
 use mixrelay_audio_io::process::{InputActivity, TransferOutcome};
 #[cfg(test)]
-use mixrelay_engine::{
+use mixrelay_engine_core::{
     GraphResourceBackend, PlaybackBindings::Preserve, session::AdapterRuntimeStatus,
 };
+use mixrelay_render::{BlockProcessor, ProcessorExchange};
 #[cfg(test)]
 use simulated::DEFAULT_BUFFER;
 use simulated::{CAPTURED, SimulatedHost};
@@ -128,7 +128,7 @@ fn wired(graph: &GraphDocument) -> GraphDocument {
 
 /// The compiled render plan at `rate` of `graph` as published.
 #[cfg(test)]
-fn compiled(graph: &GraphDocument, rate: u32) -> mixrelay_audio_engine::RenderPlan {
+fn compiled(graph: &GraphDocument, rate: u32) -> mixrelay_render::RenderPlan {
     use mixrelay_audio_graph::{CompileContext, CompileLimits, GraphCompiler};
     let execution = GraphCompiler::default()
         .compile(
@@ -139,12 +139,12 @@ fn compiled(graph: &GraphDocument, rate: u32) -> mixrelay_audio_engine::RenderPl
             },
         )
         .unwrap();
-    mixrelay_audio_engine::RenderPlan::prepare(&execution).unwrap()
+    mixrelay_render::RenderPlan::prepare(&execution).unwrap()
 }
 
 /// The compiled render plan at `rate` of the graph with its input wired to its output.
 #[cfg(test)]
-fn render_plan(graph: &GraphDocument, rate: u32) -> mixrelay_audio_engine::RenderPlan {
+fn render_plan(graph: &GraphDocument, rate: u32) -> mixrelay_render::RenderPlan {
     compiled(&wired(graph), rate)
 }
 

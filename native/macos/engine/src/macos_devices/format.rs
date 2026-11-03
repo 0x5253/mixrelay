@@ -3,7 +3,7 @@ use super::buffer_control::{self, HostBufferControl};
 use super::buffer_transaction::{BufferFailure, BufferPlan};
 use super::{backend_error, bridge::DeviceBridge, device::Device};
 use mixrelay_audio_io::HostAudioBackendError;
-use mixrelay_engine::PreparedGraphFormat;
+use mixrelay_engine_core::PreparedGraphFormat;
 use std::sync::{
     Arc,
     atomic::{AtomicU32, Ordering},

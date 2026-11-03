@@ -5,8 +5,8 @@ use crate::{
     AudioLayout, ProcessorControlRegistry, ProcessorStateError, dry_delay,
     hosted::HostedExternalProcessor, native_operation::Stage, shared_transport, timing,
 };
-use mixrelay_audio_engine::{HostedAudioProcessor, HostedLatencySource};
 use mixrelay_audio_graph::NodeId;
+use mixrelay_render::{HostedAudioProcessor, HostedLatencySource};
 use mixrelay_test_support::FixtureDir;
 
 mod fixture;

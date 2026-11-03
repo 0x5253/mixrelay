@@ -1,6 +1,6 @@
 //! Control-thread preparation and bounded publication of replacement native owners.
 use super::{DeviceStreams, LinuxVirtualEndpointBackend};
-use mixrelay_audio_engine::ProcessorExchange;
+use mixrelay_render::ProcessorExchange;
 use std::{
     sync::{
         Arc,

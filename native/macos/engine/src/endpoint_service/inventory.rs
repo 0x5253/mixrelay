@@ -70,7 +70,7 @@ impl<W: Worker> Inventory<W> {
         drop(state);
         drop(pending);
         if let Some(worker) = worker.take() {
-            let _ = mixrelay_engine_runtime::join_worker(worker);
+            let _ = mixrelay_engine_host::join_worker(worker);
         }
     }
 }

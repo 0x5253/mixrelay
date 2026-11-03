@@ -12,7 +12,7 @@ export function syncProductMetadata(metadata, root, write = false) {
     if (write) writeFileSync(path, expected);
     else if (current !== expected) throw new Error(`Product metadata drift: ${name}; run pnpm support:sync`);
   };
-  for (const name of ['package.json', 'apps/desktop/package.json', 'apps/control-ui/package.json', 'apps/streamdeck-plugin/package.json']) {
+  for (const name of ['package.json', 'apps/desktop-shell/package.json', 'apps/control-ui/package.json', 'apps/streamdeck-plugin/package.json']) {
     update(name, text => {
       const value = JSON.parse(text);
       value.author = productContact(metadata);
@@ -28,7 +28,7 @@ export function syncProductMetadata(metadata, root, write = false) {
     return text.replace(/^authors = .*$/m, `authors = ["${productContact(metadata)}"]`)
       .replace(/^homepage = .*$/m, `homepage = "${metadata.homepage}"`);
   });
-  update('apps/desktop/src-tauri/tauri.conf.json', text => {
+  update('apps/desktop-shell/src-tauri/tauri.conf.json', text => {
     const value = JSON.parse(text);
     value.bundle.publisher = metadata.publisher;
     value.bundle.homepage = metadata.homepage;

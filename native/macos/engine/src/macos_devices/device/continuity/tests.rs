@@ -1,7 +1,6 @@
 use crate::macos_devices::{
     DeviceSet, bridge::NEXT_DEVICE_EPOCH, ffi, tests::synthetic_device, worker::WorkerContext,
 };
-use mixrelay_audio_engine::{BlockProcessor, ExternalBinding, ExternalIo, RenderPlan};
 use mixrelay_audio_graph::{
     AUDIO_PORT_ID, AudioDeviceInputConfig, AudioDeviceOutputConfig, AudioEndpoint, ChannelMapping,
     CompileContext, CompileLimits, DelayParameters, DeviceSelector, EdgeSpec, Effect, EffectConfig,
@@ -11,6 +10,7 @@ use mixrelay_audio_io::process::{
     ClockDomain, InputActivity, ProcessCycle, ProcessReport, TransferOutcome,
 };
 use mixrelay_audio_io::session::ClockAuthority;
+use mixrelay_render::{BlockProcessor, ExternalBinding, ExternalIo, RenderPlan};
 use std::{
     cell::Cell,
     collections::BTreeMap,

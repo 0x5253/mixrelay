@@ -134,7 +134,7 @@ fn build_slice(
             "build",
             "--locked",
             "-p",
-            "mixrelay-hal-core",
+            "mixrelay-macos-hal",
             "--release",
             "--target",
             target,
@@ -179,7 +179,7 @@ fn link_command(root: &Path, target_directory: &Path, architecture: &str, target
         .arg(
             target_directory
                 .join(target)
-                .join("release/libmixrelay_hal_core.a"),
+                .join("release/libmixrelay_macos_hal.a"),
         )
         .args([
             "-framework",
@@ -255,7 +255,7 @@ mod tests {
             )]
         );
         assert!(args.contains(&PathBuf::from(
-            "/repo/target/aarch64-apple-darwin/release/libmixrelay_hal_core.a"
+            "/repo/target/aarch64-apple-darwin/release/libmixrelay_macos_hal.a"
         )));
     }
 

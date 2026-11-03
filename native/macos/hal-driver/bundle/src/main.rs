@@ -36,7 +36,7 @@ fn output_directory(
     match arguments {
         [] => Ok(root.join("target/macos-hal")),
         [flag, directory] if flag == "--output" && !directory.is_empty() => Ok(directory.into()),
-        _ => Err("usage: cargo run -p mixrelay-hal-bundle -- [--output DIRECTORY]".into()),
+        _ => Err("usage: cargo run -p mixrelay-macos-hal-bundle -- [--output DIRECTORY]".into()),
     }
 }
 

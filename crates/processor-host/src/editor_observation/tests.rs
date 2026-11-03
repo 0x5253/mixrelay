@@ -3,9 +3,9 @@ use crate::shared_transport::WorkerControl;
 use crate::worker::broker::publish_editor_failure;
 use crate::worker::broker::publish_observed_editor_snapshot;
 use crate::*;
-use mixrelay_audio_engine::HostedProcessorPrepareRequest;
 use mixrelay_audio_graph::{ProviderNodeConfig, RenderFormat};
 use mixrelay_control_protocol::ProcessorEditorState;
+use mixrelay_render::HostedProcessorPrepareRequest;
 use std::sync::{Arc, atomic::Ordering};
 
 struct Fixture {

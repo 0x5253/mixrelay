@@ -210,10 +210,10 @@ if true; then
     step "Compile release binaries ($target)"
     cargo build --locked --release --target "$target" \
       -p mixrelay-macos-installer \
-      -p mixrelay-service \
+      -p mixrelay-engine-service \
       -p mixrelay-driver-service \
-      -p mixrelay-desktop \
-      --bins --features mixrelay-desktop/custom-protocol
+      -p mixrelay-desktop-shell \
+      --bins --features mixrelay-desktop-shell/custom-protocol
   done
 
   step "Universal helpers"
@@ -246,7 +246,7 @@ if true; then
     "$repo_root/target/aarch64-apple-darwin/release/mixrelay-desktop" \
     "$repo_root/target/x86_64-apple-darwin/release/mixrelay-desktop" \
     -output "$desktop_universal"
-  pnpm --filter @mixrelay/desktop tauri bundle \
+  pnpm --filter @mixrelay/desktop-shell tauri bundle \
     --bundles app --target universal-apple-darwin --features custom-protocol
   finish_step
 fi

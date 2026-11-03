@@ -67,7 +67,7 @@ export function isUserFacingSurface(path) {
   if (/^(?:apps\/[^/]+\/)?package\.json$/.test(path)) return true;
   if (/^apps\/website\//.test(path)) return !/\/fonts\/sources\.json$/.test(path) && /\.(?:html|css|js|json|txt)$/.test(path) && !/check-site\.mjs$/.test(path);
   if (/^apps\/control-ui\/src\//.test(path)) return /\.(?:ts|tsx|css|txt)$/.test(path);
-  if (/^apps\/desktop\/src-tauri\//.test(path)) return /(?:src\/.*\.(?:rs|m)|Cargo\.toml|tauri[^/]*\.json|Info\.plist)$/.test(path);
+  if (/^apps\/desktop-shell\/src-tauri\//.test(path)) return /(?:src\/.*\.(?:rs|m)|Cargo\.toml|tauri[^/]*\.json|Info\.plist)$/.test(path);
   if (/^native\//.test(path)) return /\.(?:rs|m|mm|c|h|plist|strings)$/.test(path);
   if (/^packaging\//.test(path)) return !/\.md$/.test(path);
   if (/^apps\/streamdeck-plugin\//.test(path)) return /\.(?:json|html|mjs|css)$/.test(path);

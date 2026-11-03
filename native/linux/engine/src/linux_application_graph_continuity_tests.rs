@@ -11,8 +11,8 @@ use mixrelay_audio_io::{
     VirtualEndpointSpec,
 };
 #[cfg(feature = "native-lab")]
-use mixrelay_engine::GraphResourceBackend;
-use mixrelay_engine::catalog_execution::{
+use mixrelay_engine_core::GraphResourceBackend;
+use mixrelay_engine_core::catalog_execution::{
     ApplicationIdentityResolver, CatalogExecutionContext, compose_catalog,
 };
 #[cfg(feature = "native-lab")]
@@ -271,7 +271,7 @@ impl DriverCounters {
     // version reads in unit tests; the actual control reader passes a no-op.
     fn transfer_observation_with(&self, mut after_payload: impl FnMut()) -> Value {
         const MAX_ATTEMPTS: u32 = 3;
-        let native_cycle = |cycle: &mixrelay_pipewire::DriverCycle| {
+        let native_cycle = |cycle: &mixrelay_linux_pipewire::DriverCycle| {
             serde_json::json!({"clock_id": cycle.clock_id, "rate": cycle.rate,
                 "position": cycle.position, "frames": cycle.frames,
                 "monotonic_ns": cycle.monotonic_ns})
@@ -330,15 +330,15 @@ struct LinuxGraphProcess<'a> {
 }
 
 #[cfg(feature = "native-lab")]
-impl mixrelay_pipewire::DriverProcess for LinuxGraphProcess<'_> {
+impl mixrelay_linux_pipewire::DriverProcess for LinuxGraphProcess<'_> {
     fn prepare_inputs(
         &mut self,
-        inputs: &mixrelay_pipewire::GraphInputs,
-    ) -> Result<(), mixrelay_pipewire::DriverError> {
+        inputs: &mixrelay_linux_pipewire::GraphInputs,
+    ) -> Result<(), mixrelay_linux_pipewire::DriverError> {
         self.state.prepare_inputs(inputs)
     }
 
-    fn process(&mut self, cycle: &mixrelay_pipewire::DriverCycle) {
+    fn process(&mut self, cycle: &mixrelay_linux_pipewire::DriverCycle) {
         self.state.process(cycle);
         // These test-only loads borrow current owners after their normal report
         // work. No native pointer, report baseline or PCM cursor escapes.
@@ -782,14 +782,14 @@ fn with_engine_graph<R>(
     format: RenderFormat,
     playback_intents: &[mixrelay_audio_graph::composition::ApplicationPlaybackIntent],
     run: impl FnOnce(
-        &mixrelay_pipewire::GraphDriver<LinuxGraphProcess<'_>>,
+        &mixrelay_linux_pipewire::GraphDriver<LinuxGraphProcess<'_>>,
         (
-            &mixrelay_engine::session::AdapterRuntimeStatus,
+            &mixrelay_engine_core::session::AdapterRuntimeStatus,
             &DriverCounters,
         ),
         &super::super::super::LinuxVirtualEndpointBackend,
-        &Arc<mixrelay_audio_engine::ProcessorExchange>,
-        &Arc<mixrelay_audio_engine::RuntimeControlBank>,
+        &Arc<mixrelay_render::ProcessorExchange>,
+        &Arc<mixrelay_render::RuntimeControlBank>,
     ) -> R,
 ) -> (R, DriverStats) {
     let backend = super::super::super::test_backend();
@@ -798,18 +798,18 @@ fn with_engine_graph<R>(
         .store(super::super::super::format::pack(format), Ordering::Release);
     let processor = super::super::super::create_initial_processor(
         document,
-        mixrelay_engine::default_peak_meter_bank(),
+        mixrelay_engine_core::default_peak_meter_bank(),
         format,
     )
     .expect("compile exact ApplicationCapture to AudioDeviceOutput graph");
-    let exchange = Arc::new(mixrelay_audio_engine::ProcessorExchange::new(
+    let exchange = Arc::new(mixrelay_render::ProcessorExchange::new(
         processor.plan().revision(),
     ));
     let controls = Arc::clone(processor.plan().controls());
     let playback = if playback_intents.is_empty() {
-        mixrelay_engine::PlaybackBindings::Preserve
+        mixrelay_engine_core::PlaybackBindings::Preserve
     } else {
-        mixrelay_engine::PlaybackBindings::Forward {
+        mixrelay_engine_core::PlaybackBindings::Forward {
             intents: playback_intents,
             controls: &controls,
         }
@@ -826,12 +826,12 @@ fn with_engine_graph<R>(
         clock_diagnostics: Arc::clone(&state.clock_diagnostics),
         ..DriverCounters::default()
     });
-    let driver = mixrelay_pipewire::GraphDriver::open(
+    let driver = mixrelay_linux_pipewire::GraphDriver::open(
         LinuxGraphProcess {
             state,
             counters: Arc::clone(&counters),
         },
-        mixrelay_pipewire::DriverFormat::new(format.sample_rate, format.block_frames)
+        mixrelay_linux_pipewire::DriverFormat::new(format.sample_rate, format.block_frames)
             .expect("valid fixed graph-driver format"),
     )
     .expect("open real Linux GraphDriver");
@@ -850,9 +850,9 @@ fn with_engine_graph<R>(
 #[cfg(feature = "native-lab")]
 fn prepare_graph_process_state<'a>(
     backend: &'a super::super::super::LinuxVirtualEndpointBackend,
-    processor: Box<mixrelay_audio_engine::BlockProcessor>,
-    exchange: &Arc<mixrelay_audio_engine::ProcessorExchange>,
-    status: &Arc<mixrelay_engine::session::AdapterRuntimeStatus>,
+    processor: Box<mixrelay_render::BlockProcessor>,
+    exchange: &Arc<mixrelay_render::ProcessorExchange>,
+    status: &Arc<mixrelay_engine_core::session::AdapterRuntimeStatus>,
 ) -> super::super::super::LinuxProcessState<'a> {
     let format = processor.plan().format();
     let mut endpoints = Box::default();
@@ -896,8 +896,8 @@ fn prepare_graph_process_state<'a>(
 #[cfg(feature = "native-lab")]
 fn active_runtime_status(
     format: RenderFormat,
-) -> Arc<mixrelay_engine::session::AdapterRuntimeStatus> {
-    let status = Arc::new(mixrelay_engine::session::AdapterRuntimeStatus::new(
+) -> Arc<mixrelay_engine_core::session::AdapterRuntimeStatus> {
+    let status = Arc::new(mixrelay_engine_core::session::AdapterRuntimeStatus::new(
         super::super::super::adapter_profile(),
         std::sync::Arc::new(mixrelay_time::StdClock::new()),
     ));
@@ -922,7 +922,7 @@ fn open_input_capture(process_id: u32, source_serial: &str) -> (CaptureSet, Capt
         block_frames: BLOCK_FRAMES,
     };
     let (mut captures, mut watch) = CaptureSet::open_format(
-        &mixrelay_pipewire::StreamOwners::default(),
+        &mixrelay_linux_pipewire::StreamOwners::default(),
         &[(CAPTURE_NODE.into(), request)],
         1,
         format,
@@ -1191,7 +1191,7 @@ fn update_private_target(source: u32, target: Option<&str>) {
 #[cfg(feature = "native-lab")]
 fn wait_for_ack(
     backend: &super::super::super::LinuxVirtualEndpointBackend,
-    exchange: &mixrelay_audio_engine::ProcessorExchange,
+    exchange: &mixrelay_render::ProcessorExchange,
     source_serial: &str,
     source_id: u32,
     endpoint_id: u32,
@@ -1221,7 +1221,7 @@ fn wait_for_ack(
 #[cfg(feature = "native-lab")]
 fn wait_for_lease_clear(
     backend: &super::super::super::LinuxVirtualEndpointBackend,
-    exchange: &mixrelay_audio_engine::ProcessorExchange,
+    exchange: &mixrelay_render::ProcessorExchange,
     source_serial: &str,
     endpoint_id: u32,
 ) {
@@ -1415,12 +1415,12 @@ fn start_unrelated_tone(serial: &str, directory: &Path) -> FixtureProcess {
 
 #[cfg(feature = "native-lab")]
 struct ForwardInputs<'a, 'b> {
-    driver: &'a mixrelay_pipewire::GraphDriver<LinuxGraphProcess<'b>>,
-    status: &'a mixrelay_engine::session::AdapterRuntimeStatus,
+    driver: &'a mixrelay_linux_pipewire::GraphDriver<LinuxGraphProcess<'b>>,
+    status: &'a mixrelay_engine_core::session::AdapterRuntimeStatus,
     counters: &'a DriverCounters,
     backend: &'a super::super::super::LinuxVirtualEndpointBackend,
-    exchange: &'a Arc<mixrelay_audio_engine::ProcessorExchange>,
-    controls: &'a Arc<mixrelay_audio_engine::RuntimeControlBank>,
+    exchange: &'a Arc<mixrelay_render::ProcessorExchange>,
+    controls: &'a Arc<mixrelay_render::RuntimeControlBank>,
     observer: &'a mut super::mute::FixtureChild,
     directory: &'a Path,
     selected: &'a mixrelay_linux_audio_io::PipeWireTarget,
@@ -1486,7 +1486,7 @@ fn publish_source_mask(input: &ForwardInputs<'_, '_>, revision: u64, enabled: bo
         .publish_controls(
             input.controls,
             revision,
-            &[mixrelay_audio_engine::RuntimeControlUpdate {
+            &[mixrelay_render::RuntimeControlUpdate {
                 node_id: input.intent.mask_node_id.clone(),
                 control: mixrelay_audio_graph::NodeControl {
                     enabled,
@@ -1710,14 +1710,14 @@ fn save_forward_transfer_observation(
 fn transfer_observation_retains_original_latest_clock_transition_separately() {
     let counters = DriverCounters::default();
     assert!(counters.transfer_observation()["latestClockDiscontinuity"].is_null());
-    let previous = mixrelay_pipewire::DriverCycle {
+    let previous = mixrelay_linux_pipewire::DriverCycle {
         clock_id: 26,
         rate: 48_000,
         position: 4096,
         frames: 128,
         monotonic_ns: 1_000_000,
     };
-    let current = mixrelay_pipewire::DriverCycle {
+    let current = mixrelay_linux_pipewire::DriverCycle {
         clock_id: 27,
         rate: 44_100,
         position: 4480,
@@ -1733,7 +1733,7 @@ fn transfer_observation_retains_original_latest_clock_transition_separately() {
     counters
         .clock_diagnostics
         .publish(super::super::super::clock::NativeDiscontinuity {
-            previous: mixrelay_pipewire::DriverCycle {
+            previous: mixrelay_linux_pipewire::DriverCycle {
                 position: 3840,
                 ..previous
             },
@@ -2030,8 +2030,8 @@ fn collect_forward_graph_pcm(input: &mut ForwardInputs<'_, '_>) -> Value {
 
 #[cfg(feature = "native-lab")]
 fn wait_driver_ready(
-    driver: &mixrelay_pipewire::GraphDriver<LinuxGraphProcess<'_>>,
-    status: &mixrelay_engine::session::AdapterRuntimeStatus,
+    driver: &mixrelay_linux_pipewire::GraphDriver<LinuxGraphProcess<'_>>,
+    status: &mixrelay_engine_core::session::AdapterRuntimeStatus,
 ) {
     let deadline = Instant::now() + SETUP_TIMEOUT;
     while !driver.ready() {

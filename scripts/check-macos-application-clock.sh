@@ -16,12 +16,12 @@ clang -fobjc-arc -fmodules -fblocks "-mmacosx-version-min=$minimum_macos" \
   -framework AVFAudio -framework Foundation -framework CoreAudio -framework AudioUnit \
   -o "$fixture_root/MRVirtualToneSource.app/Contents/MacOS/MRVirtualToneSource"
 cd "$repo_root"
-MIXRELAY_APPLICATION_CLOCK_FIXTURE=1 node scripts/lab/native-check.mjs cargo test --release -p mixrelay-desktop \
+MIXRELAY_APPLICATION_CLOCK_FIXTURE=1 node scripts/lab/native-check.mjs cargo test --release -p mixrelay-desktop-shell \
   live_owned_application_tap_v2_src_rate_changes --no-run
 if [[ "${3:-}" == "--run" ]]; then
   MIXRELAY_APPLICATION_CLOCK_FIXTURE=1 \
   MIXRELAY_VIRTUAL_TONE_FIXTURE="$fixture_root/MRVirtualToneSource.app/Contents/MacOS/MRVirtualToneSource" \
   MIXRELAY_VIRTUAL_TONE_ENDPOINT_ID="$endpoint_id" \
-    node scripts/lab/native-check.mjs cargo test --release -p mixrelay-desktop live_owned_application_tap_v2_src_rate_changes -- --nocapture
+    node scripts/lab/native-check.mjs cargo test --release -p mixrelay-desktop-shell live_owned_application_tap_v2_src_rate_changes -- --nocapture
 fi
 print "Fixture artifacts retained: $fixture_root"

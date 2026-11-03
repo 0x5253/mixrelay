@@ -242,7 +242,7 @@ mod tests {
         let configured = plist::Value::from_reader_xml(
             include_bytes!(concat!(
                 env!("CARGO_MANIFEST_DIR"),
-                "/../../../apps/desktop/src-tauri/Entitlements.plist"
+                "/../../../apps/desktop-shell/src-tauri/Entitlements.plist"
             ))
             .as_slice(),
         )

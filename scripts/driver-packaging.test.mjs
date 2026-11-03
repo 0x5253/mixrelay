@@ -7,7 +7,7 @@ import { prepareDriverPackage } from './prepare-driver-package.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = path => readFileSync(resolve(root, path), 'utf8');
-const config = JSON.parse(read('apps/desktop/src-tauri/tauri.linux.conf.json'));
+const config = JSON.parse(read('apps/desktop-shell/src-tauri/tauri.linux.conf.json'));
 
 test('Linux package owns the device service and its user-session activation contract', () => {
   assert.deepEqual(config.bundle.externalBin, ['binaries/mixrelay-driver-service', 'binaries/mixrelay-service']);
@@ -18,7 +18,7 @@ test('Linux package owns the device service and its user-session activation cont
     assert.ok(files['/usr/share/mixrelay-driver/version.json']);
     for (const source of Object.values(files)) {
       if (source.includes('target/driver-package')) continue;
-      assert.ok(existsSync(resolve(root, 'apps/desktop/src-tauri', source)), source);
+      assert.ok(existsSync(resolve(root, 'apps/desktop-shell/src-tauri', source)), source);
     }
   }
   const unit = read('packaging/linux/mixrelay-driver.service');
@@ -153,16 +153,16 @@ test('macOS Driver preparation with --prebuilt merges and signs both existing sl
 test('Linux service packaging makes a restrictive build output executable for ordinary users', t => {
   const directory = mkdtempSync(join(root, 'target/driver-sidecar-permissions-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
-  mkdirSync(join(directory, 'apps/desktop/src-tauri'), { recursive: true });
+  mkdirSync(join(directory, 'apps/desktop-shell/src-tauri'), { recursive: true });
   writeFileSync(join(directory, 'Cargo.toml'), '[workspace.package]\nversion = "1.2.3"\n');
-  writeFileSync(join(directory, 'apps/desktop/src-tauri/tauri.conf.json'), '{"version":"1.2.3"}');
+  writeFileSync(join(directory, 'apps/desktop-shell/src-tauri/tauri.conf.json'), '{"version":"1.2.3"}');
   const input = join(directory, 'target/x86_64-unknown-linux-gnu/release/mixrelay-driver-service');
   const bytes = '#!/bin/sh\nexit 0\n';
   mkdirSync(dirname(input), { recursive: true });
   writeFileSync(input, bytes, { mode: 0o700 });
   prepareDriverPackage({ args: ['--target', 'x86_64-unknown-linux-gnu'], rootDir: directory,
     env: {}, run: () => ({ status: 0 }) });
-  const sidecar = join(directory, 'apps/desktop/src-tauri/binaries/mixrelay-driver-service-x86_64-unknown-linux-gnu');
+  const sidecar = join(directory, 'apps/desktop-shell/src-tauri/binaries/mixrelay-driver-service-x86_64-unknown-linux-gnu');
   assert.equal(readFileSync(sidecar, 'utf8'), bytes);
   assert.equal(statSync(sidecar).mode & 0o777, 0o755);
   assert.equal(statSync(input).mode & 0o777, 0o700);

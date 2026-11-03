@@ -25,7 +25,7 @@ sha2 = "0.10.9"
 thiserror.workspace = true
 # Native editor lifecycle diagnostics, emitted only on the worker's control thread.
 tracing = "0.1.41"
-mixrelay-audio-engine = { path = "../audio-engine" }
+mixrelay-render = { path = "../render" }
 mixrelay-audio-graph = { path = "../audio-graph" }
 mixrelay-audio-io = { path = "../audio-io" }
 mixrelay-control-protocol = { path = "../control-protocol" }

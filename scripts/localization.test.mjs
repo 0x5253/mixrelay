@@ -30,8 +30,8 @@ test("English product text uses British spelling", () => {
 });
 
 test("macOS declares all UI languages and bundles localized permission descriptions", () => {
-  const config = JSON.parse(readFileSync(new URL("../apps/desktop/src-tauri/tauri.conf.json", import.meta.url), "utf8"));
-  const plist = readFileSync(new URL("../apps/desktop/src-tauri/Info.plist", import.meta.url), "utf8");
+  const config = JSON.parse(readFileSync(new URL("../apps/desktop-shell/src-tauri/tauri.conf.json", import.meta.url), "utf8"));
+  const plist = readFileSync(new URL("../apps/desktop-shell/src-tauri/Info.plist", import.meta.url), "utf8");
   const localizations = plist.match(/<key>CFBundleLocalizations<\/key>\s*<array>([\s\S]*?)<\/array>/)?.[1];
   assert.ok(localizations);
   assert.deepEqual([...localizations.matchAll(/<string>(.*?)<\/string>/g)].map(match => match[1]).sort(), languages.map(entry => entry.language).sort());

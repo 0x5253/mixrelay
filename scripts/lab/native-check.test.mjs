@@ -15,8 +15,8 @@ function nativeFixture(t) {
   const owned = mkdtempSync(join(directory, "native-check-"));
   t.after(() => rmSync(owned, { recursive: true, force: true }));
   const libraries = [
-    ["mixrelay_macos_transport", "native/macos/common", "lib.rs"],
-    ["mixrelay_hal_core", "native/macos/hal-driver/rust", "src/lib.rs"],
+    ["mixrelay_macos_transport", "native/macos/transport", "lib.rs"],
+    ["mixrelay_macos_hal", "native/macos/hal-driver/rust", "src/lib.rs"],
   ].map(([name, source, entry]) => {
     const archive = join(owned, `lib${name}.a`);
     writeFileSync(archive, "fixture archive receipt");
@@ -51,7 +51,7 @@ test("public workspace and desktop test commands keep the canonical code-check e
   for (const script of ["check-macos-application-clock.sh", "check-macos-clock-boundaries.sh"]) {
     const source = readFileSync(new URL(`../${script}`, import.meta.url), "utf8");
     const desktopChecks = source.split("\n")
-      .filter(line => /\bcargo test\b.*\s-p mixrelay-desktop(?:\s|$)/.test(line));
+      .filter(line => /\bcargo test\b.*\s-p mixrelay-desktop-shell(?:\s|$)/.test(line));
     assert.ok(desktopChecks.length > 0);
     assert.ok(desktopChecks.every(line => line.includes(entry)));
   }
@@ -310,7 +310,7 @@ test(`macOS ${fixturePackage} fixture checks capture exact HOST Cargo artifacts 
     },
   });
   assert.equal(result, 17);
-  assert.deepEqual(calls[1].args, ["build", "--lib", "-p", "mixrelay-macos-transport", "-p", "mixrelay-hal-core",
+  assert.deepEqual(calls[1].args, ["build", "--lib", "-p", "mixrelay-macos-transport", "-p", "mixrelay-macos-hal",
     "--target", "aarch64-apple-darwin", "--message-format=json", "--locked"]);
   assert.equal(calls.every(call => call.options.shell === false), true);
 });
@@ -322,7 +322,7 @@ test("macOS non-fixture package checks and Linux workspace checks have no fixtur
     ["linux", ["cargo", "test", "--workspace"]],
     ["darwin", ["cargo", "fmt", "--all", "--check"]],
     ["darwin", ["cargo", "test", "-p", "processor-host", "--lib"]],
-    ["darwin", ["cargo", "build", "-p", "mixrelay-service"]],
+    ["darwin", ["cargo", "build", "-p", "mixrelay-engine-service"]],
   ]) {
     let calls = 0;
     assert.equal(runFocusedCargoCheck(args, {

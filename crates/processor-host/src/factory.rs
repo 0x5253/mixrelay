@@ -4,7 +4,7 @@ use crate::{
     ProcessorCatalog, ProcessorControlRegistry, catalog::selected_ports,
     preparation::WorkerPreparation, reuse,
 };
-use mixrelay_audio_engine::{
+use mixrelay_render::{
     HostedAudioProcessor, HostedProcessorFactory, HostedProcessorPrepareRequest,
 };
 use std::sync::Arc;

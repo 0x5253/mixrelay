@@ -120,8 +120,8 @@ impl ExternalIo for Capture<'_> {
     fn begin_cycle(
         &mut self,
         cycle: &ProcessCycle,
-        controls: mixrelay_audio_engine::ExternalControlState<'_>,
-    ) -> mixrelay_audio_engine::CycleAdmission {
+        controls: mixrelay_render::ExternalControlState<'_>,
+    ) -> mixrelay_render::CycleAdmission {
         self.io.begin_cycle(cycle, controls)
     }
     fn read_source(

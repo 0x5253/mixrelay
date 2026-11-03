@@ -434,7 +434,7 @@ mod tests {
             type_id: "au:aufx:bpas:appl".into(),
             parameters: serde_json::json!({}),
         };
-        let request = mixrelay_audio_engine::HostedProcessorPrepareRequest {
+        let request = mixrelay_render::HostedProcessorPrepareRequest {
             node_id: &id,
             config: &config,
             format: mixrelay_audio_graph::RenderFormat {

@@ -36,8 +36,8 @@ if (( $# == 1 )); then
     exit 1
   fi
 fi
-cargo build --manifest-path "$repo_root/Cargo.toml" -p mixrelay-process-tap --release
-capture_archive="$repo_root/target/release/libmixrelay_process_tap.a"
+cargo build --manifest-path "$repo_root/Cargo.toml" -p mixrelay-macos-process-tap --release
+capture_archive="$repo_root/target/release/libmixrelay_macos_process_tap.a"
 smoke_build_dir="$repo_root/target/native-tests/application-capture"
 mkdir -p "$smoke_build_dir"
 tone_process_id=""

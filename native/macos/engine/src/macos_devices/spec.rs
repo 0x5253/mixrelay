@@ -1,6 +1,6 @@
 //! Graph device selection and deterministic aggregate membership, without IO.
 use mixrelay_audio_graph::{DeviceSelector, GraphDocument, NodeConfig};
-use mixrelay_engine::resource_requirements::DeviceRequirements;
+use mixrelay_engine_core::resource_requirements::DeviceRequirements;
 use mixrelay_macos_transport::endpoint_identity::{endpoint_uid, parse_endpoint_id};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -140,7 +140,7 @@ mod tests {
         AudioDeviceInputConfig, AudioDeviceOutputConfig, CompileContext, CompileLimits,
         GraphCompiler, NodeConfig, NodeSpec, RenderFormat,
     };
-    use mixrelay_engine::session::AdapterRuntimeStatus;
+    use mixrelay_engine_core::session::AdapterRuntimeStatus;
     use std::sync::Arc;
 
     fn assert_no_native_owners(selected: BTreeMap<String, Spec>, format: RenderFormat) {

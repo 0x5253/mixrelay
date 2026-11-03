@@ -1,5 +1,4 @@
 use super::*;
-use mixrelay_audio_engine::RenderPlan;
 use mixrelay_audio_graph::{
     CompileContext, CompileLimits, GraphCompiler, GraphDocument, NodeConfig, RenderFormat,
 };
@@ -7,6 +6,7 @@ use mixrelay_macos_transport::{
     application_source_transport::SourceTransport, source_control::SourceRequest,
     source_registry::SourceRegistry,
 };
+use mixrelay_render::RenderPlan;
 use std::time::Duration;
 
 struct Clock;

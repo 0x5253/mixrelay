@@ -31,7 +31,7 @@ fn main() {
     build(
         &root,
         "clock",
-        "native/macos/common/tests/MRCallbackClockTests.c",
+        "native/macos/transport/tests/MRCallbackClockTests.c",
         &libraries,
     );
     build(

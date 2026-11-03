@@ -5,7 +5,7 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-mixrelay-driver-control = { path = "../driver-control" }
+mixrelay-driver-core = { path = "../driver-core" }
 mixrelay-local-socket = { path = "../local-socket" }
 axum.workspace = true
 parking_lot.workspace = true
@@ -16,7 +16,7 @@ tracing = "0.1.41"
 tokio = { workspace = true, features = ["sync", "time"] }
 
 [dev-dependencies]
-mixrelay-driver-control = { path = "../driver-control", features = ["test-util"] }
+mixrelay-driver-core = { path = "../driver-core", features = ["test-util"] }
 mixrelay-audio-io.workspace = true
 mixrelay-test-support = { path = "../test-support" }
 tower = { workspace = true, features = ["util"] }

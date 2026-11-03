@@ -41,9 +41,9 @@ fn build_macos_engine() {
     println!("cargo:rerun-if-changed={engine_include}/MRApplicationClock.h");
     println!("cargo:rerun-if-changed={engine_include}/MRDeviceIO.h");
     println!("cargo:rerun-if-changed={engine_include}/MRAggregateGroup.h");
-    println!("cargo:rerun-if-changed=../common/MRCallbackClock.h");
-    println!("cargo:rerun-if-changed=../common/MRAnonymousMemory.h");
-    println!("cargo:rerun-if-changed=../common/MRDeviceBuffers.h");
+    println!("cargo:rerun-if-changed=../transport/MRCallbackClock.h");
+    println!("cargo:rerun-if-changed=../transport/MRAnonymousMemory.h");
+    println!("cargo:rerun-if-changed=../transport/MRDeviceBuffers.h");
     println!("cargo:rerun-if-changed=../../../crates/audio-io/src/formats.rs");
     println!("cargo:rerun-if-changed=../../../crates/audio-io/native_format_header.rs");
     println!("cargo:rerun-if-changed=../../pcm-ring/include/MRPcmRing.h");

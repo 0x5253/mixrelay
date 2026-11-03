@@ -19,7 +19,7 @@ const engine = only(
   /<key>CFBundleIdentifier<\/key>\s*<string>([^<]+)<\/string>/g,
   'engine CFBundleIdentifier',
 )[0];
-const desktop = JSON.parse(read('apps/desktop/src-tauri/tauri.conf.json')).identifier;
+const desktop = JSON.parse(read('apps/desktop-shell/src-tauri/tauri.conf.json')).identifier;
 
 test('the engine bundle identity is reverse-DNS and distinct from the app', () => {
   assert.equal(engine, 'io.mixrelay.service');

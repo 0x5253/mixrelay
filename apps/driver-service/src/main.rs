@@ -5,7 +5,7 @@ use std::{ffi::OsString, path::PathBuf};
 
 use anyhow::{Context, Result, bail};
 use mixrelay_driver_adapters::{FileSettingsStore, SystemLatencyGenerations};
-use mixrelay_driver_control::{DriverManager, DriverProcessId, DriverRuntime};
+use mixrelay_driver_core::{DriverManager, DriverProcessId, DriverRuntime};
 use mixrelay_local_socket::{
     AuthorizedListener, DRIVER_SOCKET, bind, current_uid, socket_directory,
 };
@@ -157,7 +157,7 @@ fn transport_compatibility(value: Result<String, std::env::VarError>) -> Result<
             "com.tencent.tencentmeeting,net.whatsapp.WhatsApp,com.motu.DigitalPerformer,com.vmware.fusion,com.goodnotesapp.x".into(),
         Err(error) => return Err(error).context("read transport compatibility override"),
     };
-    mixrelay_driver_control::parse_transport_compatibility(&value)
+    mixrelay_driver_core::parse_transport_compatibility(&value)
         .context("parse MIXRELAY_TRANSPORT_COMPATIBILITY")
 }
 

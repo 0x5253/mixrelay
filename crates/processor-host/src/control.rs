@@ -7,11 +7,11 @@ use crate::{
     EDITOR_STATE_FAILED, EDITOR_STATE_OPEN, EDITOR_STATE_OPENING, PROCESSOR_STATE_TIMEOUT,
     WORKER_FAILED, WORKER_READY, latency, reuse, shared_transport::ControlMailbox, timing,
 };
-use mixrelay_audio_engine::HostedLatencySource;
 use mixrelay_audio_graph::NodeId;
 use mixrelay_control_protocol::{
     PROTOCOL_VERSION, ProcessorEditorFailure, ProcessorEditorState, ProcessorEditorStatus,
 };
+use mixrelay_render::HostedLatencySource;
 use std::{
     collections::BTreeMap,
     path::PathBuf,
@@ -301,7 +301,7 @@ impl Drop for ProcessorControlRegistration {
 }
 
 pub(super) struct HostedProcessorControl {
-    pub(super) adoption_identity: mixrelay_audio_engine::HostedProcessorIdentity,
+    pub(super) adoption_identity: mixrelay_render::HostedProcessorIdentity,
     native_format: Option<crate::RackFormat>,
     pub(super) clock: Arc<dyn mixrelay_time::MonotonicClock>,
     // Drop capture's mailbox reference before the primary mapping and its file cleanup.
@@ -323,7 +323,7 @@ impl HostedProcessorControl {
         capture: Box<dyn crate::state_capture::StateCapture>,
     ) -> Self {
         Self {
-            adoption_identity: mixrelay_audio_engine::HostedProcessorIdentity::new(),
+            adoption_identity: mixrelay_render::HostedProcessorIdentity::new(),
             native_format: None,
             clock,
             capture,

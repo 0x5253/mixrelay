@@ -10,13 +10,13 @@ use crate::{
     worker_paths::WorkerPaths,
     worker_process::{WorkerMonitor, cleanup_worker_paths},
 };
-use mixrelay_audio_engine::{
-    HostedAudioProcessor, HostedProcessorFactory, HostedProcessorPrepareRequest,
-};
 use mixrelay_audio_graph::{
     CompileContext, NodeConfig, NodeId, NodeResolver, NodeSpec, ProviderNodeConfig, RenderFormat,
 };
 use mixrelay_control_protocol::{ExternalProcessorDescriptor, ProcessorEditorState};
+use mixrelay_render::{
+    HostedAudioProcessor, HostedProcessorFactory, HostedProcessorPrepareRequest,
+};
 use std::{
     path::PathBuf,
     process::Command,

@@ -1,6 +1,6 @@
 //! Calendar-time candidates for service-issued latency generations.
 
-use mixrelay_driver_control::LatencyGenerations;
+use mixrelay_driver_core::LatencyGenerations;
 
 /// Uses epoch nanoseconds as generation candidates across service restarts.
 #[derive(Debug, Clone, Copy)]

@@ -6,10 +6,10 @@ import { dirname, join } from 'node:path';
 
 test('all release entry points share the Cargo product version', () => {
   assert.equal(checkVersion(), productVersion());
-  const desktop = JSON.parse(readFileSync(new URL('../apps/desktop/src-tauri/tauri.conf.json', import.meta.url)));
+  const desktop = JSON.parse(readFileSync(new URL('../apps/desktop-shell/src-tauri/tauri.conf.json', import.meta.url)));
   assert.equal(desktop.identifier, 'io.mixrelay.desktop');
   assert.equal(desktop.productName, 'MixRelay');
-  const linux = JSON.parse(readFileSync(new URL('../apps/desktop/src-tauri/tauri.linux.conf.json', import.meta.url)));
+  const linux = JSON.parse(readFileSync(new URL('../apps/desktop-shell/src-tauri/tauri.linux.conf.json', import.meta.url)));
   assert.deepEqual(linux.bundle.externalBin, ['binaries/mixrelay-driver-service', 'binaries/mixrelay-service']);
   for (const format of ['deb', 'rpm']) {
     const config = linux.bundle.linux[format];
@@ -23,7 +23,7 @@ function versionFixture(t) {
   mkdirSync(parent, { recursive: true });
   const directory = mkdtempSync(new URL('product-version-', parent));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
-  const paths = ['Cargo.toml', 'Cargo.lock', 'package.json', 'apps/control-ui/package.json', 'apps/desktop/package.json', 'apps/desktop/src-tauri/tauri.conf.json', 'native/macos/hal-driver/driver/Info.plist',
+  const paths = ['Cargo.toml', 'Cargo.lock', 'package.json', 'apps/control-ui/package.json', 'apps/desktop-shell/package.json', 'apps/desktop-shell/src-tauri/tauri.conf.json', 'native/macos/hal-driver/driver/Info.plist',
     ...workspaceMembers().map(member => `${member}/Cargo.toml`)];
   for (const path of paths) {
     mkdirSync(dirname(join(directory, path)), { recursive: true });
@@ -67,8 +67,8 @@ test('a stale locked workspace crate fails the version check', t => {
   const { directory } = versionFixture(t);
   setVersion('0.2.0', directory);
   const lockPath = join(directory, 'Cargo.lock');
-  writeFileSync(lockPath, readFileSync(lockPath, 'utf8').replace(/^(name = "mixrelay-desktop"\nversion = ")0\.2\.0/m, '$10.1.0'));
-  assert.throws(() => checkVersion(directory), /Cargo\.lock mixrelay-desktop differs from MixRelay 0\.2\.0/);
+  writeFileSync(lockPath, readFileSync(lockPath, 'utf8').replace(/^(name = "mixrelay-desktop-shell"\nversion = ")0\.2\.0/m, '$10.1.0'));
+  assert.throws(() => checkVersion(directory), /Cargo\.lock mixrelay-desktop-shell differs from MixRelay 0\.2\.0/);
 });
 
 test('invalid HAL metadata rejects a version change before writing any manifest', t => {
@@ -82,8 +82,8 @@ test('invalid HAL metadata rejects a version change before writing any manifest'
 test('a lockfile without a workspace crate rejects a version change before writing any manifest', t => {
   const { directory, paths } = versionFixture(t);
   const lockPath = join(directory, 'Cargo.lock');
-  writeFileSync(lockPath, readFileSync(lockPath, 'utf8').replace(/^name = "mixrelay-desktop"$/m, 'name = "renamed-desktop"'));
+  writeFileSync(lockPath, readFileSync(lockPath, 'utf8').replace(/^name = "mixrelay-desktop-shell"$/m, 'name = "renamed-desktop"'));
   const before = paths.map(path => readFileSync(join(directory, path)));
-  assert.throws(() => setVersion('0.2.0', directory), /Cargo\.lock is missing workspace crates: mixrelay-desktop$/);
+  assert.throws(() => setVersion('0.2.0', directory), /Cargo\.lock is missing workspace crates: mixrelay-desktop-shell$/);
   paths.forEach((path, index) => assert.deepEqual(readFileSync(join(directory, path)), before[index]));
 });

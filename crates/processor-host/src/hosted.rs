@@ -13,8 +13,8 @@ use crate::{
         spawn_processor_worker,
     },
 };
-use mixrelay_audio_engine::{HostedAudioProcessor, HostedLatencySource};
 use mixrelay_audio_graph::{ProviderNodeConfig, RenderFormat};
+use mixrelay_render::{HostedAudioProcessor, HostedLatencySource};
 use std::{
     path::PathBuf,
     sync::{Arc, atomic::Ordering},
@@ -133,7 +133,7 @@ impl HostedAudioProcessor for HostedExternalProcessor {
             control.active_owner.store(active, Ordering::Release);
         }
     }
-    fn reuse_identity(&self) -> Option<&mixrelay_audio_engine::HostedProcessorIdentity> {
+    fn reuse_identity(&self) -> Option<&mixrelay_render::HostedProcessorIdentity> {
         self.control
             .as_ref()
             .map(|control| &control.adoption_identity)

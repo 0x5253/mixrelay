@@ -73,7 +73,7 @@ impl Worker for ThreadWorker {
             }
         })?;
         if let Err(error) = started.recv() {
-            let _ = mixrelay_engine_runtime::join_worker(worker);
+            let _ = mixrelay_engine_host::join_worker(worker);
             return Err(std::io::Error::other(error));
         }
         Ok(Self(worker))
@@ -85,7 +85,7 @@ impl Worker for ThreadWorker {
         self.0.thread().unpark();
     }
     fn finish(self) {
-        let _ = mixrelay_engine_runtime::join_worker(self.0);
+        let _ = mixrelay_engine_host::join_worker(self.0);
     }
 }
 struct Endpoint<W: Worker> {

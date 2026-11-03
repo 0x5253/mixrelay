@@ -28,7 +28,7 @@ export function prepareDriverPackage({ args = [], env = process.env, rootDir = R
   if (platform === 'linux' && !/^(?:aarch64|x86_64)-.*linux/.test(target)) {
     throw new Error('Driver Linux packages support only arm64 and x86_64');
   }
-  const config = JSON.parse(fsApi.readFileSync(join(rootDir, 'apps/desktop/src-tauri/tauri.conf.json'), 'utf8'));
+  const config = JSON.parse(fsApi.readFileSync(join(rootDir, 'apps/desktop-shell/src-tauri/tauri.conf.json'), 'utf8'));
   const cargo = fsApi.readFileSync(join(rootDir, 'Cargo.toml'), 'utf8');
   const version = cargo.match(/\[workspace\.package\]([\s\S]*?)(?=\n\[|$)/)?.[1].match(/^version\s*=\s*"([^"]+)"/m)?.[1];
   if (!version || version !== config.version) throw new Error('Driver service and desktop package versions must match');
@@ -75,7 +75,7 @@ export function prepareDriverPackage({ args = [], env = process.env, rootDir = R
       fsApi.rmSync(staging, { recursive: true, force: true });
     }
   } else {
-    const sidecar = join(rootDir, 'apps/desktop/src-tauri/binaries', `${binary}-${target}`);
+    const sidecar = join(rootDir, 'apps/desktop-shell/src-tauri/binaries', `${binary}-${target}`);
     fsApi.mkdirSync(dirname(sidecar), { recursive: true });
     fsApi.copyFileSync(output, sidecar);
     // RPM preserves sidecar permissions; a restrictive build umask must not

@@ -3,7 +3,7 @@
 //! would resample data that `PipeWire` already converted at the stream boundary.
 use mixrelay_audio_io::process::{ClockDomain, CycleError, ProcessCycle};
 use mixrelay_audio_io::session::ClockAuthority;
-use mixrelay_pipewire::DriverCycle;
+use mixrelay_linux_pipewire::DriverCycle;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 
 /// Last successful native callback and the callback that changed its timeline.

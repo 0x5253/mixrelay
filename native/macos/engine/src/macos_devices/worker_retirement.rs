@@ -34,7 +34,7 @@ impl RetiredWorkers {
             .collect();
         // Joining and panic-payload destruction must not hold the owner registry lock.
         for worker in workers {
-            if let Err(error) = mixrelay_engine_runtime::join_worker(worker) {
+            if let Err(error) = mixrelay_engine_host::join_worker(worker) {
                 self.record_failure(error);
             }
         }
@@ -50,7 +50,7 @@ impl RetiredWorkers {
                 .unwrap_or_else(std::sync::PoisonError::into_inner),
         );
         for worker in workers {
-            if let Err(error) = mixrelay_engine_runtime::join_worker(worker) {
+            if let Err(error) = mixrelay_engine_host::join_worker(worker) {
                 self.record_failure(error);
             }
         }

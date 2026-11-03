@@ -17,9 +17,9 @@ const DISALLOWED_CARGO_ACTIONS = new Set(["run", "install", "bundle", "bundling"
 const LAUNCHD_FIXTURES = ["node", "--test", "scripts/ci/macos-removal-launchd.test.mjs"];
 const CALLER_ENVIRONMENT_STEPS = new Set(["pnpm test:scripts", LAUNCHD_FIXTURES.join(" ")]);
 const FIXTURE_LIBRARIES = [
-  { name: "mixrelay_macos_transport", source: "native/macos/common/lib.rs",
-    manifest: "native/macos/common/Cargo.toml", variable: "MIXRELAY_NATIVE_TRANSPORT_STATICLIB" },
-  { name: "mixrelay_hal_core", source: "native/macos/hal-driver/rust/src/lib.rs",
+  { name: "mixrelay_macos_transport", source: "native/macos/transport/lib.rs",
+    manifest: "native/macos/transport/Cargo.toml", variable: "MIXRELAY_NATIVE_TRANSPORT_STATICLIB" },
+  { name: "mixrelay_macos_hal", source: "native/macos/hal-driver/rust/src/lib.rs",
     manifest: "native/macos/hal-driver/rust/Cargo.toml", variable: "MIXRELAY_NATIVE_HAL_STATICLIB" },
 ];
 
@@ -53,7 +53,7 @@ function nativeFixtureEnvironment(command, args, run, env) {
     stdio: ["ignore", "pipe", "inherit"], maxBuffer: 32 * 1024 * 1024 };
   const host = run(env.RUSTC ?? "rustc", ["--print", "host-tuple"], options);
   if (statusForChild(host) !== 0 || !host.stdout?.trim()) throw new Error("Cannot determine native fixture HOST target");
-  const result = run(command, ["build", "--lib", "-p", "mixrelay-macos-transport", "-p", "mixrelay-hal-core",
+  const result = run(command, ["build", "--lib", "-p", "mixrelay-macos-transport", "-p", "mixrelay-macos-hal",
     "--target", host.stdout.trim(), "--message-format=json", ...fixtureBuildOptions(args)], options);
   if (statusForChild(result) !== 0) throw new Error(`HOST Cargo fixture library preparation failed (${statusForChild(result)})`);
   const artifacts = new Map(FIXTURE_LIBRARIES.map(library => [library.variable, new Set()]));

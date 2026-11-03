@@ -53,7 +53,7 @@ jobs:
           MIXRELAY_CODESIGN_IDENTITY: '-'
         run: |
           zsh scripts/build-macos-universal-app.sh
-          cargo run --locked -p mixrelay-hal-bundle -- --output target/universal-apple-darwin/release/hal
+          cargo run --locked -p mixrelay-macos-hal-bundle -- --output target/universal-apple-darwin/release/hal
 
   passed:
     # The one required check for this workflow; skipped work (chore, ci, docs) passes.

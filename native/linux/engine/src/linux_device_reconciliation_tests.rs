@@ -22,7 +22,7 @@ fn watch() -> DeviceWatch {
         )],
     };
     let watch = DeviceWatch {
-        owners: mixrelay_pipewire::StreamOwners::default(),
+        owners: mixrelay_linux_pipewire::StreamOwners::default(),
         automatic_outputs: false,
         generation: 3,
         format: super::super::super::render_format(),
@@ -52,7 +52,7 @@ fn watch() -> DeviceWatch {
 fn retained_devices_need_no_registry_or_native_preparation() {
     let before = watch();
     let staged = DeviceStreams::open_format(
-        &mixrelay_pipewire::StreamOwners::default(),
+        &mixrelay_linux_pipewire::StreamOwners::default(),
         &before.spec,
         4,
         before.format,
@@ -91,7 +91,7 @@ fn abandoned_preparation_does_not_mutate_retained_execution_gates() {
     let before = watch();
     let cancelled = mixrelay_audio_graph::GraphDocument::new(4, vec![], vec![]);
     let staged = DeviceStreams::open_format(
-        &mixrelay_pipewire::StreamOwners::default(),
+        &mixrelay_linux_pipewire::StreamOwners::default(),
         &before.spec,
         4,
         before.format,
@@ -157,7 +157,7 @@ fn changed_identity_width_or_format_opens_only_required_devices() {
 fn removed_devices_leave_no_lease_and_readdition_requires_fresh_acquisition() {
     let before = watch();
     let removed = DeviceStreams::open_format(
-        &mixrelay_pipewire::StreamOwners::default(),
+        &mixrelay_linux_pipewire::StreamOwners::default(),
         &DeviceRequirements::default(),
         4,
         before.format,

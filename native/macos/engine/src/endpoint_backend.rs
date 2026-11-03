@@ -3,7 +3,7 @@ use mixrelay_audio_io::{
     HostAudioBackendError, VirtualEndpointBackend, VirtualEndpointCapabilities,
     VirtualEndpointDeviceSettings, VirtualEndpointId, VirtualEndpointSpec,
 };
-use mixrelay_driver_control::{DriverCommand, DriverError, DriverSnapshot};
+use mixrelay_driver_core::{DriverCommand, DriverError, DriverSnapshot};
 use mixrelay_macos_transport::endpoint_identity::parse_endpoint_id;
 use std::sync::Arc;
 
@@ -176,7 +176,7 @@ impl VirtualEndpointBackend for MacVirtualEndpointBackend {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mixrelay_driver_control::DriverState;
+    use mixrelay_driver_core::DriverState;
 
     struct NoDriver;
     impl EndpointDriver for NoDriver {

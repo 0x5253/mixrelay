@@ -32,8 +32,8 @@ macOS release builds require full Xcode and configured signing assets.
 ## Source
 
 - `apps/control-ui`: Core components, tokens, features and screens
-- `apps/desktop`: Tauri application and background lifecycle
-- `apps/service`: engine composition
+- `apps/desktop-shell`: Tauri application and background lifecycle
+- `apps/engine-service`: engine composition
 - `crates`: platform-neutral contracts, policies and audio processing
 - `native`: macOS and Linux adapters
 - `packaging`: installers and service definitions

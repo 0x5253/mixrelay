@@ -144,7 +144,7 @@ impl Endpoint {
 impl EndpointSet {
     pub(super) fn bind_inputs(
         &mut self,
-        inputs: &mixrelay_pipewire::GraphInputs,
+        inputs: &mixrelay_linux_pipewire::GraphInputs,
     ) -> Result<(), String> {
         for slot in self.nodes.values_mut() {
             if let Some(owner) = &mut slot.owner
@@ -314,7 +314,8 @@ impl EndpointSet {
             .filter_map(|slot| slot.owner.as_mut())
             .filter_map(|owner| owner.output.as_mut())
         {
-            if let mixrelay_pipewire::OutputRelease::Rejected(code) = stream.trigger_output() {
+            if let mixrelay_linux_pipewire::OutputRelease::Rejected(code) = stream.trigger_output()
+            {
                 failures.publish_native(
                     crate::processing_failure::Failure::OutputReleaseRejected,
                     code,
