@@ -1,6 +1,7 @@
 const publicHosts = new Set([
   'rawsector.com', 'appserver.rawsector.com', 'downloads.rawsector.com',
   'support.apple.com', 'law.go.kr', 'www.law.go.kr', 'www.easylaw.go.kr',
+  'buymeacoffee.com', 'www.conventionalcommits.org',
 ]);
 const publicEmails = new Set([
   'support@rawsector.com', 'giovanni@fragcolor.com',
