@@ -49,9 +49,16 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const Playground: Story = {};
-export const Opened: Story = { args: { opened: true } };
+export const ForcedOpen: Story = { args: { forceOpen: true } };
 export const NonInteractive: Story = {
-  args: { nonInteractive: true, children: <span>읽기 전용 설명 대상</span> },
+  args: {
+    nonInteractive: true,
+    children: (
+      <span role="img" aria-label="읽기 전용 설명 대상">
+        읽기 전용 설명 대상
+      </span>
+    ),
+  },
 };
 export const Right: Story = { args: { position: 'right' } };
 export const Readout: Story = {
@@ -60,7 +67,7 @@ export const Readout: Story = {
     label: 'CH 3',
     position: 'right',
     offset: 7,
-    opened: true,
+    forceOpen: true,
     nonInteractive: true,
     children: (
       <span role="img" aria-label="Main 3, CH 3">

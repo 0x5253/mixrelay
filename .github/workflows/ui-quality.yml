@@ -38,6 +38,17 @@ jobs:
     needs: [ui]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    permissions:
+      actions: read
     steps:
-      - run: |
-          [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == false ]]
+      # A matrix leg that never got a runner is not reported as cancelled through `needs`,
+      # so read every job of this run attempt and accept only success or skipped.
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          SELF: UI checks passed
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs" --paginate \
+            --jq '.jobs[] | select(.name != env.SELF) | "\(.name)\t\(.status)\t\(.conclusion)"' > jobs.tsv
+          cat jobs.tsv
+          ! awk -F'\t' '$2 != "completed" || ($3 != "success" && $3 != "skipped")' jobs.tsv | grep .

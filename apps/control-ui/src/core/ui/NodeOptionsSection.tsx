@@ -15,14 +15,12 @@ export function NodeOptionsSection({
   opened,
   onToggle,
   children,
-  description,
   disabled = false,
 }: {
   label: string;
   opened: boolean;
   onToggle: () => void;
   children: ReactNode;
-  description?: ReactNode;
   disabled?: boolean;
 }) {
   const mapping = useContext(MidiContext)?.active ?? false;
@@ -71,7 +69,6 @@ export function NodeOptionsSection({
           className={`${styles.optionsPanel} nodrag nopan nowheel`}
           inert={disabled || mapping}
         >
-          {description ? <small className={styles.settingsDescription}>{description}</small> : null}
           {children}
         </div>
       ) : null}

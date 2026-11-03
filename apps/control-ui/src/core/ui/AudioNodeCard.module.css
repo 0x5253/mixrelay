@@ -341,13 +341,6 @@
   gap: var(--control-gap);
 }
 
-.settingsDescription {
-  color: var(--text-muted);
-  font-size: var(--font-label);
-  line-height: 1.4;
-  overflow-wrap: anywhere;
-}
-
 .processorEditor {
   display: flex;
   align-items: center;

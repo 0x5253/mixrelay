@@ -10,6 +10,7 @@ test('support registry drives native multi-architecture CI and checked-in genera
   const matrices = ciMatrices(contract);
   assert.equal(matrices.linux.include.length, 7);
   assert.deepEqual(new Set(matrices.macos.include.map(t => t.arch)), new Set(['x64', 'arm64']));
+  assert.deepEqual(matrices.macosPullRequest.include.map(t => t.id).sort(), ['macos-15-x64', 'macos-27-arm64']);
   assert.equal(matrices.linux.include.find(t => t.id === 'debian-arm64').runner, 'ubuntu-24.04-arm');
   assert.ok(!matrices.linux.include.some(t => t.id === 'arch-arm64'));
   assert.ok(requiredScenarios(contract, { os: 'macos' }).some(s => s.id === 'AUDIO-11'));
@@ -38,6 +39,8 @@ test('duplicate environments, unknown artifacts and floating distro images fail 
     c => { c.macosArchitectures['14'] = ['arm64', 'x64']; },
     c => { c.qualificationTargets[0].version = '14'; },
     c => { c.codeChecks.macos[0].version = '14'; },
+    c => { for (const t of c.codeChecks.macos) if (t.arch === 'x64') delete t.pullRequest; },
+    c => { c.codeChecks.macos[0].pullRequest = 'yes'; },
     c => { c.qualificationTargets[0].execution = { kind: 'self-hosted' }; },
     c => { c.qualificationImages['debian-x64'].digest = 'changed'; },
     c => { c.qualificationTargets.find(t => t.id === 'debian-13-arm64').execution.runner = 'ubuntu-24.04'; },
