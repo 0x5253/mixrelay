@@ -73,6 +73,12 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24.19.0
+      - name: Select Xcode 26 for Icon Composer assets
+        run: |
+          xcode="$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -n 1)"
+          [[ -n "$xcode" ]] || { ls -d /Applications/Xcode*.app; echo "Xcode 26 is required" >&2; exit 1; }
+          echo "DEVELOPER_DIR=$xcode/Contents/Developer" >> "$GITHUB_ENV"
+          DEVELOPER_DIR="$xcode/Contents/Developer" xcodebuild -version
       - name: Install the universal build toolchain
         run: |
           npm install --global pnpm@11.9.0

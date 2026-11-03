@@ -108,3 +108,13 @@ test('pull requests build every product unsigned and never reach signing or nota
     assert.doesNotMatch(readFileSync(new URL(`../.github/workflows/${name}`, import.meta.url), 'utf8'), /secrets\.|environment: release/, name);
   }
 });
+
+test('macOS builds select Xcode 26 before compiling Icon Composer assets', () => {
+  for (const name of ['release', 'pr-build']) {
+    const source = workflow(name);
+    const select = source.indexOf('ls -d /Applications/Xcode_26*.app');
+    assert.ok(select > 0, name);
+    assert.ok(source.indexOf('DEVELOPER_DIR=$xcode/Contents/Developer" >> "$GITHUB_ENV"') > select, name);
+    assert.ok(select < source.indexOf('Install the universal build toolchain'), name);
+  }
+});
