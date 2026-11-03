@@ -164,7 +164,12 @@ test('each pull request workflow reports one required check that skipped work pa
     assert.match(passed, /\n    if: always\(\)\n/, name);
     const jobs = [...source.slice(source.indexOf('\njobs:\n')).matchAll(/^  ([a-z][a-z0-9_-]*):$/gm)].map(match => match[1]).filter(job => job !== 'passed');
     assert.deepEqual(passed.match(/needs: \[([^\]]+)\]/)[1].split(', ').sort(), jobs.sort(), name);
-    assert.match(passed, /contains\(needs\.\*\.result, 'failure'\) \|\| contains\(needs\.\*\.result, 'cancelled'\)/, name);
+    // Reads every job of the run: a matrix leg that never got a runner is invisible through `needs`.
+    assert.match(passed, /\n    permissions:\n      actions: read\n/, name);
+    assert.match(passed, /actions\/runs\/\$GITHUB_RUN_ID\/attempts\/\$GITHUB_RUN_ATTEMPT\/jobs" --paginate/, name);
+    assert.equal(passed.match(/SELF: (.+)\n/)[1], passed.match(/\n    name: (.+)\n/)[1], name);
+    assert.ok(passed.includes(`$3 != "success" && $3 != "skipped"`), name);
+    assert.doesNotMatch(passed, /needs\.\*\.result/, name);
   }
 });
 
@@ -174,4 +179,9 @@ test('workflows that report required checks run on every pull request', () => {
     const triggers = workflow(name).split('\npermissions:')[0];
     assert.doesNotMatch(triggers, /paths(-ignore)?:/, name);
   }
+});
+
+test('pull requests run the macOS subset; manual runs keep every supported macOS', () => {
+  const source = workflow('native-lab');
+  assert.match(source, /macos: \$\{\{ github\.event_name == 'pull_request' && steps\.matrix\.outputs\.macosPullRequest \|\| steps\.matrix\.outputs\.macos \}\}/);
 });
