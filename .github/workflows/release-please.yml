@@ -75,5 +75,8 @@ jobs:
     permissions:
       contents: write
     uses: ./.github/workflows/release.yml
+    # A called workflow sees its environment's secrets only when the caller inherits.
+    # This job holds no secrets itself, so only the release environment's values reach release.yml.
+    secrets: inherit
     with:
       release_tag: ${{ needs.release-please.outputs.tag_name }}

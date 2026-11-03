@@ -30,7 +30,10 @@ test('official release builds only a verified version tag and publishes all chec
   assert.match(source, /sha256sum \* > SHA256SUMS && sha256sum --check SHA256SUMS/);
   assert.match(source, /gh release create .*--verify-tag --draft/);
   assert.match(source, /gh release edit .*--draft=false --prerelease=false --latest/);
-  assert.match(source, /\.draft == true and \.prerelease == false/);
+  assert.match(source, /gh release view "\$RELEASE_TAG" --json isDraft,isPrerelease > release\.json/);
+  assert.match(source, /\.isDraft == true and \.isPrerelease == false/);
+  // The tags endpoint never returns drafts, so it cannot find release-please's draft.
+  assert.doesNotMatch(source, /releases\/tags\//);
   assert.doesNotMatch(source, /--skip-notarization|secrets: inherit|windows/i);
 });
 
@@ -134,6 +137,8 @@ test('only a merged release PR tags a version and starts the official build', ()
   assert.match(release, /if: needs\.release-please\.outputs\.release_created == 'true'/);
   assert.match(release, /uses: \.\/\.github\/workflows\/release\.yml/);
   assert.match(release, /release_tag: \$\{\{ needs\.release-please\.outputs\.tag_name \}\}/);
+  // Without inherit, the called release workflow receives empty environment secrets.
+  assert.match(release, /\n    secrets: inherit\n/);
   // Nothing else in the bookkeeping workflow builds, tests or signs.
   assert.doesNotMatch(source.slice(0, source.indexOf('\n  release:\n')), /pnpm (install|check|build|test)|cargo |build-macos|build-linux|uses: \.\//);
   // The broad bot token is readable only by jobs inside the main-only release-please environment.

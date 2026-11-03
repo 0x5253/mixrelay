@@ -169,11 +169,13 @@ jobs:
         run: |
           set -euo pipefail
           # An existing public release is immutable through this workflow.
-          if gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" > release.json 2> release-error.txt; then
-            jq -e '.draft == true and .prerelease == false' release.json >/dev/null
+          # release-please already created a draft for this tag. The REST tags endpoint
+          # never returns drafts, so look the release up through gh, which also finds them.
+          if gh release view "$RELEASE_TAG" --json isDraft,isPrerelease > release.json 2> release-error.txt; then
+            jq -e '.isDraft == true and .isPrerelease == false' release.json >/dev/null
             gh release upload "$RELEASE_TAG" release-assets/* --clobber
           else
-            grep -q 'HTTP 404' release-error.txt
+            grep -q 'release not found' release-error.txt
             gh release create "$RELEASE_TAG" release-assets/* --verify-tag --draft --title "MixRelay $RELEASE_VERSION" --generate-notes
           fi
           gh release edit "$RELEASE_TAG" --draft=false --prerelease=false --latest
