@@ -1315,7 +1315,7 @@ function AudioPortHandle({
       nonInteractive
       label={`CH ${channelNumber}`}
       offset={7}
-      opened={isConnectionTarget ? true : undefined}
+      forceOpen={isConnectionTarget}
       delay={isConnectionTarget ? 0 : 160}
       position={side === 'input' ? 'left' : 'right'}
     >

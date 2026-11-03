@@ -228,7 +228,7 @@ it('keeps product information separate from the confirmed global audio pause con
   fireEvent.click(screen.getByRole('button', { name: 'About MixRelay' }));
   expect(await screen.findByRole('dialog', { name: 'About MixRelay' })).toBeInTheDocument();
   const aboutDialog = screen.getByRole('dialog', { name: 'About MixRelay' });
-  expect(within(aboutDialog).getByText('Terms of use')).toBeVisible();
+  expect(within(aboutDialog).getByText('Source licence')).toBeVisible();
   expect(within(aboutDialog).queryByRole('button', { name: 'Stop audio' })).not.toBeInTheDocument();
   expect(stopEngine).not.toHaveBeenCalled();
   fireEvent.click(within(aboutDialog).getByRole('button', { name: 'Close' }));

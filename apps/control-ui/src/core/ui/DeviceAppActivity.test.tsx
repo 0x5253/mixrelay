@@ -160,6 +160,7 @@ it('supports a readonly standalone group without a focus owner', () => {
       <DeviceAppActivity {...activity} apps={activity.apps.slice(0, 1)} />
     </MixRelayProvider>,
   );
-  expect(screen.getByRole('img')).toHaveAccessibleName(activity.summary);
+  // Inner app icons are named graphics too; the summary graphic carries the full list.
+  expect(screen.getByRole('img', { name: activity.summary })).toBeInTheDocument();
   expect(screen.queryByText('+2')).toBeNull();
 });

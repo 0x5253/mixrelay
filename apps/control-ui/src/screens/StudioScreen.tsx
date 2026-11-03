@@ -246,9 +246,7 @@ function useGraphCreation(activeId: string | undefined, allowed: boolean) {
   useEffect(() => {
     if (activeId) setIsCreatingGraph(false);
   }, [activeId]);
-  const openNewGraph = useCallback(() => {
-    if (allowed) setIsCreatingGraph(true);
-  }, [allowed]);
+  const openNewGraph = useCallback(() => setIsCreatingGraph(true), []);
   useNewGraphShortcut(Boolean(activeId) && allowed, openNewGraph);
   return { isCreatingGraph, setIsCreatingGraph, openNewGraph };
 }

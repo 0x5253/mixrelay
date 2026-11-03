@@ -50,12 +50,7 @@ export function DeviceAppActivity({
       <span hidden id={descriptionId}>
         {summary}
       </span>
-      <Tooltip
-        label={summary}
-        nonInteractive
-        opened={shown ? true : undefined}
-        onOpenChange={setShown}
-      >
+      <Tooltip label={summary} nonInteractive forceOpen={shown} onClose={() => setShown(false)}>
         <span ref={ref} className={styles.root} role="img" aria-label={summary}>
           <svg aria-hidden="true" className={styles.direction} viewBox="0 0 16 16">
             {direction === 'playing' ? (
@@ -67,7 +62,7 @@ export function DeviceAppActivity({
           {apps.length ? (
             apps.slice(0, 3).map((app) => (
               <Tooltip key={app.id} label={app.label} nonInteractive>
-                <span className={styles.icon} aria-hidden="true">
+                <span className={styles.icon} role="img" aria-label={app.label}>
                   <AudioNodeIcon icon="APP" iconUrl={app.iconUrl} />
                 </span>
               </Tooltip>
@@ -77,7 +72,7 @@ export function DeviceAppActivity({
           )}
           {apps.length > 3 ? (
             <Tooltip label={overflowDescription} nonInteractive>
-              <span className={styles.overflow} aria-hidden="true">
+              <span className={styles.overflow} role="img" aria-label={overflowDescription}>
                 {overflowLabel}
               </span>
             </Tooltip>

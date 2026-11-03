@@ -212,7 +212,6 @@ function NodeControlStates() {
         opened={opened}
         onToggle={() => setOpened(!opened)}
         disabled={blocked}
-        description="face/포트 위치와 별도로 펼쳐지는 설정"
       >
         <TextField label="설정 이름" defaultValue="Studio" />
       </NodeOptionsSection>
