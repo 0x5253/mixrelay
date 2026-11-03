@@ -1,6 +1,5 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/v17.3.0/schemas/config.json",
-  "bootstrap-sha": "020bb1c3f159a31a1ccfd87b56749bf9ab864c2d",
   "packages": {
     ".": {
       "release-type": "simple",
@@ -10,8 +9,7 @@
       "draft": true,
       "force-tag-creation": true,
       "pull-request-header": "Merging this release PR is the release decision. It tags the merge commit, builds, signs and notarizes every installer, and publishes the release once all of them are verified.\n",
-      "pull-request-title-pattern": "chore: release ${version}",
-      "release-as": "0.1.0"
+      "pull-request-title-pattern": "chore: release ${version}"
     }
   }
 }
