@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, within } from 'storybook/test';
-import appIcon from '../../../../../desktop/src-tauri/icons/32x32.png';
+import appIcon from '../../../../../desktop-shell/src-tauri/icons/32x32.png';
 import { AudioNodeCard } from '../../ui/AudioNodeCard';
 
 const meta = {

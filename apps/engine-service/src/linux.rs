@@ -90,7 +90,7 @@ fn run_bound(
     let worker_status = runtime_status.clone();
     let (worker_result, mut completion) = mixrelay_engine_core::worker_completion::channel();
     let audio_thread = thread::Builder::new()
-        .name("mixrelay-linux-pipewire-audio".to_owned())
+        .name("mixrelay-pipewire-audio".to_owned())
         .spawn(move || {
             let result = run_audio_worker(processor, exchange, &endpoint_backend, &worker_status);
             let _ = worker_result.send(result);

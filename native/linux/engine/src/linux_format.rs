@@ -70,7 +70,7 @@ impl Monitor {
         let stop = Arc::new(AtomicBool::new(false));
         let stopping = stop.clone();
         let worker = thread::Builder::new()
-            .name("mixrelay-linux-pipewire-format-monitor".into())
+            .name("mixrelay-pipewire-format-monitor".into())
             .spawn(move || {
                 while !stopping.load(Ordering::Acquire) {
                     let Some(status) = status.upgrade() else {

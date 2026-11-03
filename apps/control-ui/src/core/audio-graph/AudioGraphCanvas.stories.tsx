@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, userEvent, within } from 'storybook/test';
 
-import mixrelayAppIcon from '../../../../desktop/src-tauri/icons/32x32.png';
+import mixrelayAppIcon from '../../../../desktop-shell/src-tauri/icons/32x32.png';
 import { AudioGraphCanvas, type AudioGraphNodeMenuItem } from './AudioGraphCanvas';
 import quickTimeAppIcon from './fixtures/quicktime-player.png';
 import type { AudioGraphModel, AudioGraphPort } from './model';
