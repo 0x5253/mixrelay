@@ -4,6 +4,8 @@ import { pathToFileURL } from 'node:url';
 
 // Conventional titles distinguish fixes, features and breaking changes.
 export const TYPES = ['build', 'chore', 'ci', 'docs', 'feat', 'fix', 'perf', 'refactor', 'revert', 'style', 'test'];
+// Pull requests of these types skip build, test and release workflows.
+export const NON_BUILD_TYPES = ['chore', 'ci', 'docs'];
 const pattern = new RegExp(`^(?:${TYPES.join('|')})(?:\\([a-z0-9][a-z0-9._/,-]*\\))?!?: \\S`);
 
 export function titleProblem(title) {

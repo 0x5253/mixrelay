@@ -60,3 +60,19 @@ test('Linux release reuses inspected native-CPU packages and the checked Arch pa
   assert.match(source, /sha256sum \*\.deb/);
   assert.match(source, /sha256sum \*\.pkg\.tar\.zst/);
 });
+
+test('docs, ci and chore pull requests run no build, test or release workflow', async () => {
+  const { TYPES, NON_BUILD_TYPES } = await import('./check-conventional-title.mjs');
+  // startsWith gates stay exact only while no other title type shares a prefix with a skipped type.
+  assert.deepEqual(TYPES.filter(type => NON_BUILD_TYPES.some(skip => type !== skip && type.startsWith(skip))), []);
+  const gate = NON_BUILD_TYPES.map(type => `!startsWith(github.event.pull_request.title, '${type}')`).join(' && ');
+  for (const name of readdirSync(new URL('../.github/workflows/', import.meta.url)).filter(name => name.endsWith('.yml'))) {
+    const source = readFileSync(new URL(`../.github/workflows/${name}`, import.meta.url), 'utf8');
+    assert.doesNotMatch(source, /pull_request_target|workflow_run:/, name);
+    if (!/^\s+pull_request:/m.test(source) || name === 'pr-title.yml') continue;
+    const jobs = source.slice(source.indexOf('\njobs:\n')).split(/\n  (?=[a-z][a-z0-9_-]*:\n)/).slice(1);
+    for (const job of jobs.filter(job => !/\n    needs:/.test(job))) {
+      assert.ok(job.includes(gate), `${name}: ${job.split(':')[0]} must skip ${NON_BUILD_TYPES.join(', ')} pull requests`);
+    }
+  }
+});

@@ -13,6 +13,8 @@ concurrency:
 
 jobs:
   ui:
+    # chore, ci and docs pull requests do not build.
+    if: ${{ !startsWith(github.event.pull_request.title, 'chore') && !startsWith(github.event.pull_request.title, 'ci') && !startsWith(github.event.pull_request.title, 'docs') }}
     name: UI system boundaries, types, tests and builds
     runs-on: ubuntu-24.04
     timeout-minutes: 20

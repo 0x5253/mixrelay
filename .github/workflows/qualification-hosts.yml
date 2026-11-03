@@ -18,6 +18,8 @@ concurrency:
 
 jobs:
   matrix:
+    # chore, ci and docs pull requests do not build.
+    if: ${{ !startsWith(github.event.pull_request.title, 'chore') && !startsWith(github.event.pull_request.title, 'ci') && !startsWith(github.event.pull_request.title, 'docs') }}
     runs-on: ubuntu-24.04
     outputs:
       linux: ${{ steps.matrix.outputs.linux }}
