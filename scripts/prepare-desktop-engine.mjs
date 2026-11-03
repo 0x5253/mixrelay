@@ -125,7 +125,9 @@ export function buildPlan({ profile, target, platform, rootDir = REPO_ROOT, env 
     "--manifest-path",
     join(rootDir, "Cargo.toml"),
     "--package",
-    "mixrelay-service",
+    "mixrelay-engine-service",
+    "--bin",
+    ENGINE_BINARY_NAME,
   ];
   if (profile === "release") commandArgs.push("--release");
   commandArgs.push("--target", target);

@@ -95,6 +95,9 @@ test("dev builds the target-specific Cargo output and copies sidecar plus target
   assert.equal(calls.length, 1);
   assert.equal(calls[0].command, "cargo");
   assert.ok(calls[0].args.includes("--locked"));
+  // The crate is mixrelay-engine-service; the installed executable keeps its released name.
+  const packageAt = calls[0].args.indexOf("--package");
+  assert.deepEqual(calls[0].args.slice(packageAt, packageAt + 4), ["--package", "mixrelay-engine-service", "--bin", "mixrelay-service"]);
   assert.deepEqual(calls[0].args.slice(-2), ["--target", target]);
   assert.equal(fsApi.copies.length, 2);
   assert.equal(fsApi.copies[0].destination, join(root, "apps/desktop-shell/src-tauri/binaries", `mixrelay-service-${target}`));
