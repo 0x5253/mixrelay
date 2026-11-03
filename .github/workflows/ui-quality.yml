@@ -30,3 +30,14 @@ jobs:
       - run: pnpm check:ui-quality
       - run: pnpm notices:check
       - run: pnpm --filter @mixrelay/control-ui check
+
+  passed:
+    # The one required check for this workflow; skipped work (chore, ci, docs) passes.
+    name: UI checks passed
+    if: always()
+    needs: [ui]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - run: |
+          [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == false ]]

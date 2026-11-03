@@ -25,7 +25,8 @@ jobs:
   macos:
     # chore, ci and docs pull requests do not build.
     if: ${{ !startsWith(github.event.pull_request.title, 'chore') && !startsWith(github.event.pull_request.title, 'ci') && !startsWith(github.event.pull_request.title, 'docs') }}
-    runs-on: macos-15
+    # Icon Composer assets compile only on a macOS 26 host with Xcode 26.
+    runs-on: macos-26
     timeout-minutes: 150
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -53,3 +54,14 @@ jobs:
         run: |
           zsh scripts/build-macos-universal-app.sh
           cargo run --locked -p mixrelay-hal-bundle -- --output target/universal-apple-darwin/release/hal
+
+  passed:
+    # The one required check for this workflow; skipped work (chore, ci, docs) passes.
+    name: Unsigned build passed
+    if: always()
+    needs: [linux, macos]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - run: |
+          [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == false ]]

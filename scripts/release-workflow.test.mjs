@@ -8,14 +8,17 @@ test('workflow references match the free product and the public repository', () 
   for (const name of readdirSync(new URL('../.github/workflows/', import.meta.url)).filter(name => name.endsWith('.yml'))) {
     const source = readFileSync(new URL(`../.github/workflows/${name}`, import.meta.url), 'utf8');
     assert.doesNotMatch(source, /mixrelay\/mixrelay|MIXRELAY_POLAR|polar-configuration|installer-configuration|linux-dbus-link/);
-    assert.doesNotMatch(source, /push:\s*\n\s*branches:\s*\[main\]/);
+    // Merges to main run only the release-please bookkeeping, never checks or builds.
+    if (name !== 'release-please.yml') assert.doesNotMatch(source, /^\s+push:/m, name);
   }
 });
 
 test('official release builds only a verified version tag and publishes all checked artifacts', () => {
   const source = workflow('release');
-  assert.match(source, /tags: \['v\*'\]/);
+  assert.match(source, /^on:\n  workflow_call:\n    inputs:\n      release_tag:/m);
   assert.match(source, /workflow_dispatch:/);
+  assert.doesNotMatch(source, /^\s+push:/m);
+  assert.match(source, /RELEASE_TAG: \$\{\{ inputs\.release_tag \}\}/);
   assert.match(source, /github\.repository == '0x5253\/mixrelay'/);
   assert.match(source, /product-version\.mjs check/);
   assert.match(source, /git merge-base --is-ancestor "\$REVISION" origin\/main/);
@@ -105,7 +108,10 @@ test('pull requests build every product unsigned and never reach signing or nota
   assert.doesNotMatch(code, /secrets\.|vars\.|environment:|prepare-ci-macos-signing|release-macos|notar|productbuild|contents: write/i);
   // Only release.yml may reach the signing environment.
   for (const name of readdirSync(new URL('../.github/workflows/', import.meta.url)).filter(name => name.endsWith('.yml') && name !== 'release.yml')) {
-    assert.doesNotMatch(readFileSync(new URL(`../.github/workflows/${name}`, import.meta.url), 'utf8'), /secrets\.|environment: release/, name);
+    const other = readFileSync(new URL(`../.github/workflows/${name}`, import.meta.url), 'utf8');
+    assert.doesNotMatch(other, /environment: release/, name);
+    const secrets = [...other.matchAll(/secrets\.([A-Z0-9_]+)/g)].map(match => match[1]);
+    assert.deepEqual([...new Set(secrets)], name === 'release-please.yml' ? ['RELEASE_PLEASE_TOKEN'] : [], name);
   }
 });
 
@@ -116,5 +122,33 @@ test('macOS builds select Xcode 26 before compiling Icon Composer assets', () =>
     assert.ok(select > 0, name);
     assert.ok(source.indexOf('DEVELOPER_DIR=$xcode/Contents/Developer" >> "$GITHUB_ENV"') > select, name);
     assert.ok(select < source.indexOf('Install the universal build toolchain'), name);
+    assert.match(source, /runs-on: macos-26\n/, name);
+    assert.doesNotMatch(source, /runs-on: macos-1[0-9]/, name);
+  }
+});
+
+test('only a merged release PR tags a version and starts the official build', () => {
+  const source = workflow('release-please');
+  assert.match(source, /^on:\n  push:\n    branches: \[main\]\n/m);
+  const release = source.slice(source.indexOf('\n  release:\n'));
+  assert.match(release, /if: needs\.release-please\.outputs\.release_created == 'true'/);
+  assert.match(release, /uses: \.\/\.github\/workflows\/release\.yml/);
+  assert.match(release, /release_tag: \$\{\{ needs\.release-please\.outputs\.tag_name \}\}/);
+  // Nothing else in the bookkeeping workflow builds, tests or signs.
+  assert.doesNotMatch(source.slice(0, source.indexOf('\n  release:\n')), /pnpm (install|check|build|test)|cargo |build-macos|build-linux|uses: \.\//);
+  const config = JSON.parse(readFileSync(new URL('../release-please-config.json', import.meta.url), 'utf8')).packages['.'];
+  assert.equal(config['pull-request-title-pattern'], 'chore: release ${version}');
+  assert.equal(config.draft, true);
+});
+
+test('each pull request workflow reports one required check that skipped work passes', () => {
+  for (const name of ['ui-quality', 'native-lab', 'qualification-hosts', 'pr-build']) {
+    const source = workflow(name);
+    const passed = source.slice(source.indexOf('\n  passed:\n'));
+    assert.ok(passed.length > 1, name);
+    assert.match(passed, /\n    if: always\(\)\n/, name);
+    const jobs = [...source.slice(source.indexOf('\njobs:\n')).matchAll(/^  ([a-z][a-z0-9_-]*):$/gm)].map(match => match[1]).filter(job => job !== 'passed');
+    assert.deepEqual(passed.match(/needs: \[([^\]]+)\]/)[1].split(', ').sort(), jobs.sort(), name);
+    assert.match(passed, /contains\(needs\.\*\.result, 'failure'\) \|\| contains\(needs\.\*\.result, 'cancelled'\)/, name);
   }
 });
