@@ -15,6 +15,8 @@ concurrency:
 jobs:
   release-please:
     if: github.repository == '0x5253/mixrelay'
+    # RELEASE_PLEASE_TOKEN exists only in this environment, which opens on main alone.
+    environment: release-please
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -26,15 +28,16 @@ jobs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
-      # Without RELEASE_PLEASE_TOKEN, GitHub runs no checks on the release PR itself.
+      # A non-default token lets the release PR run its required checks like any PR.
       - id: release
         uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4.4.1
         with:
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
 
   product-version:
     needs: release-please
     if: needs.release-please.outputs.pr != ''
+    environment: release-please
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -47,7 +50,7 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           ref: ${{ env.RELEASE_BRANCH }}
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24.19.0
