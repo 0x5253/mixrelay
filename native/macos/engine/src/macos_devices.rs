@@ -42,7 +42,7 @@ use format::{PreparedDeviceFormat, PublishedFormat};
 use handoff::{Publication, ResourceConsumer, ResourceHandoff};
 use mixrelay_audio_graph::{GraphDocument, RenderFormat};
 use mixrelay_audio_io::{HostAudioBackendError, process::TransferOutcome};
-use mixrelay_engine::{
+use mixrelay_engine_core::{
     GraphResourceBackend, PreparedGraphFormat, ProcessingControlBackend, RuntimeStatusBackend,
     SessionFormatBackend, session::AdapterRuntimeStatus,
 };
@@ -549,7 +549,7 @@ impl GraphResourceBackend for MacDevices {
     fn prepare_format_change(
         &self,
         document: &GraphDocument,
-        playback: mixrelay_engine::PlaybackBindings<'_>,
+        playback: mixrelay_engine_core::PlaybackBindings<'_>,
         current: RenderFormat,
         requested: RenderFormat,
     ) -> Result<Box<dyn PreparedGraphFormat>, HostAudioBackendError> {
@@ -584,7 +584,7 @@ impl GraphResourceBackend for MacDevices {
     fn reconcile(
         &self,
         document: &GraphDocument,
-        playback: mixrelay_engine::PlaybackBindings<'_>,
+        playback: mixrelay_engine_core::PlaybackBindings<'_>,
     ) -> Result<(), HostAudioBackendError> {
         application::validate_playback(&playback)?;
         self.require_preparation()?;
@@ -1183,7 +1183,7 @@ mod tests {
         let cancelled = resources
             .prepare_format_change(
                 &graph,
-                mixrelay_engine::PlaybackBindings::Preserve,
+                mixrelay_engine_core::PlaybackBindings::Preserve,
                 old,
                 new,
             )
@@ -1193,7 +1193,7 @@ mod tests {
             resources
                 .prepare_format_change(
                     &graph,
-                    mixrelay_engine::PlaybackBindings::Preserve,
+                    mixrelay_engine_core::PlaybackBindings::Preserve,
                     old,
                     new
                 )
@@ -1218,7 +1218,7 @@ mod tests {
         resources
             .prepare_format_change(
                 &graph,
-                mixrelay_engine::PlaybackBindings::Preserve,
+                mixrelay_engine_core::PlaybackBindings::Preserve,
                 old,
                 new,
             )
@@ -1243,7 +1243,7 @@ mod tests {
         resources
             .prepare_format_change(
                 &graph,
-                mixrelay_engine::PlaybackBindings::Preserve,
+                mixrelay_engine_core::PlaybackBindings::Preserve,
                 old,
                 new,
             )
@@ -1270,7 +1270,7 @@ mod tests {
             resources
                 .prepare_format_change(
                     &graph,
-                    mixrelay_engine::PlaybackBindings::Preserve,
+                    mixrelay_engine_core::PlaybackBindings::Preserve,
                     new,
                     old
                 )
@@ -1470,7 +1470,7 @@ pub(crate) mod test_support {
     /// Shares one simulated HAL with the graph resource owner.
     #[must_use]
     pub fn devices(
-        status: std::sync::Arc<mixrelay_engine::session::AdapterRuntimeStatus>,
+        status: std::sync::Arc<mixrelay_engine_core::session::AdapterRuntimeStatus>,
         rate: u32,
         frames: u32,
         host: std::sync::Arc<SimulatedHost>,

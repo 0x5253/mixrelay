@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import appIcon from '../../../../desktop/src-tauri/icons/32x32.png';
+import appIcon from '../../../../desktop-shell/src-tauri/icons/32x32.png';
 import { AudioNodeCard } from './AudioNodeCard';
 import { InlineNotice } from './InlineNotice';
 import { NodeOptionsSection } from './NodeOptionsSection';

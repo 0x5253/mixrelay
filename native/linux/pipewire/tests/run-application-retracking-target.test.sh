@@ -98,9 +98,9 @@ grep -Fq "cp \"\$cargo_target_dir/\$artifact_profile/examples/application-source
     fail 'application fixture lookup ignores the resolved target directory'
 grep -Fq "cp \"\$cargo_target_dir/\$artifact_profile/examples/application-mute-sink\"" "$fixture/run-application-retracking.sh" ||
     fail 'mute observer lookup ignores the resolved target directory'
-grep -Fq "LD_PRELOAD=\$cargo_target_dir/release/libmixrelay_pipewire_observer.so" "$fixture/run-application-retracking.sh" ||
+grep -Fq "LD_PRELOAD=\$cargo_target_dir/release/libmixrelay_linux_pipewire_observer.so" "$fixture/run-application-retracking.sh" ||
     fail 'observer preload lookup ignores the resolved target directory'
-grep -Fq "\"\$cargo_target_dir/release/libmixrelay_pipewire.a\"" "$fixture/run-application-retracking.sh" ||
+grep -Fq "\"\$cargo_target_dir/release/libmixrelay_linux_pipewire.a\"" "$fixture/run-application-retracking.sh" ||
     fail 'lifecycle library lookup ignores the resolved target directory'
 grep -Fq "mktemp -d \"\$workspace/target/native-tests/app-lab-XXXXXX\"" "$fixture/run-application-retracking.sh" ||
     fail 'runtime evidence location is no longer workspace-owned'
@@ -126,8 +126,8 @@ check_fixture_profile() (
     eval "$(sed -n '/^test_profile_args=()/,/^observe_buffers=/p' "$fixture/run-application-retracking.sh" | sed '$d')"
     [[ "$artifact_profile" == "$expected_profile" ]] || fail 'wrong artifact profile'
     cargo() {
-        [[ "$*" == "build --locked ${expected_release}-p mixrelay-pipewire --example application-source" ||
-           "$*" == "build --locked ${expected_release}-p mixrelay-pipewire --example application-mute-sink" ]] ||
+        [[ "$*" == "build --locked ${expected_release}-p mixrelay-linux-pipewire --example application-source" ||
+           "$*" == "build --locked ${expected_release}-p mixrelay-linux-pipewire --example application-mute-sink" ]] ||
             fail 'fixture Cargo arguments do not match selected test profile'
         printf 'cargo:%s\n' "$*"
     }

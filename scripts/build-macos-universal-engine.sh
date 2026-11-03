@@ -85,7 +85,7 @@ if (( ! prebuilt )); then
     cargo build \
       --locked \
       --release \
-      -p mixrelay-service \
+      -p mixrelay-engine-service \
       --target "$target" \
       --target-dir "$target_dir"
   done

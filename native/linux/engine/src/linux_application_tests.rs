@@ -42,7 +42,7 @@ fn request(selector: &ApplicationSelector) -> ApplicationCaptureRequest {
 }
 fn watch() -> WatchEntry {
     WatchEntry {
-        owners: mixrelay_pipewire::StreamOwners::default(),
+        owners: mixrelay_linux_pipewire::StreamOwners::default(),
         lease: CaptureLease(1),
         format: super::super::render_format(),
         node_id: "app".into(),
@@ -299,7 +299,7 @@ fn restored_pid_requires_reselection_and_never_resolves_or_recaptures() {
     let (mut capture, watch) = CaptureSet::open(&[("restored".into(), request)], 10).unwrap();
     assert!(matches!(
         capture.state(),
-        mixrelay_engine::session::ApplicationRuntimeState::Waiting
+        mixrelay_engine_core::session::ApplicationRuntimeState::Waiting
     ));
     assert!(watch.recover(&AtomicBool::new(false)).unwrap().is_none());
     assert!(
@@ -573,7 +573,7 @@ fn record_conversion_pcm(
 /// need the same owner: a passive monitor is not itself the graph's clock driver.
 #[cfg(feature = "native-lab")]
 pub(crate) struct ObservedDriver {
-    _driver: mixrelay_pipewire::GraphDriver<ClockObserver>,
+    _driver: mixrelay_linux_pipewire::GraphDriver<ClockObserver>,
     clock: std::sync::Arc<std::sync::atomic::AtomicU64>,
 }
 
@@ -581,8 +581,8 @@ pub(crate) struct ObservedDriver {
 struct ClockObserver(std::sync::Arc<std::sync::atomic::AtomicU64>);
 
 #[cfg(feature = "native-lab")]
-impl mixrelay_pipewire::DriverProcess for ClockObserver {
-    fn process(&mut self, cycle: &mixrelay_pipewire::DriverCycle) {
+impl mixrelay_linux_pipewire::DriverProcess for ClockObserver {
+    fn process(&mut self, cycle: &mixrelay_linux_pipewire::DriverCycle) {
         self.0.store(
             u64::from(cycle.clock_id) << 32 | u64::from(cycle.rate),
             Ordering::Release,
@@ -594,9 +594,9 @@ impl mixrelay_pipewire::DriverProcess for ClockObserver {
 impl ObservedDriver {
     pub(crate) fn new() -> Self {
         let clock = std::sync::Arc::new(std::sync::atomic::AtomicU64::new(0));
-        let driver = mixrelay_pipewire::GraphDriver::open(
+        let driver = mixrelay_linux_pipewire::GraphDriver::open(
             ClockObserver(std::sync::Arc::clone(&clock)),
-            mixrelay_pipewire::DriverFormat::new(48_000, 128).unwrap(),
+            mixrelay_linux_pipewire::DriverFormat::new(48_000, 128).unwrap(),
         )
         .unwrap();
         Self {

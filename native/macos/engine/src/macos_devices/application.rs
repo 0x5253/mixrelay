@@ -52,9 +52,9 @@ pub(super) fn resolve(
 }
 
 pub(super) fn validate_playback(
-    playback: &mixrelay_engine::PlaybackBindings<'_>,
+    playback: &mixrelay_engine_core::PlaybackBindings<'_>,
 ) -> Result<(), HostAudioBackendError> {
-    let mixrelay_engine::PlaybackBindings::Forward { intents, controls } = playback else {
+    let mixrelay_engine_core::PlaybackBindings::Forward { intents, controls } = playback else {
         return Ok(());
     };
     let mut endpoints = std::collections::BTreeMap::new();

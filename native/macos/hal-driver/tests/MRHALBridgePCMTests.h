@@ -1,7 +1,7 @@
 /* SDK entry points coupled to the production Rust runtime on an anonymous
  * mapping. This never registers a system device or starts a native stream. */
 #include <sys/mman.h>
-#include "../../common/MRAnonymousMemory.h"
+#include "../../transport/MRAnonymousMemory.h"
 #include "MRHALClockPropertyTests.h"
 
 static void registered_client_pcm(void) {

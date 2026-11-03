@@ -3,7 +3,7 @@ use axum::{body::Body, http::Request};
 use tower::ServiceExt as _;
 
 use super::*;
-use mixrelay_driver_control::{
+use mixrelay_driver_core::{
     SettingsStore, test_backend::FakeBackend, test_settings::MemorySettings,
 };
 
@@ -13,7 +13,7 @@ fn app(store: &MemorySettings) -> Router {
         DriverManager::open(
             backend,
             store.clone(),
-            mixrelay_driver_control::test_runtime::runtime(),
+            mixrelay_driver_core::test_runtime::runtime(),
         )
         .unwrap(),
     )
@@ -26,7 +26,7 @@ async fn snapshot_uses_independent_native_state_and_version() {
     let mut manager = DriverManager::open(
         backend,
         store.clone(),
-        mixrelay_driver_control::test_runtime::runtime(),
+        mixrelay_driver_core::test_runtime::runtime(),
     )
     .unwrap();
     manager.set_installed_version(Some("0.1.0".into()));
@@ -42,7 +42,7 @@ async fn snapshot_uses_independent_native_state_and_version() {
     assert_eq!(response.status(), StatusCode::OK);
     let bytes = to_bytes(response.into_body(), JSON_LIMIT).await.unwrap();
     let snapshot: DriverSnapshot = serde_json::from_slice(&bytes).unwrap();
-    assert_eq!(snapshot.state, mixrelay_driver_control::DriverState::Ready);
+    assert_eq!(snapshot.state, mixrelay_driver_core::DriverState::Ready);
     assert_eq!(snapshot.protocol_version, 1);
     assert_eq!(snapshot.installed_version.as_deref(), Some("0.1.0"));
     assert_eq!(snapshot.owner_process_id, Some(42));
@@ -52,18 +52,18 @@ async fn snapshot_uses_independent_native_state_and_version() {
 async fn maintenance_initializes_later_ready_inventory_without_requests() {
     let store = MemorySettings::default();
     let (backend, observed) = FakeBackend::ready();
-    observed.lock().state = mixrelay_driver_control::DriverState::InstalledNotLoaded;
+    observed.lock().state = mixrelay_driver_core::DriverState::InstalledNotLoaded;
     let manager = Arc::new(Mutex::new(
         DriverManager::open(
             backend,
             store.clone(),
-            mixrelay_driver_control::test_runtime::runtime(),
+            mixrelay_driver_core::test_runtime::runtime(),
         )
         .unwrap(),
     ));
     let maintenance = tokio::spawn(maintain_inventory(Arc::downgrade(&manager)));
     assert!(store.load().unwrap().is_none());
-    observed.lock().state = mixrelay_driver_control::DriverState::Ready;
+    observed.lock().state = mixrelay_driver_core::DriverState::Ready;
     tokio::time::timeout(Duration::from_secs(3), async {
         while observed.lock().applies == 0 {
             tokio::time::sleep(Duration::from_millis(10)).await;
@@ -74,7 +74,7 @@ async fn maintenance_initializes_later_ready_inventory_without_requests() {
     assert_eq!(observed.lock().applies, 1);
     assert_eq!(
         manager.lock().snapshot().unwrap().state,
-        mixrelay_driver_control::DriverState::Ready
+        mixrelay_driver_core::DriverState::Ready
     );
     assert!(store.load().unwrap().is_some());
     drop(manager);
@@ -88,12 +88,12 @@ async fn maintenance_initializes_later_ready_inventory_without_requests() {
 async fn unavailable_router_reports_native_state_and_releases_its_owner_on_drop() {
     let store = MemorySettings::default();
     let (backend, observed) = FakeBackend::ready();
-    observed.lock().state = mixrelay_driver_control::DriverState::InstalledNotLoaded;
+    observed.lock().state = mixrelay_driver_core::DriverState::InstalledNotLoaded;
     let app = router(
         DriverManager::open(
             backend,
             store.clone(),
-            mixrelay_driver_control::test_runtime::runtime(),
+            mixrelay_driver_core::test_runtime::runtime(),
         )
         .unwrap(),
     );
@@ -112,7 +112,7 @@ async fn unavailable_router_reports_native_state_and_releases_its_owner_on_drop(
     let snapshot: DriverSnapshot = serde_json::from_slice(&bytes).unwrap();
     assert_eq!(
         snapshot.state,
-        mixrelay_driver_control::DriverState::InstalledNotLoaded
+        mixrelay_driver_core::DriverState::InstalledNotLoaded
     );
     assert!(!snapshot.settings.can_create);
     assert!(store.load().unwrap().is_none());
@@ -124,7 +124,7 @@ async fn unavailable_router_reports_native_state_and_releases_its_owner_on_drop(
     })
     .await
     .expect("waiting startup task did not retain the router owner");
-    observed.lock().state = mixrelay_driver_control::DriverState::Ready;
+    observed.lock().state = mixrelay_driver_core::DriverState::Ready;
     assert_eq!(observed.lock().applies, 0);
     assert!(store.load().unwrap().is_none());
 }
@@ -133,12 +133,12 @@ async fn unavailable_router_reports_native_state_and_releases_its_owner_on_drop(
 async fn waiting_startup_task_exits_when_its_router_owner_is_gone() {
     let store = MemorySettings::default();
     let (backend, observed) = FakeBackend::ready();
-    observed.lock().state = mixrelay_driver_control::DriverState::InstalledNotLoaded;
+    observed.lock().state = mixrelay_driver_core::DriverState::InstalledNotLoaded;
     let manager = Arc::new(Mutex::new(
         DriverManager::open(
             backend,
             store.clone(),
-            mixrelay_driver_control::test_runtime::runtime(),
+            mixrelay_driver_core::test_runtime::runtime(),
         )
         .unwrap(),
     ));
@@ -160,7 +160,7 @@ async fn maintenance_recovers_failed_inventory_without_requests_and_releases_rou
     let manager = DriverManager::open(
         backend,
         store.clone(),
-        mixrelay_driver_control::test_runtime::runtime(),
+        mixrelay_driver_core::test_runtime::runtime(),
     )
     .unwrap();
     let saved = store.load().unwrap();
@@ -173,7 +173,7 @@ async fn maintenance_recovers_failed_inventory_without_requests_and_releases_rou
     let app = router(manager);
     {
         let mut native = observed.lock();
-        native.state = mixrelay_driver_control::DriverState::Unavailable;
+        native.state = mixrelay_driver_core::DriverState::Unavailable;
         native.failed_devices.insert(id.clone());
     }
     tokio::time::timeout(Duration::from_secs(3), async {
@@ -377,34 +377,34 @@ async fn runtime_route_claims_and_releases_without_persisting_inventory_revision
     let mut manager = DriverManager::open(
         backend,
         store.clone(),
-        mixrelay_driver_control::test_runtime::runtime(),
+        mixrelay_driver_core::test_runtime::runtime(),
     )
     .unwrap();
     let revision = manager.snapshot().unwrap().revision;
     let router = router(manager);
-    let send = |command: mixrelay_driver_control::LatencyCommand| {
+    let send = |command: mixrelay_driver_core::LatencyCommand| {
         Request::builder()
             .method(Method::PUT)
-            .uri(mixrelay_driver_control::LATENCY_ROUTE)
+            .uri(mixrelay_driver_core::LATENCY_ROUTE)
             .header(CONTENT_TYPE, "application/json")
             .body(Body::from(serde_json::to_vec(&command).unwrap()))
             .unwrap()
     };
     let response = router
         .clone()
-        .oneshot(send(mixrelay_driver_control::LatencyCommand::Claim {
+        .oneshot(send(mixrelay_driver_core::LatencyCommand::Claim {
             incarnation: "test-engine".into(),
             process_id: std::process::id(),
         }))
         .await
         .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
-    let reply: mixrelay_driver_control::LatencyReply =
+    let reply: mixrelay_driver_core::LatencyReply =
         serde_json::from_slice(&to_bytes(response.into_body(), JSON_LIMIT).await.unwrap()).unwrap();
     assert!(reply.accepted);
     let response = router
         .clone()
-        .oneshot(send(mixrelay_driver_control::LatencyCommand::Release {
+        .oneshot(send(mixrelay_driver_core::LatencyCommand::Release {
             lease: reply.lease.unwrap(),
         }))
         .await

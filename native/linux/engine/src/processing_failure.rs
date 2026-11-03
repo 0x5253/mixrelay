@@ -1,7 +1,7 @@
 //! Fixed-size processing failure causes, published on RT and read on control.
 
-use mixrelay_audio_engine::ProcessBlockError;
 use mixrelay_audio_io::process::CycleError;
+use mixrelay_render::ProcessBlockError;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

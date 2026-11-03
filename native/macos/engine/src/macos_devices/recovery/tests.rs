@@ -7,7 +7,7 @@ fn adding_graph_input_reopens_output_with_native_duplex_access() {
     use std::sync::atomic::Ordering;
     let host = SimulatedHost::new();
     host.plug("duplex", 2, 48_000, 0.25);
-    let status = Arc::new(mixrelay_engine::session::AdapterRuntimeStatus::new(
+    let status = Arc::new(mixrelay_engine_core::session::AdapterRuntimeStatus::new(
         crate::macos::adapter_profile(),
         std::sync::Arc::new(mixrelay_time::ManualClock::default()),
     ));
@@ -47,7 +47,7 @@ fn adding_graph_input_reopens_output_with_native_duplex_access() {
 
 #[test]
 fn shutdown_rejects_device_preparation_before_inventory_or_native_creation() {
-    let status = Arc::new(mixrelay_engine::session::AdapterRuntimeStatus::new(
+    let status = Arc::new(mixrelay_engine_core::session::AdapterRuntimeStatus::new(
         crate::macos::adapter_profile(),
         std::sync::Arc::new(mixrelay_time::ManualClock::default()),
     ));
@@ -104,7 +104,7 @@ fn reference_order_changes_keep_clock_group_but_real_membership_changes_do_not()
 fn topology_loss_bypasses_periodic_delay_but_not_publication_ownership() {
     use std::sync::atomic::Ordering;
     use std::time::{Duration, Instant};
-    let status = Arc::new(mixrelay_engine::session::AdapterRuntimeStatus::new(
+    let status = Arc::new(mixrelay_engine_core::session::AdapterRuntimeStatus::new(
         crate::macos::adapter_profile(),
         std::sync::Arc::new(mixrelay_time::ManualClock::default()),
     ));
@@ -131,7 +131,7 @@ fn topology_loss_bypasses_periodic_delay_but_not_publication_ownership() {
 
 #[test]
 fn stopped_observation_and_reclamation_never_start_recovery() {
-    let status = Arc::new(mixrelay_engine::session::AdapterRuntimeStatus::new(
+    let status = Arc::new(mixrelay_engine_core::session::AdapterRuntimeStatus::new(
         crate::macos::adapter_profile(),
         std::sync::Arc::new(mixrelay_time::ManualClock::default()),
     ));

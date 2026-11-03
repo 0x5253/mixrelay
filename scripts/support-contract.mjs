@@ -128,9 +128,9 @@ export function checkGenerated(contract, root = fileURLToPath(new URL('..', impo
     if (write) writeFileSync(path, expected);
     else if (readFileSync(path, 'utf8') !== expected) throw new Error(`Support definition drift: ${relative}; run pnpm support:sync`);
   }
-  const tauri = JSON.parse(readFileSync(resolve(root, 'apps/desktop/src-tauri/tauri.conf.json')));
+  const tauri = JSON.parse(readFileSync(resolve(root, 'apps/desktop-shell/src-tauri/tauri.conf.json')));
   if (tauri.bundle.macOS.minimumSystemVersion !== contract.minimums.macos) throw new Error('macOS deployment minimum differs from support contract');
-  const linux = JSON.parse(readFileSync(resolve(root, 'apps/desktop/src-tauri/tauri.linux.conf.json'))).bundle.linux;
+  const linux = JSON.parse(readFileSync(resolve(root, 'apps/desktop-shell/src-tauri/tauri.linux.conf.json'))).bundle.linux;
   if (linux.deb.depends.includes(contract.runtimeLibraries.linux.midi.arch)) throw new Error('DEB MIDI dependency uses an Arch package name');
   for (const dependency of [`libc6 (>= ${contract.minimums.linux.glibc})`,
     `pipewire (>= ${contract.minimums.linux.pipewire})`, `wireplumber (>= ${contract.minimums.linux.wireplumber})`, contract.runtimeLibraries.linux.midi.deb]) {

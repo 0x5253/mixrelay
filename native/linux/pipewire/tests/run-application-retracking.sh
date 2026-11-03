@@ -249,12 +249,12 @@ fi
 export CARGO_TARGET_DIR="$cargo_target_dir"
 unset PIPEWIRE_REMOTE PIPEWIRE_RUNTIME_DIR DBUS_SESSION_BUS_ADDRESS
 cd "$workspace"
-cargo build --locked "${test_profile_args[@]}" -p mixrelay-pipewire --example application-source
+cargo build --locked "${test_profile_args[@]}" -p mixrelay-linux-pipewire --example application-source
 cp "$cargo_target_dir/$artifact_profile/examples/application-source" "$lab/application-fixture"
 if [[ "$test_name" == native_application_forward_lease_keeps_capture_pcm_and_restores_owned_state ||
       "$test_name" == native_application_graph_continuity_preserves_480k_frames_through_engine ]]; then
     [[ "${MIXRELAY_LAB_SOURCE_RATE:-48000}" == 48000 ]] || exit 2
-    cargo build --locked "${test_profile_args[@]}" -p mixrelay-pipewire --example application-mute-sink
+    cargo build --locked "${test_profile_args[@]}" -p mixrelay-linux-pipewire --example application-mute-sink
     cp "$cargo_target_dir/$artifact_profile/examples/application-mute-sink" "$lab/mute-sink-fixture"
 fi
 if [[ "$test_name" == native_application_graph_continuity_preserves_480k_frames_through_engine ]]; then
@@ -263,11 +263,11 @@ if [[ "$test_name" == native_application_graph_continuity_preserves_480k_frames_
 fi
 observer_args=()
 if [[ "$observe_buffers" == 1 ]]; then
-    cargo build --locked -p mixrelay-pipewire-observer --release
+    cargo build --locked -p mixrelay-linux-pipewire-observer --release
     host=$(rustc -vV | sed -n 's/^host: //p')
     [[ -n "$host" && "$workspace" != *"'"* && "$cargo_target_dir" != *"'"* ]] || exit 2
     # Preload only the test binary and its children, not Cargo or the daemon.
-    observer_args=(--config "target.$host.runner=['env','LD_PRELOAD=$cargo_target_dir/release/libmixrelay_pipewire_observer.so']")
+    observer_args=(--config "target.$host.runner=['env','LD_PRELOAD=$cargo_target_dir/release/libmixrelay_linux_pipewire_observer.so']")
 fi
 cc -Wall -Wextra -Werror "$fixture/MRDeviceFixture.c" $(pkg-config --cflags --libs libpipewire-0.3) -lm -o "$lab/device-fixture"
 export MIXRELAY_LAB_DEVICE_FIXTURE="$lab/device-fixture"
@@ -310,20 +310,20 @@ if [[ "$profile_graph" == 1 ]]; then
     [[ -f "$lab/$profiler_output" ]] && kill -0 "$profiler_pid"
 fi
 if [[ ${MIXRELAY_LAB_LIFECYCLE_TEST:-0} == 1 ]]; then
-    cargo build --locked --manifest-path "$workspace/Cargo.toml" -p mixrelay-pipewire --release --target-dir "$cargo_target_dir"
+    cargo build --locked --manifest-path "$workspace/Cargo.toml" -p mixrelay-linux-pipewire --release --target-dir "$cargo_target_dir"
     cc -O2 -std=c11 -D_GNU_SOURCE -Wall -Wextra -Werror -pthread \
         $(pkg-config --cflags libpipewire-0.3) -I "$workspace/native/linux/pipewire" -I "$workspace/native/pcm-ring/include" \
         "$workspace/native/linux/pipewire/tests/MRLifecycleFixture.c" \
-        "$cargo_target_dir/release/libmixrelay_pipewire.a" -ldl \
+        "$cargo_target_dir/release/libmixrelay_linux_pipewire.a" -ldl \
         $(pkg-config --libs libpipewire-0.3) -lm -o "$lab/lifecycle-fixture"
     test_command=("$lab/lifecycle-fixture")
 elif [[ "$test_name" == native_device_boundary_probe ]]; then
     [[ "$observe_buffers" == 0 && "$profile_graph" == 0 ]] || exit 2
-    cargo build --locked "${test_profile_args[@]}" -p mixrelay-service --bin mixrelay-service
+    cargo build --locked "${test_profile_args[@]}" -p mixrelay-engine-service --bin mixrelay-service
     test_command=(node "$workspace/scripts/lab/linux-device-probe.mjs"
         "$cargo_target_dir/$artifact_profile/mixrelay-service" "$lab/device-fixture" "$lab/device-evidence")
 elif [[ "$test_name" == native_pipewire_connection_lifecycle || "$test_name" == native_graph_driver_drains_before_processor_drop_and_releases_resources ]]; then
-    test_command=(env "MIXRELAY_LAB_APPLICATION_FIXTURE=$lab/application-fixture" cargo test --locked --features native-lab "${test_profile_args[@]}" -p mixrelay-pipewire --lib "$test_name" -- --nocapture --test-threads=1)
+    test_command=(env "MIXRELAY_LAB_APPLICATION_FIXTURE=$lab/application-fixture" cargo test --locked --features native-lab "${test_profile_args[@]}" -p mixrelay-linux-pipewire --lib "$test_name" -- --nocapture --test-threads=1)
 elif [[ "$test_name" == native_driver_* ]]; then
     mapfile -t listed_tests < <(cargo test --locked --features native-lab "${test_profile_args[@]}" -p mixrelay-linux-driver --lib -- --list |
         awk -v test_name="$test_name" '{ n = split($0, parts, "::"); if (parts[n] == test_name ": test") print }')
@@ -335,7 +335,7 @@ elif [[ "$test_name" == native_driver_* ]]; then
     printf 'driver_native_test=%s\ndriver_native_listed_count=1\n' "$test_filter"
     test_command=(env "MIXRELAY_LAB_APPLICATION_FIXTURE=$lab/application-fixture" cargo "${observer_args[@]}" test --locked --features native-lab "${test_profile_args[@]}" -p mixrelay-linux-driver --lib "$test_filter" -- --exact --nocapture --test-threads=1)
 elif [[ "$test_name" == native_linux_service_* ]]; then
-    test_command=(env "MIXRELAY_LAB_APPLICATION_FIXTURE=$lab/application-fixture" cargo test --locked --features native-lab "${test_profile_args[@]}" -p mixrelay-service --test linux_service_lifecycle "$test_name" -- --nocapture --test-threads=1)
+    test_command=(env "MIXRELAY_LAB_APPLICATION_FIXTURE=$lab/application-fixture" cargo test --locked --features native-lab "${test_profile_args[@]}" -p mixrelay-engine-service --test linux_service_lifecycle "$test_name" -- --nocapture --test-threads=1)
 else
     test_environment=("MIXRELAY_LAB_APPLICATION_FIXTURE=$lab/application-fixture")
     if [[ "$test_name" == native_application_forward_lease_keeps_capture_pcm_and_restores_owned_state ||

@@ -60,7 +60,7 @@ test('MIDI requires the declared ALSA runtime library in both Linux package form
 });
 
 test('DEB MIDI dependencies use Debian names and Arch retains its own ALSA package', () => {
-  const linux = JSON.parse(readFileSync(new URL('../apps/desktop/src-tauri/tauri.linux.conf.json', import.meta.url))).bundle.linux;
+  const linux = JSON.parse(readFileSync(new URL('../apps/desktop-shell/src-tauri/tauri.linux.conf.json', import.meta.url))).bundle.linux;
   assert.ok(linux.deb.depends.includes('libasound2t64'));
   assert.ok(!linux.deb.depends.includes('alsa-lib'), 'Arch/RPM package names cannot be installed by APT');
   const arch = readFileSync(new URL('../packaging/linux/arch/PKGBUILD.in', import.meta.url), 'utf8');

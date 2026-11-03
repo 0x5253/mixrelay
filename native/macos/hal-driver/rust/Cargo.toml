@@ -1,5 +1,5 @@
 [package]
-name = "mixrelay-hal-core"
+name = "mixrelay-macos-hal"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -10,7 +10,7 @@ crate-type = ["rlib", "staticlib"]
 [dependencies]
 mixrelay-time = { path = "../../../../crates/time" }
 mixrelay-audio-io.workspace = true
-mixrelay-macos-transport = { path = "../../common" }
+mixrelay-macos-transport = { path = "../../transport" }
 # Native integer buffers convert at the HAL boundary; transport remains Float32.
 mixrelay-pcm-ring = { path = "../../../pcm-ring" }
 
@@ -18,7 +18,7 @@ mixrelay-pcm-ring = { path = "../../../pcm-ring" }
 # Proves the property reads answered on IO threads never allocate.
 allocation-counter = "0.8.1"
 # Holds a producer claim and observes queue release in rearm and retirement tests.
-mixrelay-macos-transport = { path = "../../common", features = ["test-observation"] }
+mixrelay-macos-transport = { path = "../../transport", features = ["test-observation"] }
 
 [build-dependencies]
 # Compile the SDK Blocks adapter; Rust owns connection and timer lifetime.

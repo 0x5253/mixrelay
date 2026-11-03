@@ -42,9 +42,9 @@ archive = pathlib.Path(str(manifest).removesuffix('.manifest.json'))
 if hashlib.sha256(archive.read_bytes()).hexdigest() != record['sha256']:
     raise SystemExit('frozen source archive hash changed')
 clock_paths = {
-    'apps/service/src/linux.rs',
-    'apps/service/src/linux_clock.rs',
-    'apps/service/src/linux_devices.rs',
+    'apps/engine-service/src/linux.rs',
+    'apps/engine-service/src/linux_clock.rs',
+    'apps/engine-service/src/linux_devices.rs',
     'native/linux/pipewire/src/stream.rs',
 }
 clock_prefixes = ('native/pcm-ring/', 'native/linux/pipewire/')

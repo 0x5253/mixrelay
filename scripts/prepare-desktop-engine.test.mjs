@@ -27,7 +27,7 @@ function fakeFs(output) {
 }
 
 test("Linux config bundles the internal Driver runtime and matching engine sidecars", () => {
-  const linux = JSON.parse(readFileSync(join(root, "apps/desktop/src-tauri/tauri.linux.conf.json"), "utf8"));
+  const linux = JSON.parse(readFileSync(join(root, "apps/desktop-shell/src-tauri/tauri.linux.conf.json"), "utf8"));
   assert.deepEqual(linux.bundle.externalBin, [
     "binaries/mixrelay-driver-service",
     "binaries/mixrelay-service",
@@ -95,9 +95,12 @@ test("dev builds the target-specific Cargo output and copies sidecar plus target
   assert.equal(calls.length, 1);
   assert.equal(calls[0].command, "cargo");
   assert.ok(calls[0].args.includes("--locked"));
+  // The crate is mixrelay-engine-service; the installed executable keeps its released name.
+  const packageAt = calls[0].args.indexOf("--package");
+  assert.deepEqual(calls[0].args.slice(packageAt, packageAt + 4), ["--package", "mixrelay-engine-service", "--bin", "mixrelay-service"]);
   assert.deepEqual(calls[0].args.slice(-2), ["--target", target]);
   assert.equal(fsApi.copies.length, 2);
-  assert.equal(fsApi.copies[0].destination, join(root, "apps/desktop/src-tauri/binaries", `mixrelay-service-${target}`));
+  assert.equal(fsApi.copies[0].destination, join(root, "apps/desktop-shell/src-tauri/binaries", `mixrelay-service-${target}`));
   assert.equal(fsApi.copies[1].destination, join(root, "target/debug/mixrelay-service"));
   assert.equal(result.devAdjacent, join(root, "target/debug/mixrelay-service"));
 });
@@ -114,7 +117,7 @@ test("Linux release stages only the Tauri sidecar input", () => {
   });
   assert.equal(fsApi.copies.length, 1);
   assert.equal(fsApi.copies[0].source, output);
-  assert.equal(fsApi.copies[0].destination, join(root, "apps/desktop/src-tauri/binaries", `mixrelay-service-${target}`));
+  assert.equal(fsApi.copies[0].destination, join(root, "apps/desktop-shell/src-tauri/binaries", `mixrelay-service-${target}`));
   assert.equal(result.devAdjacent, undefined);
   assert.ok(result.command.includes("--release"));
 });

@@ -19,7 +19,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use mixrelay_engine::resource_requirements::DeviceRequirements;
+use mixrelay_engine_core::resource_requirements::DeviceRequirements;
 
 #[path = "linux_device_reconciliation.rs"]
 mod reconciliation;
@@ -129,7 +129,7 @@ impl OpenPolicy<'_> {
 impl DeviceStreams {
     pub(super) fn bind_inputs(
         &mut self,
-        inputs: &mixrelay_pipewire::GraphInputs,
+        inputs: &mixrelay_linux_pipewire::GraphInputs,
     ) -> Result<(), String> {
         for entry in self.inputs.values_mut() {
             if let Some(stream) = &mut entry.stream {
@@ -154,7 +154,7 @@ impl DeviceStreams {
         }
     }
 
-    pub(super) fn observe_controls(&self, controls: &mixrelay_audio_engine::RuntimeControlBank) {
+    pub(super) fn observe_controls(&self, controls: &mixrelay_render::RuntimeControlBank) {
         for owner in self.inputs.values().chain(self.outputs.values()) {
             let enabled = controls
                 .snapshot(&owner.selected.node_id)
@@ -790,7 +790,8 @@ impl DeviceStreams {
             .values_mut()
             .filter_map(|entry| entry.stream.as_mut())
         {
-            if let mixrelay_pipewire::OutputRelease::Rejected(code) = stream.trigger_output() {
+            if let mixrelay_linux_pipewire::OutputRelease::Rejected(code) = stream.trigger_output()
+            {
                 failures.publish_native(
                     crate::processing_failure::Failure::OutputReleaseRejected,
                     code,

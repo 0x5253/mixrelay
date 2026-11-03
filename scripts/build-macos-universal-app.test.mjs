@@ -42,16 +42,16 @@ function fixture(t) {
   mkdirSync(target, { recursive: true });
   mkdirSync(sdk, { recursive: true });
   mkdirSync(developer, { recursive: true });
-  mkdirSync(join(root, "apps/desktop/src-tauri/icons"), { recursive: true });
-  writeFileSync(join(root, "apps/desktop/src-tauri/icons/icon.icns"), "icon fixture");
+  mkdirSync(join(root, "apps/desktop-shell/src-tauri/icons"), { recursive: true });
+  writeFileSync(join(root, "apps/desktop-shell/src-tauri/icons/icon.icns"), "icon fixture");
   writeFileSync(join(root, "LICENSE.txt"), license);
   writeFileSync(unrelated, "preserve me\n");
   copyFileSync(sourceScript, script);
   copyFileSync(new URL("./macos-minimum.mjs", import.meta.url), join(root, "scripts/macos-minimum.mjs"));
   mkdirSync(join(root, "support"), { recursive: true });
   copyFileSync(new URL("../support/environments.json", import.meta.url), join(root, "support/environments.json"));
-  mkdirSync(join(root, "apps/desktop/src-tauri"), { recursive: true });
-  copyFileSync(new URL("../apps/desktop/src-tauri/tauri.conf.json", import.meta.url), join(root, "apps/desktop/src-tauri/tauri.conf.json"));
+  mkdirSync(join(root, "apps/desktop-shell/src-tauri"), { recursive: true });
+  copyFileSync(new URL("../apps/desktop-shell/src-tauri/tauri.conf.json", import.meta.url), join(root, "apps/desktop-shell/src-tauri/tauri.conf.json"));
   executable(join(scripts, "build-macos-driver-launcher.sh"), `#!/bin/sh
 printf 'launcher built\\n' >> "$MOCK_LOG"
 mkdir -p target/universal-apple-darwin/release
@@ -285,7 +285,7 @@ zshTest("complete product builds helpers and engine with one public app and remo
   for (const [index, target] of ["aarch64-apple-darwin", "x86_64-apple-darwin"].entries())
     assert.equal(
       cargoBuilds[index],
-      `cargo build --locked --release --target ${target} -p mixrelay-macos-installer -p mixrelay-service -p mixrelay-driver-service -p mixrelay-desktop --bins --features mixrelay-desktop/custom-protocol`,
+      `cargo build --locked --release --target ${target} -p mixrelay-macos-installer -p mixrelay-engine-service -p mixrelay-driver-service -p mixrelay-desktop-shell --bins --features mixrelay-desktop-shell/custom-protocol`,
     );
   // The UI and icons are compiled into the desktop binary, so they precede cargo.
   assert.ok(commands.indexOf("pnpm desktop:icons") < commands.indexOf(cargoBuilds[0]));
@@ -407,7 +407,7 @@ zshTest("rejects a pre-existing app symlink without invoking Tauri", (t) => {
 
 
 test("the editor bundles the launcher and icon catalog and no login agent", () => {
-  const editor = JSON.parse(readFileSync(new URL("../apps/desktop/src-tauri/tauri.conf.json", import.meta.url), "utf8"));
+  const editor = JSON.parse(readFileSync(new URL("../apps/desktop-shell/src-tauri/tauri.conf.json", import.meta.url), "utf8"));
   assert.deepEqual(editor.bundle.macOS.files, {
     "Resources/mixrelay-driver-launcher": "../../../target/universal-apple-darwin/release/mixrelay-driver-launcher",
     "Resources/Assets.car": "../../../target/app-icon/macos/Assets.car",

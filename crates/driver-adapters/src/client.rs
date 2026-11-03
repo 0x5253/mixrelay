@@ -1,5 +1,5 @@
 mod blocking;
-use mixrelay_driver_control::{DriverRequests, set_active};
+use mixrelay_driver_core::{DriverRequests, set_active};
 
 use std::{
     io::Read,
@@ -12,7 +12,7 @@ use mixrelay_local_socket::{
     DRIVER_AUTHORITY, DRIVER_SOCKET, session_socket_directory, socket_directory,
 };
 
-use mixrelay_driver_control::{
+use mixrelay_driver_core::{
     DriverCommand, DriverError, DriverSnapshot, JSON_LIMIT, SNAPSHOT_ROUTE,
 };
 
@@ -69,13 +69,13 @@ impl DriverClient {
     /// Returns transport, bounded response, JSON or remote errors.
     pub async fn publish_latency(
         &self,
-        command: &mixrelay_driver_control::LatencyCommand,
-    ) -> Result<mixrelay_driver_control::LatencyReply, DriverError> {
+        command: &mixrelay_driver_core::LatencyCommand,
+    ) -> Result<mixrelay_driver_core::LatencyReply, DriverError> {
         let mut response = self
             .client
             .put(format!(
                 "{DRIVER_AUTHORITY}{}",
-                mixrelay_driver_control::LATENCY_ROUTE
+                mixrelay_driver_core::LATENCY_ROUTE
             ))
             .json(command)
             .send()
@@ -195,7 +195,7 @@ fn command_timeout(command: &DriverCommand) -> Duration {
 fn decode_latency_response(
     status: reqwest::StatusCode,
     bytes: &[u8],
-) -> Result<mixrelay_driver_control::LatencyReply, DriverError> {
+) -> Result<mixrelay_driver_core::LatencyReply, DriverError> {
     if !status.is_success() {
         return Err(DriverError::Remote {
             status: status.as_u16(),

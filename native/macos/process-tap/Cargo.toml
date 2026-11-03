@@ -1,5 +1,5 @@
 [package]
-name = "mixrelay-process-tap"
+name = "mixrelay-macos-process-tap"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -18,7 +18,7 @@ thiserror.workspace = true
 tracing = "0.1.41"
 # Share transport/clock primitives without making HAL/engine depend on AppKit.
 mixrelay-realtime = { path = "../../../crates/realtime" }
-mixrelay-macos-transport = { path = "../common" }
+mixrelay-macos-transport = { path = "../transport" }
 
 [build-dependencies]
 # Only Objective-C object construction and AppKit adapters require this compiler.

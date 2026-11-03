@@ -1,6 +1,5 @@
 //! Retained atomic evidence; only the reporter acquires the control-side cache lock.
 use super::{DeviceSet, MacDevices, device::Device, ffi};
-use mixrelay_audio_engine::BlockProcessor;
 #[cfg(test)]
 use mixrelay_audio_io::residence::{EdgeSnapshot, PassageSnapshot};
 use mixrelay_audio_io::{
@@ -10,6 +9,7 @@ use mixrelay_audio_io::{
 use mixrelay_macos_transport::device_io::{
     IoTiming, LatencySnapshot, latency_snapshot, record_direct_latency,
 };
+use mixrelay_render::BlockProcessor;
 use std::{
     collections::BTreeMap,
     sync::atomic::{AtomicBool, AtomicU64, Ordering},
@@ -391,11 +391,11 @@ pub(crate) mod tests {
             src_delay: 0,
         }
     }
-    use mixrelay_audio_engine::{
+    use mixrelay_audio_io::process::{ProcessCycle, TransferOutcome};
+    use mixrelay_render::{
         ExternalBinding, ExternalIo, HostedAudioProcessor, HostedProcessorFactory,
         HostedProcessorPrepareRequest,
     };
-    use mixrelay_audio_io::process::{ProcessCycle, TransferOutcome};
     pub(crate) struct Factory;
     impl HostedProcessorFactory for Factory {
         fn prepare(
@@ -426,8 +426,8 @@ pub(crate) mod tests {
     }
     #[test]
     fn unrelated_process_report_faults_do_not_taint_bridged_or_direct_bindings() {
-        use mixrelay_audio_engine::PeakMeterBank;
         use mixrelay_audio_io::process::ClockDomain;
+        use mixrelay_render::PeakMeterBank;
         use std::sync::Arc;
         let mut processor =
             crate::macos::test_feedback_processor(&Factory, Arc::new(PeakMeterBank::new(8, 64)));

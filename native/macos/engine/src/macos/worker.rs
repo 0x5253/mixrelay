@@ -1,9 +1,9 @@
 //! Owns the graph worker, its capture timeline and block-by-block DSP handoff.
 use super::{direct, external_io::MacEngineExternalIo, runtime_latency, worker_runtime};
 use crate::macos_pacing::{Pace, Publication};
-use mixrelay_audio_engine::{BlockProcessor, ExternalIo, ProcessorExchange};
 use mixrelay_audio_io::process::{ProcessCycle, ProcessReport};
-use mixrelay_engine::session::AdapterRuntimeStatus;
+use mixrelay_engine_core::session::AdapterRuntimeStatus;
+use mixrelay_render::{BlockProcessor, ExternalIo, ProcessorExchange};
 use std::{
     sync::Arc,
     time::{Duration, Instant},
@@ -21,7 +21,7 @@ pub enum Error {
     #[error("macOS direct renderer failed: {0}")]
     Direct(String),
     #[error("macOS graph cycle failed: {0}")]
-    Process(#[from] mixrelay_audio_engine::ProcessBlockError),
+    Process(#[from] mixrelay_render::ProcessBlockError),
 }
 
 /// Starts the sole native graph worker and its completion observation.
@@ -33,7 +33,7 @@ pub fn start(
     devices: Arc<crate::macos_devices::MacDevices>,
     status: Arc<AdapterRuntimeStatus>,
 ) -> std::io::Result<(
-    mixrelay_engine_runtime::AudioWorker,
+    mixrelay_engine_host::AudioWorker,
     super::worker_completion::Completion<Error>,
 )> {
     let (finished, completion) = super::worker_completion::channel();
@@ -52,7 +52,7 @@ pub fn start(
             let _ = finished.send(result);
         })?;
     Ok((
-        mixrelay_engine_runtime::AudioWorker::new(status, thread),
+        mixrelay_engine_host::AudioWorker::new(status, thread),
         completion,
     ))
 }
@@ -426,7 +426,7 @@ pub(super) fn process_native_cycle(
     processor: &mut BlockProcessor,
     io: &mut impl ExternalIo,
     cycle: WorkerCycle<'_>,
-) -> Result<Option<ProcessReport>, mixrelay_audio_engine::ProcessBlockError> {
+) -> Result<Option<ProcessReport>, mixrelay_render::ProcessBlockError> {
     let format = processor.plan().format();
     let WorkerCycle {
         timeline,

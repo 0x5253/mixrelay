@@ -4,7 +4,7 @@ use std::{path::Path, time::Duration};
 
 use parking_lot::Mutex;
 
-use mixrelay_driver_control::DriverError;
+use mixrelay_driver_core::DriverError;
 
 #[derive(Debug, Default)]
 pub(super) struct Transport {

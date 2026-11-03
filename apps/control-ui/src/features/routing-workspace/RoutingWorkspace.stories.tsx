@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useMemo, useState } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import mixrelayAppIcon from '../../../../desktop/src-tauri/icons/32x32.png';
+import mixrelayAppIcon from '../../../../desktop-shell/src-tauri/icons/32x32.png';
 import { processorReportState } from '../../../.storybook/fixtures/processorReport';
 import {
   type StorybookControlState,

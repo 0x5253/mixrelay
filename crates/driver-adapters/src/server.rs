@@ -18,7 +18,7 @@ use axum::{
 use parking_lot::Mutex;
 use tokio::sync::Semaphore;
 
-use mixrelay_driver_control::{
+use mixrelay_driver_core::{
     DriverCommand, DriverError, DriverManager, DriverSnapshot, JSON_LIMIT, SNAPSHOT_ROUTE,
 };
 
@@ -45,7 +45,7 @@ pub fn router(manager: DriverManager) -> Router {
     Router::new()
         .route(SNAPSHOT_ROUTE, get(snapshot).put(mutate))
         .route(
-            mixrelay_driver_control::LATENCY_ROUTE,
+            mixrelay_driver_core::LATENCY_ROUTE,
             axum::routing::put(latency),
         )
         .layer(middleware::from_fn_with_state(state.clone(), admit))
@@ -99,8 +99,8 @@ async fn maintain_inventory(manager: Weak<Mutex<DriverManager>>) {
 
 async fn latency(
     State(control): State<Control>,
-    Json(command): Json<mixrelay_driver_control::LatencyCommand>,
-) -> Result<Json<mixrelay_driver_control::LatencyReply>, ApiError> {
+    Json(command): Json<mixrelay_driver_core::LatencyCommand>,
+) -> Result<Json<mixrelay_driver_core::LatencyReply>, ApiError> {
     let permit = control
         .operations
         .clone()

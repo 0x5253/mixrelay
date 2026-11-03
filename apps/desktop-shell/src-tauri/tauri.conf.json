@@ -1,0 +1,77 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "MixRelay",
+  "mainBinaryName": "mixrelay-desktop",
+  "version": "0.1.0",
+  "identifier": "io.mixrelay.desktop",
+  "build": {
+    "beforeDevCommand": "pnpm --dir ../.. desktop:icons && pnpm --dir ../control-ui dev",
+    "beforeBuildCommand": "pnpm --dir ../.. desktop:prepare-engine --profile release && pnpm --dir ../.. desktop:prepare-driver --profile release && pnpm --dir ../.. desktop:icons && pnpm --dir ../control-ui build",
+    "devUrl": "http://127.0.0.1:1420",
+    "frontendDist": "../../control-ui/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "MixRelay",
+        "width": 1180,
+        "height": 780,
+        "minWidth": 390,
+        "minHeight": 620,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "resources": {
+      "../../../LICENSE.txt": "LICENSE.txt",
+      "../../../third-party/THIRD-PARTY-NOTICES.txt": "third-party/THIRD-PARTY-NOTICES.txt",
+      "../../control-ui/src/core/theme/fonts/OFL.txt": "third-party/IBM-Plex/OFL.txt",
+      "../../../vendor/LICENSE-MIT": "third-party/truce-rack/LICENSE-MIT",
+      "../../../vendor/LICENSE-APACHE": "third-party/truce-rack/LICENSE-APACHE",
+      "../../../packaging/macos/localization/en.lproj/InfoPlist.strings": "en.lproj/InfoPlist.strings",
+      "../../../packaging/macos/localization/ko.lproj/InfoPlist.strings": "ko.lproj/InfoPlist.strings",
+      "../../../packaging/macos/localization/ja.lproj/InfoPlist.strings": "ja.lproj/InfoPlist.strings",
+      "../../../packaging/macos/localization/zh-Hans.lproj/InfoPlist.strings": "zh-Hans.lproj/InfoPlist.strings",
+      "../../../packaging/macos/localization/zh-Hant.lproj/InfoPlist.strings": "zh-Hant.lproj/InfoPlist.strings",
+      "../../../packaging/macos/localization/fr.lproj/InfoPlist.strings": "fr.lproj/InfoPlist.strings",
+      "../../../packaging/macos/localization/de.lproj/InfoPlist.strings": "de.lproj/InfoPlist.strings",
+      "../../../packaging/macos/localization/es.lproj/InfoPlist.strings": "es.lproj/InfoPlist.strings",
+      "../../../packaging/macos/localization/pt.lproj/InfoPlist.strings": "pt.lproj/InfoPlist.strings",
+      "../../../packaging/macos/localization/it.lproj/InfoPlist.strings": "it.lproj/InfoPlist.strings",
+      "../../../packaging/macos/localization/ru.lproj/InfoPlist.strings": "ru.lproj/InfoPlist.strings",
+      "../../../third-party/midir/LICENSE": "third-party/midir/LICENSE",
+      "../../../third-party/coremidi/LICENSE": "third-party/coremidi/LICENSE",
+      "../../../third-party/coremidi-sys/LICENSE": "third-party/coremidi-sys/LICENSE",
+      "../../../third-party/alsa/LICENSE-MIT": "third-party/alsa/LICENSE-MIT",
+      "../../../third-party/alsa-sys/LICENSE": "third-party/alsa-sys/LICENSE",
+      "../../../third-party/alsa-lib/COPYING": "third-party/alsa-lib/COPYING",
+      "../../../third-party/alsa-lib/NOTICE": "third-party/alsa-lib/NOTICE"
+    },
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns"
+    ],
+    "category": "Music",
+    "shortDescription": "Audio routing and processing",
+    "longDescription": "Route audio between devices and applications, apply audio processors, and record signals using node-based graphs.",
+    "macOS": {
+      "entitlements": "Entitlements.plist",
+      "minimumSystemVersion": "15.0",
+      "files": {
+        "Resources/mixrelay-driver-launcher": "../../../target/universal-apple-darwin/release/mixrelay-driver-launcher",
+        "Resources/Assets.car": "../../../target/app-icon/macos/Assets.car"
+      }
+    },
+    "publisher": "rawsector",
+    "homepage": "https://rawsector.com/products/mixrelay"
+  }
+}

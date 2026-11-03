@@ -24,7 +24,7 @@ mod shared_epoch_tests;
 pub mod native_lab {
     /// Exercises the installed native client after the application reads actual Driver state.
     pub fn installed_driver_pcm_soak(
-        snapshot: impl FnMut() -> mixrelay_driver_control::DriverSnapshot,
+        snapshot: impl FnMut() -> mixrelay_driver_core::DriverSnapshot,
     ) {
         super::macos_devices::pcm_probe::installed_driver_pcm_soak(snapshot);
     }
@@ -44,7 +44,7 @@ pub mod test_support {
     };
     /// Product capabilities without constructing a native device owner.
     #[must_use]
-    pub fn adapter_profile() -> mixrelay_engine::session::AdapterProfile {
+    pub fn adapter_profile() -> mixrelay_engine_core::session::AdapterProfile {
         crate::macos::adapter_profile()
     }
     /// Starts an owned worker for application observer shutdown-order fixtures.

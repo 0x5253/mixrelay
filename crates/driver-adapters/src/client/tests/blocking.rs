@@ -30,11 +30,11 @@ impl axum::serve::Listener for Counted {
 #[tokio::test]
 async fn blocking_requests_and_clones_reuse_one_live_driver_connection() {
     let fixture = mixrelay_test_support::FixtureDir::ipc("drv").unwrap();
-    let (backend, _) = mixrelay_driver_control::test_backend::FakeBackend::ready();
-    let manager = mixrelay_driver_control::DriverManager::open(
+    let (backend, _) = mixrelay_driver_core::test_backend::FakeBackend::ready();
+    let manager = mixrelay_driver_core::DriverManager::open(
         backend,
-        mixrelay_driver_control::test_settings::MemorySettings::default(),
-        mixrelay_driver_control::test_runtime::runtime(),
+        mixrelay_driver_core::test_settings::MemorySettings::default(),
+        mixrelay_driver_core::test_runtime::runtime(),
     )
     .unwrap();
     let uid = mixrelay_local_socket::current_uid();

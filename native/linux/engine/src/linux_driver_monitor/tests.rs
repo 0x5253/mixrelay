@@ -1,7 +1,7 @@
 //! Worker terminal errors wake control and retire offline recovery owners.
 use super::*;
 use mixrelay_audio_io::recovery::RecoveryMailbox;
-use mixrelay_pipewire::DriverCycle;
+use mixrelay_linux_pipewire::DriverCycle;
 use std::{
     future::pending,
     sync::{Arc, Mutex},
@@ -73,7 +73,7 @@ async fn idle_worker_fault_closes_control_and_retires_pending_recovery_without_a
         std::sync::Arc::new(mixrelay_time::StdClock::new()),
     ));
     let worker_status = Arc::clone(&status);
-    let (sender, mut completion) = mixrelay_engine::worker_completion::channel();
+    let (sender, mut completion) = mixrelay_engine_core::worker_completion::channel();
     let worker = thread::spawn(move || {
         let result = {
             let _lease = worker_status.begin_processing().unwrap();
@@ -103,7 +103,7 @@ async fn idle_worker_fault_closes_control_and_retires_pending_recovery_without_a
             .contains("InvalidPosition")
     );
     assert_eq!(
-        mixrelay_engine::RuntimeStatusBackend::status(&*status, super::super::render_format(),)
+        mixrelay_engine_core::RuntimeStatusBackend::status(&*status, super::super::render_format(),)
             .audio_session
             .unwrap()
             .issue,

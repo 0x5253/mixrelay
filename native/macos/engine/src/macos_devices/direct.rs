@@ -6,7 +6,7 @@ use super::{
     device::Device,
     ffi::{mr_device_io_clock_discontinuities, mr_device_io_output_epoch},
 };
-use mixrelay_audio_engine::{ExternalBinding, RenderPlan};
+use mixrelay_render::{ExternalBinding, RenderPlan};
 use std::{
     collections::BTreeMap,
     ffi::c_void,

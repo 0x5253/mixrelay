@@ -2,8 +2,8 @@
 
 use std::sync::Arc;
 
-use mixrelay_audio_engine::HostedAudioProcessor;
 use mixrelay_audio_graph::{ProviderNodeConfig, RenderFormat};
+use mixrelay_render::HostedAudioProcessor;
 
 use crate::{HostedProcessorControl, catalog::CatalogEntry, control::ProcessorControlRegistration};
 

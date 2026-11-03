@@ -29,7 +29,7 @@ fn prepared(
         })
         .collect::<Vec<_>>();
     CaptureSet::open_inventory_format(
-        &mixrelay_pipewire::StreamOwners::default(),
+        &mixrelay_linux_pipewire::StreamOwners::default(),
         &requests,
         &[],
         &Preparation::new(generation, super::super::super::render_format(), previous),

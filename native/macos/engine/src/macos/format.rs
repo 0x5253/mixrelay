@@ -4,7 +4,7 @@ use mixrelay_audio_io::{
     formats::{BUFFER_SIZES, SAMPLE_RATES},
     session::{AudioBackendKind, AudioSessionCapabilities, CURRENT_TIMER_FORMAT, ClockAuthority},
 };
-use mixrelay_engine::session::AdapterProfile;
+use mixrelay_engine_core::session::AdapterProfile;
 
 pub(super) fn profile(rates: Vec<u32>) -> AdapterProfile {
     AdapterProfile {
@@ -36,7 +36,7 @@ pub(super) fn profile(rates: Vec<u32>) -> AdapterProfile {
 mod tests {
     use super::*;
     use mixrelay_audio_io::session::SessionIssue;
-    use mixrelay_engine::{RuntimeStatusBackend, session::AdapterRuntimeStatus};
+    use mixrelay_engine_core::{RuntimeStatusBackend, session::AdapterRuntimeStatus};
 
     #[test]
     fn processing_catalog_does_not_depend_on_one_virtual_devices_availability() {

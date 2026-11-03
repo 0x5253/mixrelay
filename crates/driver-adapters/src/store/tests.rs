@@ -3,7 +3,7 @@ use std::fs;
 use mixrelay_test_support::FixtureDir;
 
 use super::*;
-use mixrelay_driver_control::{DriverCommand, DriverManager, test_backend::FakeBackend};
+use mixrelay_driver_core::{DriverCommand, DriverManager, test_backend::FakeBackend};
 
 #[test]
 fn malformed_store_is_preserved_without_native_apply() {
@@ -15,7 +15,7 @@ fn malformed_store_is_preserved_without_native_apply() {
         DriverManager::open(
             backend,
             FileSettingsStore::new(path.clone()),
-            mixrelay_driver_control::test_runtime::runtime()
+            mixrelay_driver_core::test_runtime::runtime()
         )
         .is_err()
     );
@@ -31,7 +31,7 @@ fn stopped_state_is_saved_with_retained_devices_in_the_private_settings_file() {
     let mut manager = DriverManager::open(
         backend,
         FileSettingsStore::new(path.clone()),
-        mixrelay_driver_control::test_runtime::runtime(),
+        mixrelay_driver_core::test_runtime::runtime(),
     )
     .unwrap();
     let revision = manager.snapshot().unwrap().revision;
@@ -58,7 +58,7 @@ fn stopped_state_is_saved_with_retained_devices_in_the_private_settings_file() {
     let mut restarted = DriverManager::open(
         backend,
         FileSettingsStore::new(path),
-        mixrelay_driver_control::test_runtime::runtime(),
+        mixrelay_driver_core::test_runtime::runtime(),
     )
     .unwrap();
     assert!(restarted.snapshot().unwrap().settings.devices.is_empty());
@@ -120,7 +120,7 @@ fn oversized_save_preserves_the_committed_configuration() {
     let manager = DriverManager::open(
         backend,
         FileSettingsStore::new(&path),
-        mixrelay_driver_control::test_runtime::runtime(),
+        mixrelay_driver_core::test_runtime::runtime(),
     )
     .unwrap();
     let store = FileSettingsStore::new(&path);

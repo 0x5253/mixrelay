@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import mixrelayAppIcon from '../../../../desktop/src-tauri/icons/32x32.png';
+import mixrelayAppIcon from '../../../../desktop-shell/src-tauri/icons/32x32.png';
 import { AudioNodeCard } from './AudioNodeCard';
 
 const meta = {

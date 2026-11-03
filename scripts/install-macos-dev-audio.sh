@@ -21,8 +21,8 @@ service_stdout="$service_log_root/engine.stdout.log"
 service_stderr="$service_log_root/engine.stderr.log"
 
 mkdir -p "$build_root" "$service_log_root"
-cargo run --manifest-path "$repo_root/Cargo.toml" -p mixrelay-hal-bundle -- --output "$driver_root"
-cargo build --manifest-path "$repo_root/Cargo.toml" -p mixrelay-service
+cargo run --manifest-path "$repo_root/Cargo.toml" -p mixrelay-macos-hal-bundle -- --output "$driver_root"
+cargo build --manifest-path "$repo_root/Cargo.toml" -p mixrelay-engine-service
 
 plutil -create xml1 "$service_plist"
 plutil -insert Label -string "io.mixrelay.audio.engine" "$service_plist"

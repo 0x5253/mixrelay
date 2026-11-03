@@ -1,8 +1,8 @@
 //! Control-side graph-driver monitoring and failure classification after native drain.
 use super::{clock, processing::LinuxProcessState};
 use crate::processing_failure::{Failure, FailureMailbox};
-use mixrelay_engine::session::AdapterRuntimeStatus;
-use mixrelay_pipewire::{DriverProcessFailure, GraphDriver};
+use mixrelay_engine_core::session::AdapterRuntimeStatus;
+use mixrelay_linux_pipewire::{DriverProcessFailure, GraphDriver};
 use std::{
     thread,
     time::{Duration, Instant},

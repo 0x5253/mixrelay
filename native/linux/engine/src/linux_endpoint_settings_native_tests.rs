@@ -55,7 +55,7 @@ fn set_width_and_name(session: &Session, channels: u16, name: &str) {
 
 fn stream_for(id: &str, side: &str, role: StreamRole<'_>, channels: u16) -> NativeStream {
     let stream = NativeStream::open_format(
-        &mixrelay_pipewire::StreamOwners::default(),
+        &mixrelay_linux_pipewire::StreamOwners::default(),
         &format!("lab.settings-{side}"),
         "Owned endpoint settings observer",
         role,

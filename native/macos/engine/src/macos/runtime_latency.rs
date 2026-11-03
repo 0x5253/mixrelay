@@ -6,8 +6,8 @@ use crate::macos_devices::{
 };
 use application::append_observations;
 pub(super) use application::record_sources;
-use mixrelay_audio_engine::{ProcessorExchange, RenderPlan, content_latency::LatencyHysteresis};
-use mixrelay_driver_control::{EngineLatencyLease, LatencyCommand, RuntimeLatency};
+use mixrelay_driver_core::{EngineLatencyLease, LatencyCommand, RuntimeLatency};
+use mixrelay_render::{ProcessorExchange, RenderPlan, content_latency::LatencyHysteresis};
 use std::collections::BTreeMap;
 use std::sync::Arc;
 use tokio::{sync::oneshot, task::JoinHandle};
@@ -15,12 +15,12 @@ use tokio::{sync::oneshot, task::JoinHandle};
 /// Driver publication consumed by the native latency observer.
 pub trait LatencyPublication: Send + Sync {
     /// Reads the current Driver endpoints without changing their native format.
-    fn snapshot(&self) -> PublicationFuture<'_, mixrelay_driver_control::DriverSnapshot>;
+    fn snapshot(&self) -> PublicationFuture<'_, mixrelay_driver_core::DriverSnapshot>;
     /// Claims, updates or releases this engine's measured latency lease.
     fn publish_latency<'a>(
         &'a self,
         request: &'a LatencyCommand,
-    ) -> PublicationFuture<'a, mixrelay_driver_control::LatencyReply>;
+    ) -> PublicationFuture<'a, mixrelay_driver_core::LatencyReply>;
 }
 
 /// Original transport failures returned by the application composition adapter.
@@ -374,11 +374,11 @@ fn destination_arrivals(
     plan.measured_destination_arrivals(sources, threshold_ns)
         .map_err(arrival_failure)
 }
-fn arrival_failure(error: mixrelay_audio_engine::ArrivalError) -> (bool, String) {
+fn arrival_failure(error: mixrelay_render::ArrivalError) -> (bool, String) {
     match error {
         // Overlapping the audio thread disturbs this window; it is not unknown.
-        mixrelay_audio_engine::ArrivalError::Contended => (true, "arrival read contended".into()),
-        mixrelay_audio_engine::ArrivalError::Invalid(reason) => {
+        mixrelay_render::ArrivalError::Contended => (true, "arrival read contended".into()),
+        mixrelay_render::ArrivalError::Invalid(reason) => {
             (false, format!("arrival invalid: {reason}"))
         }
     }
@@ -565,10 +565,10 @@ pub(crate) mod tests {
         RenderPlan::prepare(&feedback_execution()).unwrap()
     }
     pub(crate) fn feedback_processor(
-        factory: &dyn mixrelay_audio_engine::HostedProcessorFactory,
-        meters: Arc<mixrelay_audio_engine::PeakMeterBank>,
-    ) -> mixrelay_audio_engine::BlockProcessor {
-        mixrelay_audio_engine::BlockProcessor::prepare_with_hosted_processors(
+        factory: &dyn mixrelay_render::HostedProcessorFactory,
+        meters: Arc<mixrelay_render::PeakMeterBank>,
+    ) -> mixrelay_render::BlockProcessor {
+        mixrelay_render::BlockProcessor::prepare_with_hosted_processors(
             &feedback_execution(),
             meters,
             factory,
@@ -707,12 +707,12 @@ pub(crate) mod tests {
 
     #[test]
     fn canonical_snapshot_route_publishes_measured_source_plus_prepared_quantum() {
-        use mixrelay_audio_engine::BlockProcessor;
         use mixrelay_audio_io::residence::ResidenceSnapshot;
+        use mixrelay_render::BlockProcessor;
         let composed = canonical_snapshot_route();
         let mut processor = BlockProcessor::prepare_with_hosted_processors(
             &composed.execution,
-            Arc::new(mixrelay_audio_engine::PeakMeterBank::new(32, 64)),
+            Arc::new(mixrelay_render::PeakMeterBank::new(32, 64)),
             &crate::macos_devices::latency::tests::Factory,
         )
         .unwrap();
@@ -778,7 +778,7 @@ pub(crate) mod tests {
 
     #[test]
     fn control_edits_keep_topology_measurements_and_publish_applied_control_revision() {
-        use mixrelay_audio_engine::{BlockProcessor, RuntimeControlUpdate};
+        use mixrelay_render::{BlockProcessor, RuntimeControlUpdate};
         let plan = Arc::new(feedback_plan());
         let exchange = ProcessorExchange::new(plan.revision());
         let mut processor = Box::new(BlockProcessor::new(Arc::clone(&plan)).unwrap());
@@ -997,11 +997,11 @@ pub(crate) mod tests {
     #[test]
     fn arrival_contention_disturbs_while_an_invalid_request_is_unknown() {
         assert_eq!(
-            arrival_failure(mixrelay_audio_engine::ArrivalError::Contended),
+            arrival_failure(mixrelay_render::ArrivalError::Contended),
             (true, "arrival read contended".into())
         );
         assert_eq!(
-            arrival_failure(mixrelay_audio_engine::ArrivalError::Invalid("size".into())),
+            arrival_failure(mixrelay_render::ArrivalError::Invalid("size".into())),
             (false, "arrival invalid: size".into())
         );
     }

@@ -42,7 +42,7 @@ fn native_endpoint_transfer_preserves_owners_and_bounds_rt_storage() {
     ])
     .unwrap();
     let mut first = EndpointSet::prepare(
-        &mixrelay_pipewire::StreamOwners::default(),
+        &mixrelay_linux_pipewire::StreamOwners::default(),
         &one,
         &EndpointSpecs::new(),
         format,
@@ -54,7 +54,7 @@ fn native_endpoint_transfer_preserves_owners_and_bounds_rt_storage() {
     assert_eq!(serials.len(), 4);
     assert_eq!(silence_bytes(&first), 32 * 128 * 4);
     let mut added = EndpointSet::prepare(
-        &mixrelay_pipewire::StreamOwners::default(),
+        &mixrelay_linux_pipewire::StreamOwners::default(),
         &two,
         &one,
         format,
@@ -82,7 +82,7 @@ fn native_endpoint_transfer_preserves_owners_and_bounds_rt_storage() {
     .unwrap();
     assert!(
         EndpointSet::prepare(
-            &mixrelay_pipewire::StreamOwners::default(),
+            &mixrelay_linux_pipewire::StreamOwners::default(),
             &invalid,
             &two,
             format,
@@ -97,7 +97,7 @@ fn native_endpoint_transfer_preserves_owners_and_bounds_rt_storage() {
     );
 
     let mut reduced = EndpointSet::prepare(
-        &mixrelay_pipewire::StreamOwners::default(),
+        &mixrelay_linux_pipewire::StreamOwners::default(),
         &one,
         &two,
         format,

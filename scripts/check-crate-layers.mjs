@@ -15,12 +15,12 @@ const FOUNDATION = [
   'mixrelay-time',
   'mixrelay-local-socket',
   'mixrelay-processor-state',
-  'mixrelay-engine-process',
+  'mixrelay-engine-supervisor',
   'mixrelay-midi-control',
 ];
-const MODELS = ['mixrelay-audio-graph', 'mixrelay-audio-recorder', 'mixrelay-audio-engine'];
-const CONTRACTS = ['mixrelay-control-protocol', 'mixrelay-driver-control'];
-const DOMAIN = ['mixrelay-engine'];
+const MODELS = ['mixrelay-audio-graph', 'mixrelay-audio-recorder', 'mixrelay-render'];
+const CONTRACTS = ['mixrelay-control-protocol', 'mixrelay-driver-core'];
+const DOMAIN = ['mixrelay-engine-core'];
 const PLUGIN_FORMATS = ['truce-rack-core', 'truce-rack-clap', 'truce-rack-vst3'];
 /** Every non-app crate; apps may use any of them ("앱 외 전부"). Test support stays dev-only. */
 const ALL_BUT_APPS = Symbol('all but apps');
@@ -46,41 +46,41 @@ export const CRATES = {
   'mixrelay-realtime': { layer: 'foundation', allows: [] },
   'mixrelay-local-socket': { layer: 'foundation', allows: [] },
   'mixrelay-processor-state': { layer: 'foundation', allows: [] },
-  'mixrelay-engine-process': { layer: 'foundation', allows: ['mixrelay-time'] },
+  'mixrelay-engine-supervisor': { layer: 'foundation', allows: ['mixrelay-time'] },
   'mixrelay-time': { layer: 'foundation', allows: [] },
   'mixrelay-audio-graph': { layer: 'model', allows: FOUNDATION },
   'mixrelay-audio-recorder': { layer: 'model', allows: FOUNDATION },
-  'mixrelay-audio-engine': { layer: 'model', allows: [...FOUNDATION, 'mixrelay-audio-graph'] },
+  'mixrelay-render': { layer: 'model', allows: [...FOUNDATION, 'mixrelay-audio-graph'] },
   'mixrelay-control-protocol': { layer: 'contract', allows: [...FOUNDATION, ...MODELS] },
-  'mixrelay-driver-control': { layer: 'contract', allows: FOUNDATION },
-  'mixrelay-engine': { layer: 'domain', allows: [...FOUNDATION, ...MODELS, ...CONTRACTS] },
-  'mixrelay-engine-runtime': { layer: 'native', allows: engineAdapter() },
-  'mixrelay-desktop-application': { layer: 'domain', allows: ['mixrelay-time', 'mixrelay-audio-io', 'mixrelay-control-protocol', 'mixrelay-driver-control', 'mixrelay-audio-graph', 'mixrelay-midi-control'] },
+  'mixrelay-driver-core': { layer: 'contract', allows: FOUNDATION },
+  'mixrelay-engine-core': { layer: 'domain', allows: [...FOUNDATION, ...MODELS, ...CONTRACTS] },
+  'mixrelay-engine-host': { layer: 'native', allows: engineAdapter() },
+  'mixrelay-desktop-core': { layer: 'domain', allows: ['mixrelay-time', 'mixrelay-audio-io', 'mixrelay-control-protocol', 'mixrelay-driver-core', 'mixrelay-audio-graph', 'mixrelay-midi-control'] },
   'mixrelay-macos-audio-io': { layer: 'macos', allows: ['mixrelay-audio-io'] },
-  'mixrelay-macos-engine': { layer: 'macos', allows: engineAdapter('mixrelay-engine-runtime', 'mixrelay-macos-transport', 'mixrelay-macos-audio-io', 'mixrelay-process-tap') },
-  'mixrelay-linux-engine': { layer: 'linux', allows: engineAdapter('mixrelay-engine-runtime', 'mixrelay-linux-driver', 'mixrelay-linux-audio-io', 'mixrelay-pipewire'), devAllows: ['mixrelay-driver-adapters'] },
+  'mixrelay-macos-engine': { layer: 'macos', allows: engineAdapter('mixrelay-engine-host', 'mixrelay-macos-transport', 'mixrelay-macos-audio-io', 'mixrelay-macos-process-tap') },
+  'mixrelay-linux-engine': { layer: 'linux', allows: engineAdapter('mixrelay-engine-host', 'mixrelay-linux-driver', 'mixrelay-linux-audio-io', 'mixrelay-linux-pipewire'), devAllows: ['mixrelay-driver-adapters'] },
   'mixrelay-linux-audio-io': { layer: 'linux', allows: ['mixrelay-audio-io', 'mixrelay-time'] },
-  'mixrelay-driver-adapters': { layer: 'service', allows: [...FOUNDATION, 'mixrelay-driver-control'] },
+  'mixrelay-driver-adapters': { layer: 'service', allows: [...FOUNDATION, 'mixrelay-driver-core'] },
   'mixrelay-control-server': { layer: 'service', allows: [...FOUNDATION, ...MODELS, ...CONTRACTS] },
   // The table's known exception: plugin descriptors and editor frames live in the protocol.
   'mixrelay-processor-host': { layer: 'service', allows: [...FOUNDATION, ...MODELS, 'mixrelay-control-protocol', ...PLUGIN_FORMATS] },
   'mixrelay-macos-transport': { layer: 'macos', allows: FOUNDATION },
-  'mixrelay-hal-core': { layer: 'macos', allows: [...FOUNDATION, 'mixrelay-macos-transport'] },
-  'mixrelay-process-tap': { layer: 'macos', allows: [...FOUNDATION, 'mixrelay-macos-transport'] },
+  'mixrelay-macos-hal': { layer: 'macos', allows: [...FOUNDATION, 'mixrelay-macos-transport'] },
+  'mixrelay-macos-process-tap': { layer: 'macos', allows: [...FOUNDATION, 'mixrelay-macos-transport'] },
   'mixrelay-macos-driver': { layer: 'macos', allows: [...FOUNDATION, ...CONTRACTS, 'mixrelay-macos-transport'] },
   'mixrelay-macos-installer': { layer: 'macos', allows: [...FOUNDATION, ...CONTRACTS, 'mixrelay-driver-adapters'] },
-  'mixrelay-hal-bundle': { layer: 'macos', allows: [] },
-  'mixrelay-pipewire': { layer: 'linux', allows: FOUNDATION },
-  'mixrelay-linux-driver': { layer: 'linux', allows: [...FOUNDATION, ...CONTRACTS, 'mixrelay-pipewire', 'mixrelay-linux-audio-io'] },
-  'mixrelay-service': { layer: 'app', allows: ALL_BUT_APPS },
+  'mixrelay-macos-hal-bundle': { layer: 'macos', allows: [] },
+  'mixrelay-linux-pipewire': { layer: 'linux', allows: FOUNDATION },
+  'mixrelay-linux-driver': { layer: 'linux', allows: [...FOUNDATION, ...CONTRACTS, 'mixrelay-linux-pipewire', 'mixrelay-linux-audio-io'] },
+  'mixrelay-engine-service': { layer: 'app', allows: ALL_BUT_APPS },
   'mixrelay-driver-service': { layer: 'app', allows: ALL_BUT_APPS },
-  'mixrelay-desktop': { layer: 'app', allows: ALL_BUT_APPS },
+  'mixrelay-desktop-shell': { layer: 'app', allows: ALL_BUT_APPS },
   'mixrelay-test-support': { layer: 'test', allows: [] },
   'mixrelay-macos-test-support': { layer: 'test', allows: [] },
   // tests/fixtures/*
   'mixrelay-native-clap-fixture': { layer: 'test', allows: [] },
   // A diagnostic preload with no workspace deps.
-  'mixrelay-pipewire-observer': { layer: 'test', allows: [] },
+  'mixrelay-linux-pipewire-observer': { layer: 'test', allows: [] },
   // Vendored plugin formats.
   'truce-rack-core': { layer: 'vendor', allows: [] },
   'truce-rack-clap': { layer: 'vendor', allows: ['truce-rack-core'] },

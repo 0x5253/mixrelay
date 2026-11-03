@@ -133,8 +133,8 @@ function fixture(t) {
   copyFileSync(new URL("./macos-minimum.mjs", import.meta.url), join(root, "scripts/macos-minimum.mjs"));
   mkdirSync(join(root, "support"), { recursive: true });
   copyFileSync(new URL("../support/environments.json", import.meta.url), join(root, "support/environments.json"));
-  mkdirSync(join(root, "apps/desktop/src-tauri"), { recursive: true });
-  copyFileSync(new URL("../apps/desktop/src-tauri/tauri.conf.json", import.meta.url), join(root, "apps/desktop/src-tauri/tauri.conf.json"));
+  mkdirSync(join(root, "apps/desktop-shell/src-tauri"), { recursive: true });
+  copyFileSync(new URL("../apps/desktop-shell/src-tauri/tauri.conf.json", import.meta.url), join(root, "apps/desktop-shell/src-tauri/tauri.conf.json"));
   chmodSync(script, 0o755);
   const entitlements = join(root, "native/macos/service/Engine.entitlements.plist");
   mkdirSync(join(root, "native/macos/service"), { recursive: true });

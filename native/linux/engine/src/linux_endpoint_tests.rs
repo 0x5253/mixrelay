@@ -44,7 +44,7 @@ impl DriverFixture {
         assert!(std::env::var_os("MIXRELAY_LAB_DEVICE_FIXTURE").is_some());
         let client = mixrelay_driver_adapters::DriverClient::new().unwrap();
         let mut snapshot = client.snapshot_blocking().unwrap();
-        assert_eq!(snapshot.state, mixrelay_driver_control::DriverState::Ready);
+        assert_eq!(snapshot.state, mixrelay_driver_core::DriverState::Ready);
         for id in [A, B] {
             assert!(
                 !snapshot
@@ -59,7 +59,7 @@ impl DriverFixture {
         for id in [A, B] {
             snapshot = fixture
                 .0
-                .mutate_blocking(&mixrelay_driver_control::DriverCommand::Create {
+                .mutate_blocking(&mixrelay_driver_core::DriverCommand::Create {
                     expected_revision: snapshot.revision,
                     spec: device_spec(id),
                 })
@@ -76,7 +76,7 @@ impl Drop for DriverFixture {
         for id in &self.1 {
             let result = self.0.snapshot_blocking().and_then(|snapshot| {
                 self.0
-                    .mutate_blocking(&mixrelay_driver_control::DriverCommand::Remove {
+                    .mutate_blocking(&mixrelay_driver_core::DriverCommand::Remove {
                         expected_revision: snapshot.revision,
                         endpoint_id: (*id).into(),
                     })
@@ -93,7 +93,7 @@ fn configure_driver(spec: VirtualEndpointSpec) {
     let client = mixrelay_driver_adapters::DriverClient::new().unwrap();
     let snapshot = client.snapshot_blocking().unwrap();
     client
-        .mutate_blocking(&mixrelay_driver_control::DriverCommand::Configure {
+        .mutate_blocking(&mixrelay_driver_core::DriverCommand::Configure {
             expected_revision: snapshot.revision,
             spec,
         })
@@ -123,7 +123,7 @@ fn identities_are_not_aliased_by_punctuation_labels_or_graph_names() {
 #[test]
 fn empty_inventory_needs_no_server_and_unavailable_reads_are_silent() {
     let mut set = EndpointSet::prepare(
-        &mixrelay_pipewire::StreamOwners::default(),
+        &mixrelay_linux_pipewire::StreamOwners::default(),
         &EndpointSpecs::new(),
         &EndpointSpecs::new(),
         render_format(),
@@ -140,7 +140,7 @@ fn empty_inventory_needs_no_server_and_unavailable_reads_are_silent() {
 #[cfg(feature = "native-lab")]
 struct Session {
     // Drain the production callback before dropping its controller/native owners.
-    _worker: mixrelay_engine_runtime::AudioWorker,
+    _worker: mixrelay_engine_host::AudioWorker,
     controller: Arc<EngineGraphController>,
     exchange: Arc<ProcessorExchange>,
     backend: Arc<LinuxVirtualEndpointBackend>,
@@ -158,7 +158,7 @@ impl Session {
             )
             .with_graph_format_control(),
         );
-        let config = mixrelay_engine::test_util::configuration(render_format());
+        let config = mixrelay_engine_core::test_util::configuration(render_format());
         let meters = config.meters.clone();
         let processor =
             create_initial_processor(&document, meters.clone(), render_format()).unwrap();
@@ -177,14 +177,14 @@ impl Session {
                     graph_resources: backend.clone(),
                     runtime_status: status.clone(),
 
-                    documents: Arc::new(mixrelay_engine_runtime::document_files::DiskDocuments),
-                    incarnation: mixrelay_engine_runtime::identity::new_incarnation(),
+                    documents: Arc::new(mixrelay_engine_host::document_files::DiskDocuments),
+                    incarnation: mixrelay_engine_host::identity::new_incarnation(),
                     ..config
                 },
                 document,
             )
             .with_graph_catalog_path(
-                mixrelay_engine_runtime::persistence::config_directory()
+                mixrelay_engine_host::persistence::config_directory()
                     .unwrap()
                     .join("graphs.json"),
             ),
@@ -197,7 +197,7 @@ impl Session {
                 .expect("native PipeWire worker failed");
         });
         Self {
-            _worker: mixrelay_engine_runtime::AudioWorker::new(status, thread),
+            _worker: mixrelay_engine_host::AudioWorker::new(status, thread),
             controller,
             exchange,
             backend,
@@ -399,7 +399,7 @@ fn reader(id: &str) -> NativeStream {
 #[cfg(feature = "native-lab")]
 fn capture_target(target: &str) -> NativeStream {
     let stream = NativeStream::open_format(
-        &mixrelay_pipewire::StreamOwners::default(),
+        &mixrelay_linux_pipewire::StreamOwners::default(),
         "lab.capture-reader",
         "Owned capture observer",
         StreamRole::DeviceInput(target),

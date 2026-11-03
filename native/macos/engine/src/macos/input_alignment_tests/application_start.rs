@@ -311,8 +311,8 @@ impl ExternalIo for Racing<'_, '_> {
     fn begin_cycle(
         &mut self,
         cycle: &ProcessCycle,
-        controls: mixrelay_audio_engine::ExternalControlState<'_>,
-    ) -> mixrelay_audio_engine::CycleAdmission {
+        controls: mixrelay_render::ExternalControlState<'_>,
+    ) -> mixrelay_render::CycleAdmission {
         if std::mem::take(&mut self.race) {
             self.publish();
         }

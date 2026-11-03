@@ -25,7 +25,7 @@ test("macOS defaults exclusively to the checked universal build", () => {
 });
 
 test("one public bundle supplies the editor and internal background runtime", () => {
-  const config = JSON.parse(readFileSync(new URL("../apps/desktop/src-tauri/tauri.conf.json", import.meta.url), "utf8"));
+  const config = JSON.parse(readFileSync(new URL("../apps/desktop-shell/src-tauri/tauri.conf.json", import.meta.url), "utf8"));
   assert.equal(config.productName, "MixRelay");
   assert.equal(config.identifier, "io.mixrelay.desktop");
   assert.match(config.build.beforeBuildCommand, /desktop:prepare-driver --profile release/);
@@ -67,7 +67,7 @@ test("build runs from the repository and propagates its exit status", async () =
 
 test("native Tauri builds run in the desktop package without a shell", async () => {
   await main(["--no-bundle"], "linux", (_command, _args, options) => {
-    assert.equal(options.cwd, fileURLToPath(new URL("../apps/desktop", import.meta.url)));
+    assert.equal(options.cwd, fileURLToPath(new URL("../apps/desktop-shell", import.meta.url)));
     assert.equal(options.shell, undefined);
     return { status: 0 };
   });
@@ -251,7 +251,7 @@ test("successful Linux Debian build inspects its single produced artifact before
   });
   assert.equal(status, 0);
   assert.equal(calls.length, 1);
-  assert.equal(calls[0].options.cwd, fileURLToPath(new URL("../apps/desktop", import.meta.url)));
+  assert.equal(calls[0].options.cwd, fileURLToPath(new URL("../apps/desktop-shell", import.meta.url)));
   assert.deepEqual(inspected, ["/fixture/MixRelay_0.1.0_amd64.deb"]);
 });
 

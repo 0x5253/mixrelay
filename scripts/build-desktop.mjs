@@ -8,7 +8,7 @@ import { inspectPackage } from "./check-linux-package.mjs";
 import { loadContract, checkGenerated } from './support-contract.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const desktopRoot = resolve(root, "apps/desktop");
+const desktopRoot = resolve(root, "apps/desktop-shell");
 const require = createRequire(import.meta.url);
 const LINUX_BUNDLE_FORMATS = new Set(["deb", "rpm"]);
 export function desktopBuildCommand(platform, args = []) {

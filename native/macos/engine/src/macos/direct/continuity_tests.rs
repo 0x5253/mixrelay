@@ -1,10 +1,10 @@
 use super::*;
-use mixrelay_audio_engine::ProcessorExchange;
 use mixrelay_audio_graph::{
     CompileContext, CompileLimits, GainConfig, GraphCompiler, GraphDocument, NodeConfig, NodeSpec,
     RenderFormat,
 };
-use mixrelay_engine::{RuntimeStatusBackend, session::AdapterRuntimeStatus};
+use mixrelay_engine_core::{RuntimeStatusBackend, session::AdapterRuntimeStatus};
+use mixrelay_render::ProcessorExchange;
 use std::sync::Arc;
 
 struct ControlFixture {

@@ -3,13 +3,13 @@
 mod tests;
 use super::endpoint_service;
 use crate::macos_pacing::Publication;
-use mixrelay_audio_engine::{ExternalBinding, ExternalIo};
 use mixrelay_audio_io::capture_alignment::CaptureFrontier;
 use mixrelay_audio_io::process::{ProcessCycle, TransferOutcome};
 use mixrelay_macos_transport::{
     application_clock::ConsumerRoute,
     source_registry::{GraphCredit, ReadMiss},
 };
+use mixrelay_render::{ExternalBinding, ExternalIo};
 
 /// Time-addressed source reads without PCM, by reason, and the shared-cursor
 /// reacquisitions they caused. Plain counters owned by the graph worker thread.
@@ -125,8 +125,8 @@ impl ExternalIo for MacEngineExternalIo<'_> {
     fn begin_cycle(
         &mut self,
         cycle: &ProcessCycle,
-        controls: mixrelay_audio_engine::ExternalControlState<'_>,
-    ) -> mixrelay_audio_engine::CycleAdmission {
+        controls: mixrelay_render::ExternalControlState<'_>,
+    ) -> mixrelay_render::CycleAdmission {
         self.host = self.devices.graph_host();
         for (binding, enabled) in controls.sources() {
             self.devices
@@ -200,7 +200,7 @@ impl ExternalIo for MacEngineExternalIo<'_> {
         } else {
             None
         };
-        mixrelay_audio_engine::CycleAdmission::Process
+        mixrelay_render::CycleAdmission::Process
     }
 
     fn read_source(
@@ -293,7 +293,7 @@ impl ExternalIo for MacEngineExternalIo<'_> {
 }
 
 /// Publishes how this plan uses each virtual source to its producer.
-fn publish_routes(controls: &mixrelay_audio_engine::ExternalControlState<'_>, head: Option<u64>) {
+fn publish_routes(controls: &mixrelay_render::ExternalControlState<'_>, head: Option<u64>) {
     if let Some(sources) = endpoint_service::virtual_source_registry() {
         for (token, route) in plan_routes(controls.sources(), head) {
             sources.set_consumer_route(token, route);

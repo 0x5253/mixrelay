@@ -14,17 +14,17 @@ native-lab = []
 test-util = ["mixrelay-macos-transport/test-observation", "mixrelay-time/test-util"]
 
 [dependencies]
-mixrelay-engine = { path = "../../../crates/engine" }
-mixrelay-engine-runtime = { path = "../../common/engine-runtime" }
-mixrelay-audio-engine = { path = "../../../crates/audio-engine" }
+mixrelay-engine-core = { path = "../../../crates/engine-core" }
+mixrelay-engine-host = { path = "../../common/engine-host" }
+mixrelay-render = { path = "../../../crates/render" }
 mixrelay-audio-graph = { path = "../../../crates/audio-graph" }
 mixrelay-audio-io.workspace = true
 mixrelay-control-protocol = { path = "../../../crates/control-protocol" }
-mixrelay-driver-control = { path = "../../../crates/driver-control" }
+mixrelay-driver-core = { path = "../../../crates/driver-core" }
 mixrelay-time = { path = "../../../crates/time" }
 mixrelay-realtime = { path = "../../../crates/realtime" }
 mixrelay-pcm-ring = { path = "../../pcm-ring" }
-mixrelay-macos-transport = { path = "../common" }
+mixrelay-macos-transport = { path = "../transport" }
 mixrelay-macos-audio-io = { path = "../audio-io" }
 parking_lot.workspace = true
 thiserror.workspace = true
@@ -43,4 +43,4 @@ allocation-counter = "0.8.1"
 mixrelay-time = { path = "../../../crates/time", features = ["test-util"] }
 mixrelay-test-support = { path = "../../../crates/test-support" }
 mixrelay-macos-test-support = { path = "../../../crates/macos-test-support" }
-mixrelay-macos-transport = { path = "../common", features = ["test-observation"] }
+mixrelay-macos-transport = { path = "../transport", features = ["test-observation"] }

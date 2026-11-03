@@ -105,7 +105,7 @@ extern "C" fn initialize() {
         .unwrap_or("");
     // The test runner's inventory/ps/kill children inherit LD_PRELOAD, but are
     // not audio clients and do not allocate or publish an observer journal.
-    if !(name.starts_with("mixrelay_service-")
+    if !(name.starts_with("mixrelay_linux_engine-")
         || name.starts_with("mixrelay_linux_driver-")
         || matches!(name, "application-fixture" | "pw-cat" | "pw-record"))
     {

@@ -10,8 +10,8 @@ import { validateProductMetadata } from './core/product-metadata-policy.mjs';
 test('support metadata generates npm, Cargo and Tauri fields and detects drift', t => {
   const directory = mkdtempSync(join(tmpdir(), 'mixrelay-metadata-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
-  for (const name of ['package.json', 'apps/control-ui/package.json', 'apps/desktop/package.json',
-    'apps/streamdeck-plugin/package.json', 'Cargo.toml', 'apps/desktop/src-tauri/tauri.conf.json']) {
+  for (const name of ['package.json', 'apps/control-ui/package.json', 'apps/desktop-shell/package.json',
+    'apps/streamdeck-plugin/package.json', 'Cargo.toml', 'apps/desktop-shell/src-tauri/tauri.conf.json']) {
     mkdirSync(dirname(join(directory, name)), { recursive: true });
     cpSync(new URL(`../${name}`, import.meta.url), join(directory, name));
   }
@@ -22,11 +22,11 @@ test('support metadata generates npm, Cargo and Tauri fields and detects drift',
   const cargo = readFileSync(join(directory, 'Cargo.toml'), 'utf8');
   assert.match(cargo, /authors = \["Different Publisher <other@rawsector.com>"\]/);
   assert.ok(cargo.includes(`homepage = "${metadata.homepage}"`));
-  const npm = JSON.parse(readFileSync(join(directory, 'apps/desktop/package.json')));
+  const npm = JSON.parse(readFileSync(join(directory, 'apps/desktop-shell/package.json')));
   assert.equal(npm.author, 'Different Publisher <other@rawsector.com>');
   assert.equal(npm.homepage, metadata.homepage);
   assert.equal(npm.repository, undefined);
-  const tauri = JSON.parse(readFileSync(join(directory, 'apps/desktop/src-tauri/tauri.conf.json')));
+  const tauri = JSON.parse(readFileSync(join(directory, 'apps/desktop-shell/src-tauri/tauri.conf.json')));
   assert.equal(tauri.bundle.publisher, metadata.publisher);
   assert.equal(tauri.bundle.homepage, metadata.homepage);
   writeFileSync(join(directory, 'Cargo.toml'), cargo.replace(/^authors = .*$/m, 'authors = ["MixRelay"]'));

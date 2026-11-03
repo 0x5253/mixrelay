@@ -2641,18 +2641,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mixrelay-audio-engine"
-version = "0.1.0"
-dependencies = [
- "mixrelay-audio-graph",
- "mixrelay-audio-io",
- "mixrelay-test-support",
- "parking_lot",
- "serde_json",
- "thiserror 2.0.20",
-]
-
-[[package]]
 name = "mixrelay-audio-graph"
 version = "0.1.0"
 dependencies = [
@@ -2721,7 +2709,26 @@ dependencies = [
 ]
 
 [[package]]
-name = "mixrelay-desktop"
+name = "mixrelay-desktop-core"
+version = "0.1.0"
+dependencies = [
+ "mixrelay-audio-graph",
+ "mixrelay-audio-io",
+ "mixrelay-control-protocol",
+ "mixrelay-driver-core",
+ "mixrelay-midi-control",
+ "mixrelay-test-support",
+ "mixrelay-time",
+ "semver",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+ "tokio",
+ "url",
+]
+
+[[package]]
+name = "mixrelay-desktop-shell"
 version = "0.1.0"
 dependencies = [
  "alsa",
@@ -2732,16 +2739,16 @@ dependencies = [
  "mixrelay-audio-graph",
  "mixrelay-audio-io",
  "mixrelay-control-protocol",
- "mixrelay-desktop-application",
+ "mixrelay-desktop-core",
  "mixrelay-driver-adapters",
- "mixrelay-driver-control",
- "mixrelay-engine-process",
+ "mixrelay-driver-core",
+ "mixrelay-engine-supervisor",
  "mixrelay-linux-audio-io",
  "mixrelay-local-socket",
  "mixrelay-macos-audio-io",
+ "mixrelay-macos-process-tap",
  "mixrelay-macos-transport",
  "mixrelay-midi-control",
- "mixrelay-process-tap",
  "mixrelay-realtime",
  "mixrelay-test-support",
  "mixrelay-time",
@@ -2765,31 +2772,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "mixrelay-desktop-application"
-version = "0.1.0"
-dependencies = [
- "mixrelay-audio-graph",
- "mixrelay-audio-io",
- "mixrelay-control-protocol",
- "mixrelay-driver-control",
- "mixrelay-midi-control",
- "mixrelay-test-support",
- "mixrelay-time",
- "semver",
- "serde",
- "serde_json",
- "thiserror 2.0.20",
- "tokio",
- "url",
-]
-
-[[package]]
 name = "mixrelay-driver-adapters"
 version = "0.1.0"
 dependencies = [
  "axum",
  "mixrelay-audio-io",
- "mixrelay-driver-control",
+ "mixrelay-driver-core",
  "mixrelay-local-socket",
  "mixrelay-test-support",
  "parking_lot",
@@ -2802,7 +2790,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "mixrelay-driver-control"
+name = "mixrelay-driver-core"
 version = "0.1.0"
 dependencies = [
  "mixrelay-audio-io",
@@ -2823,7 +2811,7 @@ dependencies = [
  "axum",
  "libc",
  "mixrelay-driver-adapters",
- "mixrelay-driver-control",
+ "mixrelay-driver-core",
  "mixrelay-linux-driver",
  "mixrelay-local-socket",
  "mixrelay-macos-driver",
@@ -2835,16 +2823,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "mixrelay-engine"
+name = "mixrelay-engine-core"
 version = "0.1.0"
 dependencies = [
  "allocation-counter",
- "mixrelay-audio-engine",
  "mixrelay-audio-graph",
  "mixrelay-audio-io",
  "mixrelay-control-protocol",
- "mixrelay-driver-control",
+ "mixrelay-driver-core",
  "mixrelay-processor-state",
+ "mixrelay-render",
  "mixrelay-test-support",
  "mixrelay-time",
  "parking_lot",
@@ -2857,26 +2845,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "mixrelay-engine-process"
-version = "0.1.0"
-dependencies = [
- "mixrelay-time",
- "tempfile",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "mixrelay-engine-runtime"
+name = "mixrelay-engine-host"
 version = "0.1.0"
 dependencies = [
  "allocation-counter",
  "libc",
- "mixrelay-audio-engine",
  "mixrelay-audio-graph",
  "mixrelay-audio-io",
  "mixrelay-control-protocol",
- "mixrelay-engine",
+ "mixrelay-engine-core",
+ "mixrelay-render",
  "mixrelay-test-support",
  "serde",
  "serde_json",
@@ -2885,23 +2863,55 @@ dependencies = [
 ]
 
 [[package]]
-name = "mixrelay-hal-bundle"
-version = "0.1.0"
-dependencies = [
- "core-foundation-sys",
- "libc",
-]
-
-[[package]]
-name = "mixrelay-hal-core"
+name = "mixrelay-engine-service"
 version = "0.1.0"
 dependencies = [
  "allocation-counter",
- "cc",
+ "axum",
+ "mixrelay-audio-graph",
  "mixrelay-audio-io",
+ "mixrelay-audio-recorder",
+ "mixrelay-control-protocol",
+ "mixrelay-control-server",
+ "mixrelay-driver-adapters",
+ "mixrelay-driver-core",
+ "mixrelay-engine-core",
+ "mixrelay-engine-host",
+ "mixrelay-engine-supervisor",
+ "mixrelay-linux-engine",
+ "mixrelay-local-socket",
+ "mixrelay-macos-engine",
+ "mixrelay-macos-process-tap",
+ "mixrelay-macos-test-support",
  "mixrelay-macos-transport",
  "mixrelay-pcm-ring",
+ "mixrelay-processor-host",
+ "mixrelay-processor-state",
+ "mixrelay-realtime",
+ "mixrelay-render",
+ "mixrelay-test-support",
  "mixrelay-time",
+ "parking_lot",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror 2.0.20",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "truce-rack-clap",
+ "truce-rack-core",
+]
+
+[[package]]
+name = "mixrelay-engine-supervisor"
+version = "0.1.0"
+dependencies = [
+ "mixrelay-time",
+ "tempfile",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -2925,10 +2935,10 @@ version = "0.1.0"
 dependencies = [
  "allocation-counter",
  "mixrelay-audio-io",
- "mixrelay-driver-control",
+ "mixrelay-driver-core",
  "mixrelay-linux-audio-io",
+ "mixrelay-linux-pipewire",
  "mixrelay-pcm-ring",
- "mixrelay-pipewire",
  "mixrelay-time",
  "sha2",
  "thiserror 2.0.20",
@@ -2942,18 +2952,18 @@ dependencies = [
  "allocation-counter",
  "axum",
  "libc",
- "mixrelay-audio-engine",
  "mixrelay-audio-graph",
  "mixrelay-audio-io",
  "mixrelay-control-protocol",
  "mixrelay-driver-adapters",
- "mixrelay-driver-control",
- "mixrelay-engine",
- "mixrelay-engine-runtime",
+ "mixrelay-driver-core",
+ "mixrelay-engine-core",
+ "mixrelay-engine-host",
  "mixrelay-linux-audio-io",
  "mixrelay-linux-driver",
+ "mixrelay-linux-pipewire",
  "mixrelay-local-socket",
- "mixrelay-pipewire",
+ "mixrelay-render",
  "mixrelay-test-support",
  "mixrelay-time",
  "serde_json",
@@ -2961,6 +2971,34 @@ dependencies = [
  "thiserror 2.0.20",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "mixrelay-linux-pipewire"
+version = "0.1.0"
+dependencies = [
+ "allocation-counter",
+ "cc",
+ "mixrelay-audio-io",
+ "mixrelay-pcm-ring",
+ "mixrelay-test-support",
+ "mixrelay-time",
+ "pipewire",
+ "pkg-config",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+]
+
+[[package]]
+name = "mixrelay-linux-pipewire-observer"
+version = "0.1.0"
+dependencies = [
+ "allocation-counter",
+ "libc",
+ "pipewire",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -2989,7 +3027,7 @@ dependencies = [
  "cc",
  "libc",
  "mixrelay-audio-io",
- "mixrelay-driver-control",
+ "mixrelay-driver-core",
  "mixrelay-macos-transport",
  "mixrelay-time",
  "parking_lot",
@@ -3004,18 +3042,18 @@ dependencies = [
  "allocation-counter",
  "cc",
  "libc",
- "mixrelay-audio-engine",
  "mixrelay-audio-graph",
  "mixrelay-audio-io",
  "mixrelay-control-protocol",
- "mixrelay-driver-control",
- "mixrelay-engine",
- "mixrelay-engine-runtime",
+ "mixrelay-driver-core",
+ "mixrelay-engine-core",
+ "mixrelay-engine-host",
  "mixrelay-macos-audio-io",
  "mixrelay-macos-test-support",
  "mixrelay-macos-transport",
  "mixrelay-pcm-ring",
  "mixrelay-realtime",
+ "mixrelay-render",
  "mixrelay-test-support",
  "mixrelay-time",
  "parking_lot",
@@ -3028,6 +3066,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "mixrelay-macos-hal"
+version = "0.1.0"
+dependencies = [
+ "allocation-counter",
+ "cc",
+ "mixrelay-audio-io",
+ "mixrelay-macos-transport",
+ "mixrelay-pcm-ring",
+ "mixrelay-time",
+]
+
+[[package]]
+name = "mixrelay-macos-hal-bundle"
+version = "0.1.0"
+dependencies = [
+ "core-foundation-sys",
+ "libc",
+]
+
+[[package]]
 name = "mixrelay-macos-installer"
 version = "0.1.0"
 dependencies = [
@@ -3036,7 +3094,7 @@ dependencies = [
  "core-foundation",
  "libc",
  "mixrelay-driver-adapters",
- "mixrelay-driver-control",
+ "mixrelay-driver-core",
  "mixrelay-local-socket",
  "mixrelay-test-support",
  "mixrelay-time",
@@ -3050,6 +3108,18 @@ dependencies = [
  "thiserror 2.0.20",
  "tracing",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "mixrelay-macos-process-tap"
+version = "0.1.0"
+dependencies = [
+ "allocation-counter",
+ "cc",
+ "mixrelay-macos-transport",
+ "mixrelay-realtime",
+ "thiserror 2.0.20",
+ "tracing",
 ]
 
 [[package]]
@@ -3101,46 +3171,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mixrelay-pipewire"
-version = "0.1.0"
-dependencies = [
- "allocation-counter",
- "cc",
- "mixrelay-audio-io",
- "mixrelay-pcm-ring",
- "mixrelay-test-support",
- "mixrelay-time",
- "pipewire",
- "pkg-config",
- "serde",
- "serde_json",
- "thiserror 2.0.20",
-]
-
-[[package]]
-name = "mixrelay-pipewire-observer"
-version = "0.1.0"
-dependencies = [
- "allocation-counter",
- "libc",
- "pipewire",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "mixrelay-process-tap"
-version = "0.1.0"
-dependencies = [
- "allocation-counter",
- "cc",
- "mixrelay-macos-transport",
- "mixrelay-realtime",
- "thiserror 2.0.20",
- "tracing",
-]
-
-[[package]]
 name = "mixrelay-processor-host"
 version = "0.1.0"
 dependencies = [
@@ -3151,12 +3181,12 @@ dependencies = [
  "dispatch2",
  "libc",
  "memmap2",
- "mixrelay-audio-engine",
  "mixrelay-audio-graph",
  "mixrelay-audio-io",
  "mixrelay-control-protocol",
  "mixrelay-processor-state",
  "mixrelay-realtime",
+ "mixrelay-render",
  "mixrelay-test-support",
  "mixrelay-time",
  "objc2",
@@ -3195,45 +3225,15 @@ name = "mixrelay-realtime"
 version = "0.1.0"
 
 [[package]]
-name = "mixrelay-service"
+name = "mixrelay-render"
 version = "0.1.0"
 dependencies = [
- "allocation-counter",
- "axum",
- "mixrelay-audio-engine",
  "mixrelay-audio-graph",
  "mixrelay-audio-io",
- "mixrelay-audio-recorder",
- "mixrelay-control-protocol",
- "mixrelay-control-server",
- "mixrelay-driver-adapters",
- "mixrelay-driver-control",
- "mixrelay-engine",
- "mixrelay-engine-process",
- "mixrelay-engine-runtime",
- "mixrelay-linux-engine",
- "mixrelay-local-socket",
- "mixrelay-macos-engine",
- "mixrelay-macos-test-support",
- "mixrelay-macos-transport",
- "mixrelay-pcm-ring",
- "mixrelay-process-tap",
- "mixrelay-processor-host",
- "mixrelay-processor-state",
- "mixrelay-realtime",
  "mixrelay-test-support",
- "mixrelay-time",
  "parking_lot",
- "reqwest",
- "serde",
  "serde_json",
- "sha2",
  "thiserror 2.0.20",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "truce-rack-clap",
- "truce-rack-core",
 ]
 
 [[package]]

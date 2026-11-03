@@ -1,10 +1,8 @@
 //! Control-thread matching and audio-boundary ownership transfer for surviving plug-ins.
 
 use crate::{HostedProcessorControl, ProcessorControlRegistry, WORKER_READY};
-use mixrelay_audio_engine::{
-    HostedAudioProcessor, HostedLatencySource, HostedProcessorPrepareRequest,
-};
 use mixrelay_audio_graph::{ProviderNodeConfig, RenderFormat};
+use mixrelay_render::{HostedAudioProcessor, HostedLatencySource, HostedProcessorPrepareRequest};
 use std::sync::{Arc, Weak, atomic::Ordering};
 
 #[derive(Clone)]
@@ -77,7 +75,7 @@ impl HostedAudioProcessor for ReuseRequest {
         false
     }
 
-    fn reuse_identity(&self) -> Option<&mixrelay_audio_engine::HostedProcessorIdentity> {
+    fn reuse_identity(&self) -> Option<&mixrelay_render::HostedProcessorIdentity> {
         Some(&self.0.adoption_identity)
     }
 

@@ -93,11 +93,11 @@ fn service_rejections_keep_status_and_error_message() {
 #[tokio::test]
 async fn lifecycle_client_stops_real_http_inventory_and_reactivates_retained_settings() {
     let fixture = mixrelay_test_support::FixtureDir::ipc("drv").unwrap();
-    let (backend, observed) = mixrelay_driver_control::test_backend::FakeBackend::ready();
-    let manager = mixrelay_driver_control::DriverManager::open(
+    let (backend, observed) = mixrelay_driver_core::test_backend::FakeBackend::ready();
+    let manager = mixrelay_driver_core::DriverManager::open(
         backend,
-        mixrelay_driver_control::test_settings::MemorySettings::default(),
-        mixrelay_driver_control::test_runtime::runtime(),
+        mixrelay_driver_core::test_settings::MemorySettings::default(),
+        mixrelay_driver_core::test_runtime::runtime(),
     )
     .unwrap();
     let expected = observed.lock().settings.devices.clone();
@@ -114,24 +114,24 @@ async fn lifecycle_client_stops_real_http_inventory_and_reactivates_retained_set
 #[tokio::test]
 async fn absent_native_driver_can_quit_without_attempting_a_stop() {
     let fixture = mixrelay_test_support::FixtureDir::ipc("drv").unwrap();
-    let (backend, observed) = mixrelay_driver_control::test_backend::FakeBackend::ready();
-    observed.lock().state = mixrelay_driver_control::DriverState::NotInstalled;
-    let manager = mixrelay_driver_control::DriverManager::open(
+    let (backend, observed) = mixrelay_driver_core::test_backend::FakeBackend::ready();
+    observed.lock().state = mixrelay_driver_core::DriverState::NotInstalled;
+    let manager = mixrelay_driver_core::DriverManager::open(
         backend,
-        mixrelay_driver_control::test_settings::MemorySettings::default(),
-        mixrelay_driver_control::test_runtime::runtime(),
+        mixrelay_driver_core::test_settings::MemorySettings::default(),
+        mixrelay_driver_core::test_runtime::runtime(),
     )
     .unwrap();
     let (client, service) = serve(&fixture, crate::router(manager)).await;
     let absent = client.set_active(false).await.unwrap();
     assert_eq!(
         absent.state,
-        mixrelay_driver_control::DriverState::NotInstalled
+        mixrelay_driver_core::DriverState::NotInstalled
     );
     assert!(absent.settings.devices.is_empty());
     assert_eq!(observed.lock().applies, 0);
     // An installed but unloaded driver must not be treated as safely stopped.
-    observed.lock().state = mixrelay_driver_control::DriverState::InstalledNotLoaded;
+    observed.lock().state = mixrelay_driver_core::DriverState::InstalledNotLoaded;
     assert!(client.set_active(false).await.is_err());
     assert_eq!(observed.lock().applies, 0);
     service.abort();
@@ -157,11 +157,11 @@ async fn serve(
 #[tokio::test]
 async fn blocking_and_async_clients_share_socket_inventory_and_revision_errors() {
     let fixture = mixrelay_test_support::FixtureDir::ipc("drv").unwrap();
-    let (backend, observed) = mixrelay_driver_control::test_backend::FakeBackend::ready();
-    let manager = mixrelay_driver_control::DriverManager::open(
+    let (backend, observed) = mixrelay_driver_core::test_backend::FakeBackend::ready();
+    let manager = mixrelay_driver_core::DriverManager::open(
         backend,
-        mixrelay_driver_control::test_settings::MemorySettings::default(),
-        mixrelay_driver_control::test_runtime::runtime(),
+        mixrelay_driver_core::test_settings::MemorySettings::default(),
+        mixrelay_driver_core::test_runtime::runtime(),
     )
     .unwrap();
     let (client, service) = serve(&fixture, crate::router(manager)).await;
@@ -302,7 +302,7 @@ fn runtime_latency_replies_decode_and_rejections_stay_errors() {
             br#"{"accepted":true,"lease":null}"#
         )
         .unwrap(),
-        mixrelay_driver_control::LatencyReply {
+        mixrelay_driver_core::LatencyReply {
             accepted: true,
             lease: None
         }

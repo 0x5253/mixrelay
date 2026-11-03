@@ -7,7 +7,7 @@ import { once } from "node:events";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
-const source = fileURLToPath(new URL("../native/macos/common/MRDriverRuntimeLauncher.c", import.meta.url));
+const source = fileURLToPath(new URL("../native/macos/transport/MRDriverRuntimeLauncher.c", import.meta.url));
 
 function fixture(t) {
   const directory = mkdtempSync(join(tmpdir(), "mixrelay-launcher-test-"));

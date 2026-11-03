@@ -1,5 +1,5 @@
 [package]
-name = "mixrelay-pipewire"
+name = "mixrelay-linux-pipewire"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

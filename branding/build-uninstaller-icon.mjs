@@ -26,12 +26,12 @@ const work = fs.mkdtempSync(path.join(os.tmpdir(), 'mixrelay-uninstaller-icon-')
 try {
   const source = path.join(work, 'uninstaller-icon.svg');
   fs.writeFileSync(source, appIcon.replace(new RegExp(`fill="${red}"`, 'gi'), `fill="${ink}"`));
-  const result = spawnSync('pnpm', ['--filter', '@mixrelay/desktop', 'tauri', 'icon', source, '--output', path.join(work, 'icons')],
+  const result = spawnSync('pnpm', ['--filter', '@mixrelay/desktop-shell', 'tauri', 'icon', source, '--output', path.join(work, 'icons')],
     { cwd: repository, stdio: 'pipe' });
   if (result.error || result.status !== 0) throw new Error(result.error?.message || result.stderr.toString());
   canonicalIcns(path.join(work, 'icons/icon.icns'));
-  fs.copyFileSync(path.join(work, 'icons/icon.icns'), path.join(repository, 'apps/desktop/src-tauri/icons/uninstaller.icns'));
+  fs.copyFileSync(path.join(work, 'icons/icon.icns'), path.join(repository, 'apps/desktop-shell/src-tauri/icons/uninstaller.icns'));
 } finally {
   fs.rmSync(work, { recursive: true, force: true });
 }
-console.log('apps/desktop/src-tauri/icons/uninstaller.icns');
+console.log('apps/desktop-shell/src-tauri/icons/uninstaller.icns');

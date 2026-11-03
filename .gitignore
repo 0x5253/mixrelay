@@ -16,8 +16,8 @@ storybook-static/
 coverage/
 
 # Tauri
-apps/desktop/src-tauri/gen/
-apps/desktop/src-tauri/binaries/
+apps/desktop-shell/src-tauri/gen/
+apps/desktop-shell/src-tauri/binaries/
 
 # IDE
 .idea/

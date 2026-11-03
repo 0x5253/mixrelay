@@ -327,7 +327,7 @@ struct Callbacks<P> {
 ///
 /// Borrowed processing state stays exclusively borrowed through driver teardown:
 /// ```compile_fail
-/// use mixrelay_pipewire::{DriverCycle, DriverFormat, DriverProcess, GraphDriver};
+/// use mixrelay_linux_pipewire::{DriverCycle, DriverFormat, DriverProcess, GraphDriver};
 /// struct Counter<'a>(&'a mut u64);
 /// impl DriverProcess for Counter<'_> {
 ///     fn process(&mut self, _: &DriverCycle) { *self.0 += 1; }

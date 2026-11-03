@@ -10,8 +10,8 @@ use crate::macos_devices::{
     DeviceSet, MacDevices,
     callback_fixture::{CallbackTime, NativeOwner, direct_plan, publish},
 };
-use mixrelay_audio_engine::{BlockProcessor, PeakMeterBank, RenderPlan};
-use mixrelay_engine::session::AdapterRuntimeStatus;
+use mixrelay_engine_core::session::AdapterRuntimeStatus;
+use mixrelay_render::{BlockProcessor, PeakMeterBank, RenderPlan};
 use std::{collections::BTreeMap, sync::Arc, time::Duration};
 
 mod application;

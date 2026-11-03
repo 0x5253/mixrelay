@@ -1,4 +1,4 @@
-export const PRODUCT_JSON_MANIFESTS = ['package.json', 'apps/control-ui/package.json', 'apps/desktop/package.json', 'apps/desktop/src-tauri/tauri.conf.json'];
+export const PRODUCT_JSON_MANIFESTS = ['package.json', 'apps/control-ui/package.json', 'apps/desktop-shell/package.json', 'apps/desktop-shell/src-tauri/tauri.conf.json'];
 export const HAL_MANIFEST = 'native/macos/hal-driver/driver/Info.plist';
 // `cargo build --locked` rejects a lockfile whose workspace crate versions differ from their manifests.
 // Path packages have no `source` line; registry and git packages keep their own versions.

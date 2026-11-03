@@ -14,7 +14,7 @@ workspace = true
 
 [dependencies]
 mixrelay-time = { path = "../../../crates/time" }
-mixrelay-driver-control = { path = "../../../crates/driver-control" }
+mixrelay-driver-core = { path = "../../../crates/driver-core" }
 # Typed transaction and backend failures stay visible to the privileged adapter.
 thiserror.workspace = true
 # Parse bounded launchd plists into an exact, closed configuration schema.

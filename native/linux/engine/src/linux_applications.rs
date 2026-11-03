@@ -85,7 +85,7 @@ pub(super) struct VerifiedPlaybackTarget {
 impl CaptureSet {
     pub(super) fn bind_inputs(
         &mut self,
-        inputs: &mixrelay_pipewire::GraphInputs,
+        inputs: &mixrelay_linux_pipewire::GraphInputs,
     ) -> Result<(), String> {
         for capture in self.nodes.values_mut() {
             for tap in &mut capture.taps {
@@ -125,8 +125,8 @@ impl CaptureSet {
     pub(super) fn contains(&self, node_id: &str) -> bool {
         self.nodes.contains_key(node_id)
     }
-    pub(super) fn state(&self) -> mixrelay_engine::session::ApplicationRuntimeState {
-        use mixrelay_engine::session::ApplicationRuntimeState;
+    pub(super) fn state(&self) -> mixrelay_engine_core::session::ApplicationRuntimeState {
+        use mixrelay_engine_core::session::ApplicationRuntimeState;
         if self
             .nodes
             .values()

@@ -1,0 +1,33 @@
+[package]
+name = "mixrelay-linux-driver"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+[features]
+# Explicit private normal-user lab, excluded from default tests.
+native-lab = []
+
+[lints]
+workspace = true
+
+[dependencies]
+mixrelay-driver-core = { path = "../../../crates/driver-core" }
+mixrelay-audio-io = { path = "../../../crates/audio-io" }
+mixrelay-time = { path = "../../../crates/time" }
+thiserror.workspace = true
+
+[dev-dependencies]
+mixrelay-time = { path = "../../../crates/time", features = ["test-util"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+mixrelay-linux-pipewire = { path = "../pipewire" }
+mixrelay-pcm-ring = { path = "../../pcm-ring" }
+sha2 = "0.10.9"
+tracing = "0.1.41"
+
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+mixrelay-linux-audio-io = { path = "../audio-io" }
+allocation-counter = "0.8.1"
+mixrelay-linux-pipewire = { path = "../pipewire", features = ["test-observation"] }

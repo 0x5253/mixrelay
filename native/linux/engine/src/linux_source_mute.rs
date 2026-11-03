@@ -1,10 +1,10 @@
 //! Exact, off-RT `PipeWire` registry and `WirePlumber` ACK for a scoped forwarding lease.
 //! No selector string, display name, or client-supplied PID authorizes link removal.
 use super::{CaptureWatch, EndpointSpecs};
-use mixrelay_audio_engine::{ProcessorExchange, RuntimeControlBank};
 use mixrelay_audio_graph::composition::ApplicationPlaybackIntent;
-use mixrelay_engine::PlaybackBindings;
+use mixrelay_engine_core::PlaybackBindings;
 use mixrelay_linux_audio_io::process_identity::{ProcessIdentity, process_identity, same_process};
+use mixrelay_render::{ProcessorExchange, RuntimeControlBank};
 use serde_json::Value;
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -67,7 +67,7 @@ impl OwnedPlan {
 pub(super) struct PlaybackResources<'a> {
     pub watch: Option<&'a CaptureWatch>,
     pub endpoints: &'a EndpointSpecs,
-    pub driver: Option<&'a mixrelay_driver_control::DriverSnapshot>,
+    pub driver: Option<&'a mixrelay_driver_core::DriverSnapshot>,
 }
 
 #[derive(Default)]
@@ -314,7 +314,7 @@ fn desired_leases(
     let driver = resources
         .driver
         .ok_or("Driver owner snapshot unavailable")?;
-    if driver.state != mixrelay_driver_control::DriverState::Ready {
+    if driver.state != mixrelay_driver_core::DriverState::Ready {
         return Err("Driver is not ready".into());
     }
     let driver_owner = driver

@@ -1,0 +1,76 @@
+[package]
+name = "mixrelay-desktop-shell"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+homepage.workspace = true
+publish = false
+
+# The installed executable keeps its released name; only the crate name describes the code.
+[[bin]]
+name = "mixrelay-desktop"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[build-dependencies]
+cc = "1.2.57"
+tauri-build = { version = "=2.6.3", features = [] }
+
+[dependencies]
+mixrelay-desktop-core = { path = "../../../crates/desktop-core" }
+mixrelay-midi-control = { path = "../../../crates/midi-control" }
+midir = "=0.11.1"
+mixrelay-control-protocol = { path = "../../../crates/control-protocol" }
+mixrelay-driver-core = { path = "../../../crates/driver-core" }
+mixrelay-driver-adapters = { path = "../../../crates/driver-adapters" }
+mixrelay-engine-supervisor = { path = "../../../crates/engine-supervisor" }
+mixrelay-time = { path = "../../../crates/time" }
+open = "5.4.4"
+reqwest = { workspace = true, features = ["query", "rustls"] }
+mixrelay-local-socket = { path = "../../../crates/local-socket" }
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tauri = { version = "=2.11.5", features = ["tray-icon"] }
+tauri-plugin-single-instance = "=2.4.0"
+tokio = { workspace = true, features = ["io-util", "process", "sync", "time"] }
+tracing = "0.1.41"
+# Linux: O_PATH keeps socket inode identity during listener cleanup. All: live-PID checks.
+libc = "0.2.186"
+tracing-subscriber = { version = "0.3.20", default-features = false, features = ["env-filter", "fmt"] }
+# Same-directory atomic replacement and cleanup for desktop recording preferences.
+tempfile = "3.27.0"
+mixrelay-audio-io = { path = "../../../crates/audio-io" }
+rfd = { version = "0.17.2", default-features = false, features = ["xdg-portal"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+mixrelay-linux-audio-io = { path = "../../../native/linux/audio-io" }
+alsa = "=0.11.0"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+mixrelay-macos-audio-io = { path = "../../../native/macos/audio-io" }
+coremidi-sys = "=3.2.1"
+# Typed AppKit termination hook; the existing Tauri delegate remains the owner.
+objc2 = "0.6.4"
+objc2-foundation = { version = "0.3.2", default-features = false, features = ["std", "NSProcessInfo", "NSObjCRuntime"] }
+objc2-web-kit = { version = "0.3.2", default-features = false, features = ["std", "WKWebViewConfiguration", "WKPreferences"] }
+objc2-app-kit = { version = "0.3.2", default-features = false, features = ["std", "NSApplication", "NSResponder"] }
+mixrelay-realtime = { path = "../../../crates/realtime" }
+mixrelay-macos-transport = { path = "../../../native/macos/transport" }
+mixrelay-macos-process-tap = { path = "../../../native/macos/process-tap" }
+mixrelay-audio-graph = { path = "../../../crates/audio-graph" }
+
+
+[dev-dependencies]
+mixrelay-time = { path = "../../../crates/time", features = ["test-util"] }
+# Virtual time exercises delayed native shutdown without sleeping in tests.
+tokio = { workspace = true, features = ["test-util"] }
+mixrelay-test-support = { path = "../../../crates/test-support" }
+
+[features]
+# Embeds the built editor UI instead of the dev server. Release builds enable it
+# through the combined cargo build (`--features mixrelay-desktop-shell/custom-protocol`).
+custom-protocol = ["tauri/custom-protocol"]

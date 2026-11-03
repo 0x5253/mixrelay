@@ -88,7 +88,7 @@ impl StateCaptureFixture {
             sample_rate: 48_000,
             block_frames: 128,
         };
-        let request = mixrelay_audio_engine::HostedProcessorPrepareRequest {
+        let request = mixrelay_render::HostedProcessorPrepareRequest {
             node_id: &node,
             config: &config,
             format,
@@ -111,7 +111,7 @@ impl StateCaptureFixture {
         }
     }
 
-    fn instance_id(&self) -> mixrelay_audio_engine::HostedProcessorIdentity {
+    fn instance_id(&self) -> mixrelay_render::HostedProcessorIdentity {
         self.control.as_ref().unwrap().adoption_identity.clone()
     }
 
@@ -124,8 +124,8 @@ impl StateCaptureFixture {
     fn reuse_identity(
         &self,
         config: &mixrelay_audio_graph::ProviderNodeConfig,
-    ) -> Option<mixrelay_audio_engine::HostedProcessorIdentity> {
-        let request = mixrelay_audio_engine::HostedProcessorPrepareRequest {
+    ) -> Option<mixrelay_render::HostedProcessorIdentity> {
+        let request = mixrelay_render::HostedProcessorPrepareRequest {
             node_id: &self.node,
             config,
             format: self.format,

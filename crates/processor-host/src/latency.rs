@@ -126,8 +126,8 @@ impl ProcessorControlRegistry {
 mod tests {
     use std::sync::{Arc, atomic::Ordering};
 
-    use mixrelay_audio_engine::HostedAudioProcessor;
     use mixrelay_audio_graph::NodeId;
+    use mixrelay_render::HostedAudioProcessor;
     use mixrelay_test_support::FixtureDir;
 
     use super::*;

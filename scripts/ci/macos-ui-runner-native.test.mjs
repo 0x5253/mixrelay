@@ -49,7 +49,7 @@ test('native WebKit preference bridge changes the real feature and rejects absen
   assert.equal(process.platform, 'darwin');
   const directory = mkdtempSync(join(tmpdir(), 'mr-webkit-feature-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
-  const source = fileURLToPath(new URL('../../apps/desktop/src-tauri/src/macos_webview/MRWebKitPreferences.m', import.meta.url));
+  const source = fileURLToPath(new URL('../../apps/desktop-shell/src-tauri/src/macos_webview/MRWebKitPreferences.m', import.meta.url));
   const fixture = join(directory, 'main.m');
   writeFileSync(fixture, `
 #import <WebKit/WebKit.h>

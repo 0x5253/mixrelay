@@ -2,8 +2,8 @@
 use super::super::external_io::{binding_sources, binding_token};
 use crate::endpoint_service;
 use crate::macos_pacing::{ApplicationClockSnapshot, ApplicationPacer, HardwarePacer, Pace};
-use mixrelay_audio_engine::{BlockProcessor, ExternalBinding, RenderPlan};
 use mixrelay_macos_transport::{application_clock::ConsumerRoute, source_registry::SourceRegistry};
+use mixrelay_render::{BlockProcessor, ExternalBinding, RenderPlan};
 
 pub(in crate::macos) struct RouteClock {
     pub(in crate::macos) maximum_frames: u32,

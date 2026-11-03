@@ -52,12 +52,12 @@ mod tests {
         callback_fixture::{CallbackTime, NativeOwner, direct_plan},
         direct::Binding,
     };
-    use mixrelay_audio_engine::{BlockProcessor, PeakMeterBank, ProcessBlockError};
     use mixrelay_audio_io::{
         process::{ClockDomain, CycleError, ProcessCycle},
         session::ClockAuthority,
     };
     use mixrelay_realtime::Timebase;
+    use mixrelay_render::{BlockProcessor, PeakMeterBank, ProcessBlockError};
     use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
     use std::{sync::Arc, time::Duration};
 
@@ -86,7 +86,7 @@ mod tests {
     fn moving_the_prepared_owner_keeps_native_state_and_descriptor_stable() {
         let mut processor = processor_at(32, 48_000);
         let bindings = stereo_bindings();
-        let status = mixrelay_engine::session::AdapterRuntimeStatus::new(
+        let status = mixrelay_engine_core::session::AdapterRuntimeStatus::new(
             crate::macos::adapter_profile(),
             std::sync::Arc::new(mixrelay_time::ManualClock::default()),
         );
@@ -179,7 +179,7 @@ mod tests {
             BlockProcessor::with_peak_meters(Arc::clone(prepared.plan()), Arc::clone(&meters))
                 .unwrap(),
         );
-        let status = mixrelay_engine::session::AdapterRuntimeStatus::new(
+        let status = mixrelay_engine_core::session::AdapterRuntimeStatus::new(
             crate::macos::adapter_profile(),
             std::sync::Arc::new(mixrelay_time::ManualClock::default()),
         );

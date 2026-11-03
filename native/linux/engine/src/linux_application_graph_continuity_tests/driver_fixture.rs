@@ -1,7 +1,7 @@
 //! Own a real Driver endpoint and its free control API inside the private native lab.
 use mixrelay_audio_io::VirtualEndpointSpec;
 use mixrelay_driver_adapters::FileSettingsStore;
-use mixrelay_driver_control::{DriverDeviceConfig, DriverManager};
+use mixrelay_driver_core::{DriverDeviceConfig, DriverManager};
 use mixrelay_local_socket::{AuthorizedListener, DRIVER_SOCKET, Peer, bind, current_uid};
 use std::{
     fs::OpenOptions,
@@ -59,8 +59,8 @@ impl DriverFixture {
                 let manager = DriverManager::open(
                     mixrelay_linux_driver::LinuxDriver::open().unwrap(),
                     FileSettingsStore::new(path),
-                    mixrelay_driver_control::DriverRuntime::new(
-                        mixrelay_driver_control::DriverProcessId::new(std::process::id()).unwrap(),
+                    mixrelay_driver_core::DriverRuntime::new(
+                        mixrelay_driver_core::DriverProcessId::new(std::process::id()).unwrap(),
                         Box::new(mixrelay_time::StdClock::new()),
                         Box::new(mixrelay_driver_adapters::SystemLatencyGenerations),
                     ),

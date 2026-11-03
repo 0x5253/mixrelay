@@ -33,7 +33,7 @@ const lifecycleHooks = Object.fromEntries(Object.entries({
   preinst: 'driver-before-change.sh', prerm: 'driver-pre-remove.sh',
   postinst: 'driver-after-install.sh', postrm: 'driver-after-remove.sh',
 }).map(([script, source]) => [script, readFileSync(new URL(`../packaging/linux/${source}`, import.meta.url), 'utf8')]));
-const linuxConfig = () => JSON.parse(readFileSync(new URL('../apps/desktop/src-tauri/tauri.linux.conf.json', import.meta.url), 'utf8'));
+const linuxConfig = () => JSON.parse(readFileSync(new URL('../apps/desktop-shell/src-tauri/tauri.linux.conf.json', import.meta.url), 'utf8'));
 
 function metadataOutput(name, data) {
   if (name === 'Package') return data.packageName;
@@ -126,10 +126,10 @@ test('both Linux package formats own the WirePlumber hook and policy fragment', 
 });
 test('shared resources and both Linux packages include unchanged licence notices', () => {
   const shared = JSON.parse(readFileSync(new URL(
-    '../apps/desktop/src-tauri/tauri.conf.json', import.meta.url,
+    '../apps/desktop-shell/src-tauri/tauri.conf.json', import.meta.url,
   ), 'utf8'));
   const linux = JSON.parse(readFileSync(new URL(
-    '../apps/desktop/src-tauri/tauri.linux.conf.json', import.meta.url,
+    '../apps/desktop-shell/src-tauri/tauri.linux.conf.json', import.meta.url,
   ), 'utf8'));
   for (const name of releaseDocuments) {
     assert.equal(shared.bundle.resources[`../../../${name}`], name);
@@ -165,7 +165,7 @@ test('package documentation cannot be missing, empty, linked, or unreadable to i
 });
 test('Linux product builds select package-manager formats and register lifecycle hooks', () => {
   const config = JSON.parse(readFileSync(new URL(
-    '../apps/desktop/src-tauri/tauri.linux.conf.json', import.meta.url,
+    '../apps/desktop-shell/src-tauri/tauri.linux.conf.json', import.meta.url,
   ), 'utf8'));
   assert.deepEqual(config.bundle.targets, ['deb', 'rpm']);
   for (const format of ['deb', 'rpm']) {
@@ -410,7 +410,7 @@ test('audio session, native dialogs and user-service tools are mandatory in Debi
 });
 test('Debian SVG icon loader is a required package dependency', () => {
   const config = JSON.parse(readFileSync(new URL(
-    '../apps/desktop/src-tauri/tauri.linux.conf.json', import.meta.url,
+    '../apps/desktop-shell/src-tauri/tauri.linux.conf.json', import.meta.url,
   ), 'utf8'));
   assert.ok(config.bundle.linux.deb.depends.includes('librsvg2-common'));
   const data = fixture();
@@ -419,7 +419,7 @@ test('Debian SVG icon loader is a required package dependency', () => {
 });
 test('tray indicator runtime provider is mandatory in Debian payloads and both package configurations', () => {
   const config = JSON.parse(readFileSync(new URL(
-    '../apps/desktop/src-tauri/tauri.linux.conf.json', import.meta.url,
+    '../apps/desktop-shell/src-tauri/tauri.linux.conf.json', import.meta.url,
   ), 'utf8'));
   assert.ok(config.bundle.linux.deb.depends.includes('libayatana-appindicator3-1'));
   assert.ok(config.bundle.linux.rpm.depends.includes('libayatana-appindicator-gtk3'));

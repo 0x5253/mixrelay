@@ -109,7 +109,7 @@ fn native_rename_rollback_and_retired_controls_never_retarget() {
     let format = render_format();
     let original = specs(vec![("a".into(), device_spec(A))]).unwrap();
     let active = EndpointSet::prepare(
-        &mixrelay_pipewire::StreamOwners::default(),
+        &mixrelay_linux_pipewire::StreamOwners::default(),
         &original,
         &EndpointSpecs::new(),
         format,
@@ -129,7 +129,7 @@ fn native_rename_rollback_and_retired_controls_never_retarget() {
     let mut renamed = original.clone();
     renamed.get_mut("a").unwrap().display_name = "Pending name".into();
     let edit = EndpointEdit::prepare(
-        &mixrelay_pipewire::StreamOwners::default(),
+        &mixrelay_linux_pipewire::StreamOwners::default(),
         &renamed,
         &original,
         &controls,
@@ -152,7 +152,7 @@ fn native_rename_rollback_and_retired_controls_never_retarget() {
     assert_eq!(inventory(), serials);
 
     let cancelled = EndpointEdit::prepare(
-        &mixrelay_pipewire::StreamOwners::default(),
+        &mixrelay_linux_pipewire::StreamOwners::default(),
         &renamed,
         &original,
         &controls,
@@ -163,7 +163,7 @@ fn native_rename_rollback_and_retired_controls_never_retarget() {
     renamed.get_mut("a").unwrap().display_name = "invalid\0name".into();
     assert!(
         EndpointEdit::prepare(
-            &mixrelay_pipewire::StreamOwners::default(),
+            &mixrelay_linux_pipewire::StreamOwners::default(),
             &renamed,
             &original,
             &controls,
@@ -180,7 +180,7 @@ fn native_rename_rollback_and_retired_controls_never_retarget() {
     );
     assert!(stale.description_change("before", "stale").is_err());
     let replacement = EndpointSet::prepare(
-        &mixrelay_pipewire::StreamOwners::default(),
+        &mixrelay_linux_pipewire::StreamOwners::default(),
         &original,
         &EndpointSpecs::new(),
         format,

@@ -4,12 +4,12 @@ use std::{
     time::{Duration, Instant},
 };
 
-use mixrelay_audio_engine::{BlockProcessor, CompensationState, PeakMeterBank, ProcessorExchange};
 use mixrelay_audio_graph::{CompileContext, CompileLimits, GraphCompiler, NodeId, RenderFormat};
 use mixrelay_processor_host::{
     CatalogNodeResolver, ExternalProcessorFactory, ProcessorCatalog, ProcessorControlRegistry,
 };
 use mixrelay_processor_state::StateRef;
+use mixrelay_render::{BlockProcessor, CompensationState, PeakMeterBank, ProcessorExchange};
 
 #[derive(Clone)]
 pub(super) struct NativeResources {

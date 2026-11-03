@@ -64,7 +64,7 @@ try {
     const bundles = join(release, 'bundle/macos');
     if (!values['package-only']) {
       await run(owned, 'zsh', ['scripts/build-macos-universal-app.sh'], env);
-      await run(owned, 'cargo', ['run', '-p', 'mixrelay-hal-bundle', '--', '--output', join(release, 'hal')], env);
+      await run(owned, 'cargo', ['run', '-p', 'mixrelay-macos-hal-bundle', '--', '--output', join(release, 'hal')], env);
     }
     const staging = join(root, 'target/product-release', version);
     mkdirSync(staging, { recursive: true });

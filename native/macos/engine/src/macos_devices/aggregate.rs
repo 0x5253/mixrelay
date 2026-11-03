@@ -142,7 +142,7 @@ mod tests {
         NodeControl, NodeSpec,
     };
     use mixrelay_audio_io::process::InputActivity;
-    use mixrelay_engine::{GraphResourceBackend, PlaybackBindings::Preserve};
+    use mixrelay_engine_core::{GraphResourceBackend, PlaybackBindings::Preserve};
     use std::sync::atomic::Ordering;
 
     #[test]
@@ -255,7 +255,7 @@ mod tests {
         let host = SimulatedHost::new();
         let microphone = host.plug("io.mixrelay.test.microphone", 2, 48_000, CAPTURED);
         let speaker = host.plug("io.mixrelay.test.speaker", 2, 48_000, 2.0 * CAPTURED);
-        let status = Arc::new(mixrelay_engine::session::AdapterRuntimeStatus::new(
+        let status = Arc::new(mixrelay_engine_core::session::AdapterRuntimeStatus::new(
             crate::macos::adapter_profile(),
             std::sync::Arc::new(mixrelay_time::ManualClock::default()),
         ));

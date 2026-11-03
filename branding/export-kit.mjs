@@ -13,7 +13,7 @@ for (const file of fs.readdirSync(path.join(identity, 'symbols')).filter(f => f.
   const sizes = name.includes('outline') ? [64, 128, 256, 512] :
     name.includes('knockout') ? [32, 64, 128, 256, 512] : [16, 24, 32, 64, 128, 256, 512, 1024];
   const output = path.join(kit, 'png', name);
-  const result = spawnSync('pnpm', ['--filter', '@mixrelay/desktop', 'tauri', 'icon',
+  const result = spawnSync('pnpm', ['--filter', '@mixrelay/desktop-shell', 'tauri', 'icon',
     path.join(identity, 'symbols', file), '--output', output,
     ...sizes.flatMap(size => ['--png', String(size)])], { cwd: path.dirname(root), stdio: 'pipe' });
   if (result.error || result.status !== 0) throw new Error(result.error?.message || result.stderr.toString());
@@ -24,9 +24,9 @@ fs.copyFileSync(path.join(identity, 'app-icon.svg'), path.join(kit, 'svg/app-ico
 fs.copyFileSync(path.join(root, 'tray-white.svg'), path.join(kit, 'svg/tray-white.svg'));
 fs.mkdirSync(path.join(kit, 'app'), { recursive: true });
 for (const file of ['32x32.png', '64x64.png', '128x128.png', '128x128@2x.png', 'icon.png', 'icon.icns', 'icon.ico']) {
-  fs.copyFileSync(path.join(root, '../apps/desktop/src-tauri/icons', file), path.join(kit, 'app', file));
+  fs.copyFileSync(path.join(root, '../apps/desktop-shell/src-tauri/icons', file), path.join(kit, 'app', file));
 }
-fs.cpSync(path.join(root, '../apps/desktop/src-tauri/tray-icons'), path.join(kit, 'tray'), { recursive: true });
+fs.cpSync(path.join(root, '../apps/desktop-shell/src-tauri/tray-icons'), path.join(kit, 'tray'), { recursive: true });
 for (const file of ['mixrelay-brand-system.svg']) {
   fs.copyFileSync(path.join(identity, file), path.join(kit, file));
 }

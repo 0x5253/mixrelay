@@ -41,26 +41,21 @@ impl WorkerContext {
             channels = self.channels
         );
         let _entered = span.enter();
-        mixrelay_engine_runtime::device_worker::supervise(
-            &self.stop,
-            &self.failed,
-            tx,
-            |connected| {
-                tracing::info!(
-                    previous_native_rate = self.native_rate.load(Ordering::Acquire),
-                    processing_rate = self.graph_rate.load(Ordering::Acquire),
-                    "CoreAudio connection starting"
-                );
-                let result = self.connection(connected);
-                match &result {
-                    Err(error) if !self.stop.load(Ordering::Acquire) => {
-                        tracing::warn!(%error, "CoreAudio connection ended; recovery pending");
-                    }
-                    _ => tracing::info!("CoreAudio connection retired"),
+        mixrelay_engine_host::device_worker::supervise(&self.stop, &self.failed, tx, |connected| {
+            tracing::info!(
+                previous_native_rate = self.native_rate.load(Ordering::Acquire),
+                processing_rate = self.graph_rate.load(Ordering::Acquire),
+                "CoreAudio connection starting"
+            );
+            let result = self.connection(connected);
+            match &result {
+                Err(error) if !self.stop.load(Ordering::Acquire) => {
+                    tracing::warn!(%error, "CoreAudio connection ended; recovery pending");
                 }
-                result
-            },
-        );
+                _ => tracing::info!("CoreAudio connection retired"),
+            }
+            result
+        });
     }
     pub(super) fn connection(&self, connected: &mut dyn FnMut()) -> Result<(), String> {
         let pointer = self.native.pointer.as_ptr();

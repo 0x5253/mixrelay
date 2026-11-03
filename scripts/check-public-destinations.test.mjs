@@ -43,9 +43,9 @@ test('approved product, source, support and legal references pass', () => {
 
 test('desktop updates use only the exact public release API and version-matched installer assets', () => {
   const endpoint = 'https://api.github.com/repos/0x5253/mixrelay/releases/latest';
-  const source = readFileSync(new URL('../apps/desktop/src-tauri/src/updates.rs', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../apps/desktop-shell/src-tauri/src/updates.rs', import.meta.url), 'utf8');
   assert.ok(source.includes(endpoint));
-  assert.doesNotThrow(() => assertPublicReferences(source, 'apps/desktop/src-tauri/src/updates.rs'));
+  assert.doesNotThrow(() => assertPublicReferences(source, 'apps/desktop-shell/src-tauri/src/updates.rs'));
   for (const file of ['MixRelay-Installer-1.2.3.pkg', 'MixRelay_1.2.3_amd64.deb',
     'MixRelay_1.2.3_arm64.deb', 'mix-relay-1.2.3-1-x86_64.pkg.tar.zst']) {
     const url = `https://github.com/0x5253/mixrelay/releases/download/v1.2.3/${file}`;
@@ -71,12 +71,12 @@ test('extraction includes plain emails, encoded HTML links and adjacent translat
 
 test('scope includes each shipped boundary and excludes tests, developer docs and evidence', () => {
   for (const path of ['apps/control-ui/src/features/settings/AboutDialog.tsx', 'apps/control-ui/src/core/i18n/locales/en.ts',
-    'apps/desktop/src-tauri/src/status_menu/menu.rs', 'native/macos/installer/src/native/dialogs.m',
+    'apps/desktop-shell/src-tauri/src/status_menu/menu.rs', 'native/macos/installer/src/native/dialogs.m',
     'LICENSE.txt', 'third-party/alsa-lib/NOTICE', 'packaging/localization/installer-notices.json',
     'packaging/linux/arch/PKGBUILD.in', 'packaging/linux/mixrelay-uninstall.desktop',
     'apps/streamdeck-plugin/manifest.json', 'apps/streamdeck-plugin/ui/index.html',
     'apps/website/index.html', 'mix-relay.release.json']) assert.ok(isUserFacingSurface(path), path);
-  for (const path of ['scripts/check-public-destinations.test.mjs', 'apps/desktop/src-tauri/src/updates_tests.rs',
+  for (const path of ['scripts/check-public-destinations.test.mjs', 'apps/desktop-shell/src-tauri/src/updates_tests.rs',
     'native/macos/installer/src/tests.rs', 'scripts/e2e/qualification.fixture.mjs', 'docs/product.md',
     'docs/validation/evidence/mix-relay.release.json', 'apps/control-ui/src/test-support/integration.ts',
     'apps/control-ui/src/features/settings/AboutDialog.stories.tsx', 'apps/website/assets/fonts/sources.json']) {

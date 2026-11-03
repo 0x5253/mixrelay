@@ -19,4 +19,4 @@ RUN apt-get -o APT::Update::Error-Mode=any update \
 WORKDIR /workspace
 USER lab
 ENV CARGO_HOME=/home/lab/.cargo CARGO_TARGET_DIR=/workspace/target CARGO_BUILD_JOBS=2
-CMD ["cargo", "test", "--locked", "-p", "mixrelay-service", "--lib", "--", "--test-threads=1"]
+CMD ["cargo", "test", "--locked", "-p", "mixrelay-engine-service", "--lib", "--", "--test-threads=1"]

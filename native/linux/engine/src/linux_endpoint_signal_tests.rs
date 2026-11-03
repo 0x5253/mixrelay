@@ -13,7 +13,7 @@ impl Playback {
         let name = format!("{}.render", native_name(&id.into()));
         let serial = inventory()[&name].clone();
         let mut stream = NativeStream::open_format(
-            &mixrelay_pipewire::StreamOwners::default(),
+            &mixrelay_linux_pipewire::StreamOwners::default(),
             "lab.os-playback",
             "Owned OS playback",
             StreamRole::AutomaticDeviceOutput(&serial),

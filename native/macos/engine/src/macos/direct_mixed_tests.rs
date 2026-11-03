@@ -1,6 +1,6 @@
 use super::*;
-use mixrelay_audio_engine::{ProcessorExchange, RuntimeControlUpdate};
 use mixrelay_audio_graph::{GraphDocument, NodeConfig, NodeControl};
+use mixrelay_render::{ProcessorExchange, RuntimeControlUpdate};
 use std::sync::Arc;
 
 fn processor() -> Box<BlockProcessor> {
@@ -53,7 +53,7 @@ fn driver_duplex_client_reads_capture_and_writes_render_at_native_callback_bound
             channels: 2,
         },
     ];
-    let status = mixrelay_engine::session::AdapterRuntimeStatus::new(
+    let status = mixrelay_engine_core::session::AdapterRuntimeStatus::new(
         crate::macos::adapter_profile(),
         std::sync::Arc::new(mixrelay_time::StdClock::new()),
     );
