@@ -1,4 +1,4 @@
-# MixRelay
+<h1><picture><source media="(prefers-color-scheme: dark)" srcset="branding/identity/wordmark/mixrelay-lockup-dark.svg"><img src="branding/identity/wordmark/mixrelay-lockup-light.svg" alt="MixRelay" height="56"></picture></h1>
 
 MixRelay is a virtual audio driver and visual router for macOS and Linux.
 The editor, background engine and virtual audio devices ship together.
