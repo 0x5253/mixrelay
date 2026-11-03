@@ -32,8 +32,11 @@ test('approved product, source, support and legal references pass', () => {
     'https://downloads.rawsector.com/mix-relay.pkg', 'https://github.com/0x5253/mixrelay',
     'https://github.com/0x5253/mixrelay/releases',
     'https://support.apple.com/en-gb/guide/mac-help', 'https://www.law.go.kr/LSW/index.html',
-    'https://www.easylaw.go.kr/CSP/Main.laf', 'mailto:support@rawsector.com', 'legal@dsub.io', 'privacy@dsub.io']) {
+    'https://www.easylaw.go.kr/CSP/Main.laf', 'mailto:support@rawsector.com']) {
     assert.doesNotThrow(() => assertPublicDestination(destination));
+  }
+  for (const retired of ['legal@dsub.io', 'privacy@dsub.io']) {
+    assert.throws(() => assertPublicDestination(retired), /unapproved/);
   }
 });
 
@@ -59,8 +62,8 @@ test('desktop updates use only the exact public release API and version-matched 
 
 test('extraction includes plain emails, encoded HTML links and adjacent translated prose', () => {
   assert.deepEqual(extractDestinations('`support@rawsector.com` https://appserver.rawsector.comに接続します。\n'
-    + '<a href="https://www.law.go.kr/a?x=1&amp;y=2">law</a> legal&#64;dsub.io'),
-  ['https://appserver.rawsector.com', 'https://www.law.go.kr/a?x=1&y=2', 'support@rawsector.com', 'legal@dsub.io']);
+    + '<a href="https://www.law.go.kr/a?x=1&amp;y=2">law</a> giovanni&#64;fragcolor.com'),
+  ['https://appserver.rawsector.com', 'https://www.law.go.kr/a?x=1&y=2', 'support@rawsector.com', 'giovanni@fragcolor.com']);
   assert.deepEqual(extractDestinations('"icons/128x128@2x.png"'), []);
   assert.throws(() => assertPublicReferences('<p>Contact nobody@example.org.</p>', 'manual'), /unapproved/);
 });

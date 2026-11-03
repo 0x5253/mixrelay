@@ -3,7 +3,7 @@ const publicHosts = new Set([
   'support.apple.com', 'law.go.kr', 'www.law.go.kr', 'www.easylaw.go.kr',
 ]);
 const publicEmails = new Set([
-  'support@rawsector.com', 'privacy@dsub.io', 'legal@dsub.io', 'giovanni@fragcolor.com',
+  'support@rawsector.com', 'giovanni@fragcolor.com',
 ]);
 // Existing third-party licence references retain their original protocols.
 const licenceDestinations = new Set([
