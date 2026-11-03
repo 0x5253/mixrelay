@@ -27,7 +27,8 @@ function fixture(t) {
   const exec = (program, args) => {
     assert.equal(program, '/usr/bin/security');
     calls.push(args);
-    if (fail?.(args)) return { status: 1, stderr: Object.values(env).join('\n') };
+    const failure = fail?.(args);
+    if (failure) return { status: 1, stderr: typeof failure === 'string' ? failure : Object.values(env).join('\n') };
     if (args[0] === 'create-keychain') writeFileSync(args.at(-1), 'fixture-keychain');
     return { status: 0, stdout: args.length === 3 && args[0] === 'list-keychains'
       ? [login, RETIRED_SIGNING_KEYCHAIN].map(path => `    ${JSON.stringify(path)}`).join('\n') : '' };
@@ -92,11 +93,15 @@ test('failed import, preflight and build each restore search paths and erase eve
     const f = fixture(t);
     if (stage === 'import') f.fail(args => args[0] === 'import');
     if (stage === 'preflight') f.preflight = () => { throw new Error('preflight failure'); };
-    await assert.rejects(withCIMacosSigning(() => { throw new Error('build failure'); }, f), error => {
+    const reported = [];
+    await assert.rejects(withCIMacosSigning(() => { throw new Error('build failure'); }, { ...f, report: line => reported.push(line) }), error => {
       assert.ok(!error.message.includes(f.env.MIXRELAY_MACOS_P12_PASSWORD));
       assert.ok(!error.message.includes(f.env.MIXRELAY_MACOS_APPLICATION_P12_BASE64));
       return true;
     });
+    for (const secret of [f.env.MIXRELAY_MACOS_P12_PASSWORD, f.env.MIXRELAY_MACOS_APPLICATION_P12_BASE64]) {
+      assert.ok(!reported.join('\n').includes(secret));
+    }
     restored(f);
   }
 });
@@ -184,4 +189,25 @@ test('a failed unlock refresh aborts before building and still removes its priva
   };
   await assert.rejects(withCIMacosSigning(() => assert.fail('no build after refresh failure'), f), /interrupted by SIGTERM/);
   restored(f);
+});
+
+test('an intermediate already present on the runner is accepted; other import failures still stop signing', async t => {
+  const intermediate = args => args[0] === 'import' && args[1].endsWith('intermediate.cer');
+  const present = fixture(t);
+  present.env.MIXRELAY_MACOS_INTERMEDIATE_CERTIFICATE_BASE64 = Buffer.from('intermediate-fixture').toString('base64');
+  present.fail(args => intermediate(args) && 'security: SecKeychainItemImport: The specified item already exists in the keychain.');
+  let built = false;
+  await withCIMacosSigning(() => { built = true; }, { ...present, report: () => assert.fail('nothing to report') });
+  assert.ok(built);
+  restored(present);
+  for (const [name, failure] of [['intermediate', 'security: SecKeychainItemImport: Unknown format in import.'],
+    ['p12', 'security: SecKeychainItemImport: The specified item already exists in the keychain.']]) {
+    const f = fixture(t);
+    f.env.MIXRELAY_MACOS_INTERMEDIATE_CERTIFICATE_BASE64 = Buffer.from('intermediate-fixture').toString('base64');
+    f.fail(args => (name === 'intermediate' ? intermediate(args) : args[0] === 'import' && args[1].endsWith('.p12')) && failure);
+    const reported = [];
+    await assert.rejects(withCIMacosSigning(() => assert.fail('no build'), { ...f, report: line => reported.push(line) }), /could not import/);
+    assert.deepEqual(reported, [failure]);
+    restored(f);
+  }
 });

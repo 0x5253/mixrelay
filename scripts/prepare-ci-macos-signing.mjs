@@ -20,9 +20,17 @@ function ciEnvironment(env, platform) {
   const info = lstatSync(env.RUNNER_TEMP);
   if (!info.isDirectory() || info.isSymbolicLink() || info.uid !== process.getuid()) throw new Error('RUNNER_TEMP must belong to this runner');
 }
-function security(args, purpose, exec) {
+// Hosted macOS runners may already hold Apple's public Developer ID intermediate.
+const DUPLICATE_ITEM = /already exists in the keychain/i;
+function security(args, purpose, exec, { duplicateOk = false, secrets = [], report = console.error } = {}) {
   const result = exec('/usr/bin/security', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 45000 });
-  if (result.error || result.status !== 0 || result.signal) throw new Error(`macOS CI signing could not ${purpose}`);
+  if (duplicateOk && !result.error && !result.signal && result.status !== 0 && DUPLICATE_ITEM.test(result.stderr ?? '')) return '';
+  if (result.error || result.status !== 0 || result.signal) {
+    // The tool's own first line explains the failure; secret values never reach the log.
+    const detail = secrets.filter(Boolean).reduce((text, secret) => text.split(secret).join('***'), String(result.stderr ?? '').split('\n')[0]);
+    if (detail) report(detail);
+    throw new Error(`macOS CI signing could not ${purpose}`);
+  }
   return result.stdout?.trim() ?? '';
 }
 function decode(env, name, maximum) {
@@ -73,6 +81,7 @@ export async function withCIMacosSigning(action, {
   spawnRefresh = (path, owner) => spawn(process.execPath,
     [join(root, 'scripts/macos-signing.mjs'), '--keep-unlocked', path, String(owner)],
     { stdio: ['ignore', 'ignore', 'inherit'] }),
+  report = console.error,
 } = {}) {
   ciEnvironment(env, platform);
   const application = decode(env, 'MIXRELAY_MACOS_APPLICATION_P12_BASE64', 1024 * 1024);
@@ -117,9 +126,9 @@ export async function withCIMacosSigning(action, {
     return child;
   };
   const signingIO = { signals: ownedSignals, startRefresh };
-  const run = (args, purpose) => {
+  const run = (args, purpose, options) => {
     if (interrupted) throw new Error(`macOS CI signing interrupted by ${interrupted}`);
-    return security(args, purpose, exec);
+    return security(args, purpose, exec, { secrets: Object.entries(env).filter(([name]) => name.startsWith('MIXRELAY_')).map(([, value]) => value), report, ...options });
   };
   const privateFile = (name, bytes) => writeFileSync(join(directory, name), bytes, { mode: 0o600, flag: 'wx' });
   let saved = false;
@@ -140,7 +149,7 @@ export async function withCIMacosSigning(action, {
       run(['import', join(directory, name), '-k', keychain, '-f', 'pkcs12', '-P', password,
         '-T', '/usr/bin/codesign', '-T', '/usr/bin/pkgbuild', '-T', '/usr/bin/productbuild'], 'import the Developer ID signing asset');
     }
-    if (intermediate) run(['import', join(directory, 'intermediate.cer'), '-k', keychain, '-t', 'cert'], 'import the Developer ID intermediate certificate');
+    if (intermediate) run(['import', join(directory, 'intermediate.cer'), '-k', keychain, '-t', 'cert'], 'import the Developer ID intermediate certificate', { duplicateOk: true });
     run(['set-key-partition-list', '-S', 'apple-tool:,apple:,codesign:', '-s', '-k', keychainPassword, keychain], 'authorize Apple signing tools without a dialog');
     const config = { keychain, keychainPassword, p12Password: password, teamId,
       applicationIdentity: env.MIXRELAY_MACOS_APPLICATION_IDENTITY, installerIdentity: env.MIXRELAY_MACOS_INSTALLER_IDENTITY,
