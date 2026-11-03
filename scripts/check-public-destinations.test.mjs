@@ -32,7 +32,8 @@ test('approved product, source, support and legal references pass', () => {
     'https://downloads.rawsector.com/mix-relay.pkg', 'https://github.com/0x5253/mixrelay',
     'https://github.com/0x5253/mixrelay/releases',
     'https://support.apple.com/en-gb/guide/mac-help', 'https://www.law.go.kr/LSW/index.html',
-    'https://www.easylaw.go.kr/CSP/Main.laf', 'mailto:support@rawsector.com']) {
+    'https://www.easylaw.go.kr/CSP/Main.laf', 'mailto:support@rawsector.com',
+    'https://buymeacoffee.com/rawsector', 'https://www.conventionalcommits.org']) {
     assert.doesNotThrow(() => assertPublicDestination(destination));
   }
   for (const retired of ['legal@dsub.io', 'privacy@dsub.io']) {
