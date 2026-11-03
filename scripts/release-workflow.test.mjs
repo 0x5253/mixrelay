@@ -35,6 +35,9 @@ test('signing assets are scoped to the macOS build and cleaned before uploading 
   const source = workflow('release');
   const macos = source.slice(source.indexOf('\n  macos:'), source.indexOf('\n  publish:'));
   assert.match(macos, /prepare-ci-macos-signing\.mjs --output candidate/);
+  assert.match(macos, /\n    environment: release\n/);
+  assert.equal(source.match(/environment: release/g).length, 1);
+  assert.doesNotMatch(source, /pull_request/);
   assert.match(macos, /if: always\(\)\n\s*run: node scripts\/prepare-ci-macos-signing\.mjs --cleanup/);
   assert.ok(macos.indexOf('--cleanup') < macos.indexOf('actions/upload-artifact@'));
   assert.match(macos, /"notarized-artifacts-built"/);

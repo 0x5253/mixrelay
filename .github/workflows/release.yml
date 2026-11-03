@@ -61,6 +61,8 @@ jobs:
 
   macos:
     needs: source
+    # Signing secrets live only in this environment: v* tags, approval required.
+    environment: release
     runs-on: macos-15
     timeout-minutes: 180
     steps:
