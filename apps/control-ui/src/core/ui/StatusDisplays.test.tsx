@@ -56,10 +56,10 @@ it('describes the transport value once and omits an empty description', () => {
 it('renders the readout tooltip form with the shared tooltip owner', async () => {
   render(
     <MixRelayProvider>
-      <Tooltip label="CH 3" kind="readout" opened nonInteractive>
+      <Tooltip label="CH 3" kind="readout" forceOpen nonInteractive>
         <span role="img" aria-label="Main 3, CH 3" />
       </Tooltip>
-      <Tooltip label="Delete graph" opened>
+      <Tooltip label="Delete graph" forceOpen>
         <button type="button">Delete</button>
       </Tooltip>
     </MixRelayProvider>,

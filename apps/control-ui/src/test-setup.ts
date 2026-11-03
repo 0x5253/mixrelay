@@ -12,6 +12,25 @@ Object.assign(globalThis, { jest: { advanceTimersByTime: vi.advanceTimersByTime 
 
 afterEach(cleanup);
 
+// React Aria reports broken component contracts only as console warnings. Fail the test
+// instead, so a tooltip trigger without a role or a controlled/uncontrolled switch cannot
+// ship silently.
+const ariaContract = /<Focusable> child|changed from (?:un)?controlled to (?:un)?controlled/;
+const ariaViolations: string[] = [];
+for (const level of ['warn', 'error'] as const) {
+  const original = console[level].bind(console);
+  console[level] = (...args: unknown[]) => {
+    const message = args.map(String).join(' ');
+    if (ariaContract.test(message)) ariaViolations.push(message);
+    original(...args);
+  };
+}
+afterEach(() => {
+  if (ariaViolations.length === 0) return;
+  const found = ariaViolations.splice(0);
+  throw new Error(`React Aria contract warnings:\n${found.join('\n')}`);
+});
+
 Object.defineProperty(window, 'matchMedia', {
   configurable: true,
   value: vi.fn().mockImplementation((query: string) => ({
