@@ -53,7 +53,9 @@ export function prepareDriverPackage({ args = [], env = process.env, rootDir = R
   let output = join(targetRoot, target, profile, binary);
   if (platform === 'darwin') {
     const identity = env.MIXRELAY_CODESIGN_IDENTITY || env.APPLE_SIGNING_IDENTITY;
-    if (profile === 'release' && !identity?.startsWith('Developer ID Application: ')) {
+    // "-" is the ad-hoc check build; any other release identity must be Developer ID.
+    const releaseSigned = profile === 'release' && identity !== '-';
+    if (releaseSigned && !identity?.startsWith('Developer ID Application: ')) {
       throw new Error('Driver release service requires a Developer ID Application identity');
     }
     output = join(targetRoot, 'universal-apple-darwin', profile, binary);
@@ -64,8 +66,8 @@ export function prepareDriverPackage({ args = [], env = process.env, rootDir = R
       checked('xcrun', ['lipo', '-create', ...slices.map(slice => join(targetRoot, slice, profile, binary)), '-output', staged]);
       assertUniversalDriver(run, rootDir, env, staged);
       fsApi.chmodSync(staged, 0o755);
-      const signing = ['--force', '--sign', profile === 'release' ? identity : '-'];
-      if (profile === 'release') signing.push('--options', 'runtime', '--timestamp', '--identifier', binary);
+      const signing = ['--force', '--sign', releaseSigned ? identity : '-'];
+      if (releaseSigned) signing.push('--options', 'runtime', '--timestamp', '--identifier', binary);
       checked('codesign', [...signing, staged]);
       checked('codesign', ['--verify', '--strict', '--all-architectures', staged]);
       fsApi.renameSync(staged, output);

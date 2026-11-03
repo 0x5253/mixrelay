@@ -2,10 +2,14 @@
 set -euo pipefail
 repo_root="${0:A:h:h}"
 minimum_macos="$(node "$repo_root/scripts/macos-minimum.mjs")"
-[[ "${APPLE_SIGNING_IDENTITY:-}" == "Developer ID Application: "* ]] || {
-  print -u2 "A Developer ID Application identity is required"
+if [[ "${APPLE_SIGNING_IDENTITY:-}" == "-" ]]; then
+  signing=(--sign -)
+elif [[ "${APPLE_SIGNING_IDENTITY:-}" == "Developer ID Application: "* ]]; then
+  signing=(--sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp)
+else
+  print -u2 "A Developer ID Application identity, or - for an ad-hoc check build, is required"
   exit 1
-}
+fi
 output_dir="$repo_root/target/universal-apple-darwin/release"
 mkdir -p "$output_dir"
 [[ ! -L "$output_dir" && ! -L "$output_dir/mixrelay-driver-launcher" ]] || exit 1
@@ -17,7 +21,7 @@ for arch in arm64 x86_64; do
     -o "$task_dir/$arch"
 done
 xcrun lipo -create "$task_dir/arm64" "$task_dir/x86_64" -output "$task_dir/mixrelay-driver-launcher"
-codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp \
+codesign --force "${signing[@]}" \
   --identifier io.mixrelay.driver.launcher "$task_dir/mixrelay-driver-launcher"
 codesign --verify --strict --all-architectures "$task_dir/mixrelay-driver-launcher"
 mv "$task_dir/mixrelay-driver-launcher" "$output_dir/mixrelay-driver-launcher"

@@ -176,7 +176,9 @@ if [ "\${MOCK_PNPM_MODE:-universal}" = nested ]; then
   mkdir -p "$MOCK_APP/Contents/Frameworks"
   printf '%s\\n' 'MACHO universal' > "$MOCK_APP/Contents/Frameworks/Helper"
 fi
-if [ -n "\${APPLE_SIGNING_IDENTITY:-}" ] && [ "\${APPLE_SIGNING_IDENTITY}" != - ]; then
+if [ "\${APPLE_SIGNING_IDENTITY:-}" = - ]; then
+  : > "$MOCK_APP/.ad-hoc-signed"
+elif [ -n "\${APPLE_SIGNING_IDENTITY:-}" ]; then
   : > "$MOCK_APP/.tauri-signed"
 fi
 `);
@@ -303,6 +305,22 @@ zshTest("complete product builds helpers and engine with one public app and remo
   assert.match(commands, /--identifier mixrelay-macos-payload-check /);
   // APPLE_SIGNING_IDENTITY alone must still reach the engine builder, which otherwise signs ad hoc.
   assert.match(commands, new RegExp(`^engine identity ${identity.replace(/[()]/g, "\\$&")}$`, "m"));
+});
+
+zshTest("ad-hoc check builds compile and bundle every product without release signing", (t) => {
+  const paths = fixture(t);
+  const result = runBuild(paths, { APPLE_SIGNING_IDENTITY: "-", APPLE_INSTALLER_SIGNING_IDENTITY: "" }, []);
+  assert.equal(result.status, 0, result.stderr);
+  const commands = log(paths);
+  assert.match(commands, /tauri bundle --bundles app --target universal-apple-darwin/);
+  assert.match(commands, /^APPLE_SIGNING_IDENTITY=-$/m);
+  assert.match(commands, /^engine identity -$/m);
+  const helpers = commands.split("\n").filter(line => line.startsWith("codesign --force") && line.includes("--identifier mixrelay-"));
+  assert.equal(helpers.length, 3);
+  for (const line of helpers) {
+    assert.match(line, /^codesign --force --sign - --identifier /);
+    assert.doesNotMatch(line, /--timestamp|Developer ID/);
+  }
 });
 
 zshTest("rejects an unsigned release identity before invoking Tauri", (t) => {

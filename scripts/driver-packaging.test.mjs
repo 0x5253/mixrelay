@@ -83,7 +83,8 @@ test('Driver preparation with --prebuilt uses existing slices and never runs car
 test('macOS Driver preparation with --prebuilt merges and signs both existing slices', () => {
   const release = slice => `/project/target/${slice}/release/mixrelay-driver-service`;
   const output = '/project/target/universal-apple-darwin/release/mixrelay-driver-service';
-  const prepare = ({ present = [release('aarch64-apple-darwin'), release('x86_64-apple-darwin')], fail, archs = 'x86_64 arm64\n' } = {}) => {
+  const prepare = ({ present = [release('aarch64-apple-darwin'), release('x86_64-apple-darwin')], fail, archs = 'x86_64 arm64\n',
+    identity = 'Developer ID Application: MixRelay (AB12C3D4E5)' } = {}) => {
     const commands = [], renames = [], removed = [];
     const fsApi = {
       readFileSync(path) {
@@ -104,7 +105,7 @@ test('macOS Driver preparation with --prebuilt merges and signs both existing sl
     };
     const call = () => prepareDriverPackage({
       args: ['--profile', 'release', '--target', 'aarch64-apple-darwin', '--prebuilt'],
-      rootDir: '/project', env: { MIXRELAY_CODESIGN_IDENTITY: 'Developer ID Application: MixRelay (AB12C3D4E5)' }, fsApi, run,
+      rootDir: '/project', env: { MIXRELAY_CODESIGN_IDENTITY: identity }, fsApi, run,
     });
     return { call, commands, renames, removed };
   };
@@ -118,6 +119,13 @@ test('macOS Driver preparation with --prebuilt merges and signs both existing sl
   assert.deepEqual(success.commands[1][1], ['lipo', '-archs', '/project/target/universal-apple-darwin/release/.driver-service-staging/mixrelay-driver-service']);
   assert.deepEqual(success.renames.map(([, to]) => to), [output]);
   assert.deepEqual(success.removed, ['/project/target/universal-apple-darwin/release/.driver-service-staging']);
+
+  // "-" is the ad-hoc check build: same artifact, no release signature options.
+  const adHoc = prepare({ identity: '-' });
+  assert.equal(adHoc.call().output, output);
+  assert.deepEqual(adHoc.commands.find(([command, args]) => command === 'codesign' && args[0] === '--force')[1],
+    ['--force', '--sign', '-', '/project/target/universal-apple-darwin/release/.driver-service-staging/mixrelay-driver-service']);
+  assert.throws(prepare({ identity: 'Apple Development: Someone (AB12C3D4E5)' }).call, /requires a Developer ID Application identity/);
 
   for (const slice of ['aarch64-apple-darwin', 'x86_64-apple-darwin']) {
     const missing = prepare({ present: [release(slice === 'aarch64-apple-darwin' ? 'x86_64-apple-darwin' : 'aarch64-apple-darwin')] });

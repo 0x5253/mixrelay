@@ -23,18 +23,21 @@ fi
 if [[ -n "${MIXRELAY_CODESIGN_IDENTITY:-}" ]]; then
   export APPLE_SIGNING_IDENTITY="$MIXRELAY_CODESIGN_IDENTITY"
 fi
-if [[ "${APPLE_SIGNING_IDENTITY:-}" != "Developer ID Application: "* ]]; then
-  print -u2 "A Developer ID Application signing identity is required for a release bundle"
+# "-" is the ad-hoc check build for pull requests: everything compiles and bundles,
+# nothing is release-signed, and the PKG and notarization steps cannot accept it.
+if [[ "${APPLE_SIGNING_IDENTITY:-}" == "-" ]]; then
+  helper_signing=(--sign -)
+  export MIXRELAY_CODESIGN_IDENTITY=-
+elif [[ "${APPLE_SIGNING_IDENTITY:-}" != "Developer ID Application: "* ]]; then
+  print -u2 "A Developer ID Application signing identity, or - for an ad-hoc check build, is required"
   exit 1
-fi
-if true; then
+else
   if [[ ! "$APPLE_SIGNING_IDENTITY" =~ '\(([A-Z0-9]{10})\)$' ]]; then
     print -u2 "Driver signing identity must contain its ten-character Apple Team ID"
     exit 1
   fi
-  signing_team="${match[1]}"
+  helper_signing=(--sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp)
   export MIXRELAY_CODESIGN_IDENTITY="$APPLE_SIGNING_IDENTITY"
-
 fi
 if [[ -n "${CARGO_TARGET_DIR:-}" ]]; then
   print -u2 "Unset CARGO_TARGET_DIR for the checked universal app build"
@@ -227,8 +230,7 @@ if true; then
       print -u2 "Driver helper must contain exactly arm64 and x86_64: $helper ($architectures)"
       exit 1
     fi
-    codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime \
-      --timestamp --identifier "$helper" "$helper_output/$helper"
+    codesign --force "${helper_signing[@]}" --identifier "$helper" "$helper_output/$helper"
     codesign --verify --strict --all-architectures "$helper_output/$helper"
   done
   # One bundle supplies both the editor and its internal background role.

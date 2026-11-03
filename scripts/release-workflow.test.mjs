@@ -93,3 +93,18 @@ test('every bundled resource is inside the Linux build container context', () =>
   assert.ok(resources.includes('third-party/THIRD-PARTY-NOTICES.txt'));
   for (const path of resources) assert.ok(allowed.some(pattern => pattern.test(path)), `${path} is excluded by .dockerignore`);
 });
+
+test('pull requests build every product unsigned and never reach signing or notarization', () => {
+  const source = workflow('pr-build');
+  assert.match(source, /^on:\n  pull_request:\n  workflow_dispatch:\n\n/m);
+  assert.match(source, /uses: \.\/\.github\/workflows\/build-linux-release\.yml/);
+  assert.match(source, /APPLE_SIGNING_IDENTITY: '-'\n\s+MIXRELAY_CODESIGN_IDENTITY: '-'/);
+  assert.match(source, /zsh scripts\/build-macos-universal-app\.sh/);
+  assert.match(source, /mixrelay-hal-bundle/);
+  const code = source.split('\n').filter(line => !line.trimStart().startsWith('#')).join('\n');
+  assert.doesNotMatch(code, /secrets\.|vars\.|environment:|prepare-ci-macos-signing|release-macos|notar|productbuild|contents: write/i);
+  // Only release.yml may reach the signing environment.
+  for (const name of readdirSync(new URL('../.github/workflows/', import.meta.url)).filter(name => name.endsWith('.yml') && name !== 'release.yml')) {
+    assert.doesNotMatch(readFileSync(new URL(`../.github/workflows/${name}`, import.meta.url), 'utf8'), /secrets\.|environment: release/, name);
+  }
+});

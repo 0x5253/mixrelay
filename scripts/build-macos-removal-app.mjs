@@ -14,8 +14,10 @@ function command(program, args) {
   return result.stdout.trim();
 }
 export function buildRemovalApp({executable, helper, output, version, identity}) {
+  // "-" is the ad-hoc check build; release removal apps carry their signing team.
+  const adHoc = identity === '-';
   const team = identity.match(/^Developer ID Application: [^\r\n]+ \(([A-Z0-9]{10})\)$/)?.[1];
-  if (!team || !/^\d+(?:\.\d+){1,3}$/.test(version)) throw new Error('Invalid release identity or version');
+  if ((!team && !adHoc) || !/^\d+(?:\.\d+){1,3}$/.test(version)) throw new Error('Invalid release identity or version');
   for (const path of [executable, helper, output]) {
     if (!path.startsWith('/') || resolve(path) !== path) throw new Error('Release paths must be absolute');
     let current = '/';
@@ -54,12 +56,13 @@ export function buildRemovalApp({executable, helper, output, version, identity})
       CFBundleDisplayName:'Uninstall MixRelay',CFBundleExecutable:'mixrelay-driver-uninstaller',
       CFBundlePackageType:'APPL',CFBundleShortVersionString:version,CFBundleVersion:version,
       CFBundleIconFile:'icon.icns',CFBundleDevelopmentRegion:'en',CFBundleLocalizations:languages.map(l=>l.language),
-      LSMinimumSystemVersion:MINIMUM_MACOS,NSHighResolutionCapable:true,MixRelaySigningTeam:team,
+      LSMinimumSystemVersion:MINIMUM_MACOS,NSHighResolutionCapable:true,...(team ? {MixRelaySigningTeam:team} : {}),
     };
     const plist = join(app,'Contents/Info.plist');
     fs.writeFileSync(plist,JSON.stringify(info));
     command('/usr/bin/plutil',['-convert','xml1',plist]);
-    command('/usr/bin/codesign',['--force','--sign',identity,'--options','runtime','--timestamp','--identifier','io.mixrelay.driver.uninstaller',app]);
+    const signing = adHoc ? ['--sign','-'] : ['--sign',identity,'--options','runtime','--timestamp'];
+    command('/usr/bin/codesign',['--force',...signing,'--identifier','io.mixrelay.driver.uninstaller',app]);
     command('/usr/bin/codesign',['--verify','--deep','--strict','--all-architectures',app]);
     if (fs.existsSync(output)) { previous=join(work,'previous.app'); fs.renameSync(output,previous); }
     try { fs.renameSync(app,output); }
