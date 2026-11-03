@@ -1,0 +1,439 @@
+{
+  "schemaVersion": 1,
+  "product": "mix-relay",
+  "minimums": {
+    "macos": "15.0",
+    "linux": {
+      "pipewire": "1.2.0",
+      "wireplumber": "0.5.0",
+      "glibc": "2.39"
+    }
+  },
+  "build": {
+    "linuxDistribution": "debian"
+  },
+  "artifacts": [
+    {
+      "id": "macos-universal-pkg",
+      "os": "macos",
+      "arch": "universal",
+      "format": "pkg"
+    },
+    {
+      "id": "linux-x64-deb",
+      "os": "linux",
+      "arch": "x64",
+      "format": "deb"
+    },
+    {
+      "id": "linux-arm64-deb",
+      "os": "linux",
+      "arch": "arm64",
+      "format": "deb"
+    },
+    {
+      "id": "linux-x64-arch",
+      "os": "linux",
+      "arch": "x64",
+      "format": "arch"
+    },
+    {
+      "id": "macos-universal-streamdeck",
+      "os": "macos",
+      "arch": "universal",
+      "format": "streamDeckPlugin"
+    }
+  ],
+  "codeChecks": {
+    "macos": [
+      {
+        "id": "macos-15-arm64",
+        "os": "macos",
+        "version": "15",
+        "arch": "arm64",
+        "runner": "macos-15"
+      },
+      {
+        "id": "macos-15-x64",
+        "os": "macos",
+        "version": "15",
+        "arch": "x64",
+        "runner": "macos-15-intel"
+      },
+      {
+        "id": "macos-26-arm64",
+        "os": "macos",
+        "version": "26",
+        "arch": "arm64",
+        "runner": "macos-26"
+      },
+      {
+        "id": "macos-26-x64",
+        "os": "macos",
+        "version": "26",
+        "arch": "x64",
+        "runner": "macos-26-intel"
+      },
+      {
+        "id": "macos-27-arm64",
+        "os": "macos",
+        "version": "27",
+        "arch": "arm64",
+        "runner": "xcode-27"
+      }
+    ],
+    "linuxDistributions": [
+      {
+        "id": "debian",
+        "version": "13",
+        "image": "debian:13-slim@sha256:d7e12182ce18b85b93007c1dedf31f2d29e01ccf3182cc4017c709b6259bc132",
+        "architectures": [
+          "x64",
+          "arm64"
+        ],
+        "artifactFormat": "deb"
+      },
+      {
+        "id": "ubuntu",
+        "version": "26.04",
+        "image": "ubuntu:26.04@sha256:f144425ff09be612d6d9ad965196e9cdc23dae1f42110a8a11a3e9a8198759f7",
+        "architectures": [
+          "x64",
+          "arm64"
+        ],
+        "artifactFormat": "deb"
+      },
+      {
+        "id": "kali",
+        "version": "rolling",
+        "image": "kalilinux/kali-rolling@sha256:c6d78f57ebfdd9fec428a8b04f74876e66fddd08dfd328c076224a552e7332a3",
+        "architectures": [
+          "x64",
+          "arm64"
+        ],
+        "artifactFormat": "deb"
+      },
+      {
+        "id": "arch",
+        "version": "rolling",
+        "image": "archlinux:base@sha256:82b1b08faae9d61e3e7e13d562f4d09114d939105b0d59ff34140f3bd418593a",
+        "architectures": [
+          "x64"
+        ],
+        "artifactFormat": "arch"
+      }
+    ]
+  },
+  "qualificationTargets": [
+    {
+      "id": "macos-15-arm64",
+      "os": "macos",
+      "version": "15",
+      "versionMatch": "major",
+      "arch": "arm64",
+      "artifact": "macos-universal-pkg",
+      "execution": {
+        "kind": "github-hosted",
+        "runner": "macos-15"
+      }
+    },
+    {
+      "id": "macos-15-x64",
+      "os": "macos",
+      "version": "15",
+      "versionMatch": "major",
+      "arch": "x64",
+      "artifact": "macos-universal-pkg",
+      "execution": {
+        "kind": "github-hosted",
+        "runner": "macos-15-intel"
+      }
+    },
+    {
+      "id": "macos-26-arm64",
+      "os": "macos",
+      "version": "26",
+      "versionMatch": "major",
+      "arch": "arm64",
+      "artifact": "macos-universal-pkg",
+      "execution": {
+        "kind": "github-hosted",
+        "runner": "macos-26"
+      }
+    },
+    {
+      "id": "macos-26-x64",
+      "os": "macos",
+      "version": "26",
+      "versionMatch": "major",
+      "arch": "x64",
+      "artifact": "macos-universal-pkg",
+      "execution": {
+        "kind": "github-hosted",
+        "runner": "macos-26-intel"
+      }
+    },
+    {
+      "id": "macos-27-arm64",
+      "os": "macos",
+      "version": "27",
+      "versionMatch": "major",
+      "arch": "arm64",
+      "artifact": "macos-universal-pkg",
+      "execution": {
+        "kind": "github-hosted",
+        "runner": "xcode-27"
+      }
+    },
+    {
+      "id": "debian-13-x64",
+      "os": "linux",
+      "distro": "debian",
+      "version": "13",
+      "versionMatch": "major",
+      "arch": "x64",
+      "artifact": "linux-x64-deb",
+      "execution": {
+        "kind": "linux-vm",
+        "runner": "ubuntu-24.04",
+        "image": "debian-x64"
+      }
+    },
+    {
+      "id": "debian-13-arm64",
+      "os": "linux",
+      "distro": "debian",
+      "version": "13",
+      "versionMatch": "major",
+      "arch": "arm64",
+      "artifact": "linux-arm64-deb",
+      "execution": {
+        "kind": "linux-vm",
+        "runner": "ubuntu-24.04-arm",
+        "image": "debian-arm64"
+      }
+    },
+    {
+      "id": "ubuntu-26-04-x64",
+      "os": "linux",
+      "distro": "ubuntu",
+      "version": "26.04",
+      "versionMatch": "minor",
+      "arch": "x64",
+      "artifact": "linux-x64-deb",
+      "execution": {
+        "kind": "linux-vm",
+        "runner": "ubuntu-24.04",
+        "image": "ubuntu-x64"
+      }
+    },
+    {
+      "id": "ubuntu-26-04-arm64",
+      "os": "linux",
+      "distro": "ubuntu",
+      "version": "26.04",
+      "versionMatch": "minor",
+      "arch": "arm64",
+      "artifact": "linux-arm64-deb",
+      "execution": {
+        "kind": "linux-vm",
+        "runner": "ubuntu-24.04-arm",
+        "image": "ubuntu-arm64"
+      }
+    },
+    {
+      "id": "kali-rolling-x64",
+      "os": "linux",
+      "distro": "kali",
+      "version": "rolling",
+      "versionMatch": "rolling",
+      "arch": "x64",
+      "artifact": "linux-x64-deb",
+      "execution": {
+        "kind": "linux-vm",
+        "runner": "ubuntu-24.04",
+        "image": "kali-x64"
+      }
+    },
+    {
+      "id": "kali-rolling-arm64",
+      "os": "linux",
+      "distro": "kali",
+      "version": "rolling",
+      "versionMatch": "rolling",
+      "arch": "arm64",
+      "artifact": "linux-arm64-deb",
+      "execution": {
+        "kind": "linux-vm",
+        "runner": "ubuntu-24.04-arm",
+        "image": "kali-arm64"
+      }
+    },
+    {
+      "id": "arch-rolling-x64",
+      "os": "linux",
+      "distro": "arch",
+      "version": "rolling",
+      "versionMatch": "rolling",
+      "arch": "x64",
+      "artifact": "linux-x64-arch",
+      "execution": {
+        "kind": "linux-vm",
+        "runner": "ubuntu-24.04",
+        "image": "arch-x64"
+      }
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "PKG-01",
+      "scope": "artifact",
+      "required": true,
+      "title": "Installed executables match the selected distribution artifact"
+    },
+    {
+      "id": "APP-01",
+      "scope": "installed-api",
+      "required": true,
+      "title": "Installed runtime and Driver become ready"
+    },
+    {
+      "id": "GRAPH-02",
+      "scope": "installed-api",
+      "required": true,
+      "title": "Save and reopen a graph without losing authored routing"
+    },
+    {
+      "id": "AUDIO-01",
+      "scope": "native-audio",
+      "required": true,
+      "title": "Installed native audio preserves the stereo PCM received at the product boundary"
+    },
+    {
+      "id": "REC-02",
+      "scope": "installed-api",
+      "required": true,
+      "title": "Preserve received native PCM in a finalized RF64 recording"
+    },
+    {
+      "id": "AUDIO-12",
+      "scope": "native-audio",
+      "required": true,
+      "os": [
+        "macos"
+      ],
+      "title": "Preserve received silence and audible PCM in both source orders"
+    },
+    {
+      "id": "GRAPH-01",
+      "scope": "installed-ui",
+      "required": true,
+      "title": "Create and connect a routing graph through the installed UI"
+    },
+    {
+      "id": "AUDIO-11",
+      "scope": "native-audio",
+      "required": true,
+      "os": [
+        "macos"
+      ],
+      "title": "Free whole-system capture receives multiple sources"
+    },
+    {
+      "id": "UPGRADE-01",
+      "scope": "artifact",
+      "required": true,
+      "title": "Upgrade from a pinned previous candidate preserves user state and passes the complete installed suite"
+    },
+    {
+      "id": "PKG-02",
+      "scope": "artifact",
+      "required": true,
+      "title": "Remove the installed product while preserving saved session documents"
+    },
+    {
+      "id": "STREAMDECK-01",
+      "scope": "artifact",
+      "required": true,
+      "artifact": "macos-universal-streamdeck",
+      "title": "Validate packed Stream Deck bytes, identity, DRM and runtime without running Stream Deck"
+    }
+  ],
+  "macosArchitectures": {
+    "15": [
+      "arm64",
+      "x64"
+    ],
+    "26": [
+      "arm64",
+      "x64"
+    ],
+    "27": [
+      "arm64"
+    ]
+  },
+  "qualificationImages": {
+    "debian-x64": {
+      "url": "https://cloud.debian.org/images/cloud/trixie/20261017-2634/debian-13-genericcloud-amd64-20261017-2634.qcow2",
+      "algorithm": "sha512",
+      "digest": "ec584ccabfef7120b4c4f7482adf0e615894d9292cedec446b64194b951ebe5dd97c336b5dcbae458333764b0edd516334506017f33c4f2020ef8d38b569ffe3",
+      "format": "qcow2"
+    },
+    "ubuntu-x64": {
+      "url": "https://cloud-images.ubuntu.com/releases/resolute/release-20261016/ubuntu-26.04-server-cloudimg-amd64.img",
+      "algorithm": "sha256",
+      "digest": "5645d0318ad21f643ebb1ac4567514620e9893380b07b0201fda163baa5b7eb5",
+      "format": "qcow2"
+    },
+    "kali-x64": {
+      "url": "https://kali.download/cloud-images/kali-2026.2/kali-linux-2026.2-cloud-genericcloud-amd64.tar.xz",
+      "algorithm": "sha256",
+      "digest": "3f4ca86ae1eca0dc2bf2092f065a959508e186c6b44f85758813a8e9a0604f3e",
+      "format": "tar.xz"
+    },
+    "debian-arm64": {
+      "url": "https://cloud.debian.org/images/cloud/trixie/20261017-2634/debian-13-genericcloud-arm64-20261017-2634.qcow2",
+      "algorithm": "sha512",
+      "digest": "0199ea72dd82e84264fda5068c5756412c778f395fca6748a186f2d0a34f524fe406e87339bda0b7f71aa9bab066b9850cde44cd1650116f389dc3f786cb232b",
+      "format": "qcow2"
+    },
+    "ubuntu-arm64": {
+      "url": "https://cloud-images.ubuntu.com/releases/resolute/release-20261016/ubuntu-26.04-server-cloudimg-arm64.img",
+      "algorithm": "sha256",
+      "digest": "8eb876c2ccc4b6ff89e4a65d511815923b285e04503ba465809bf587f763da24",
+      "format": "qcow2"
+    },
+    "kali-arm64": {
+      "url": "https://kali.download/cloud-images/kali-2026.2/kali-linux-2026.2-cloud-genericcloud-arm64.tar.xz",
+      "algorithm": "sha256",
+      "digest": "9ab19c28d049fdc6f1d5d30f6cc93b8b01997f11c89f6992f690c07b16b7b7e4",
+      "format": "tar.xz"
+    },
+    "arch-x64": {
+      "url": "https://mirror.pkgbuild.com/images/v20261015.611680/Arch-Linux-x86_64-cloudimg-20261015.611680.qcow2",
+      "algorithm": "sha256",
+      "digest": "08754e28d91b1680086c6211ef4df13559e766fff7cdb4006489b14b5d281f08",
+      "format": "qcow2"
+    }
+  },
+  "artifactChecks": [
+    {
+      "id": "streamdeck-plugin",
+      "artifact": "macos-universal-streamdeck",
+      "kind": "streamdeck"
+    }
+  ],
+  "runtimeLibraries": {
+    "linux": {
+      "midi": {
+        "deb": "libasound2t64",
+        "arch": "alsa-lib"
+      }
+    }
+  },
+  "metadata": {
+    "homepage": "https://rawsector.com/products/mixrelay",
+    "publisher": "rawsector",
+    "email": "support@rawsector.com"
+  }
+}

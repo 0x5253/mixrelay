@@ -1,0 +1,23 @@
+{
+  "name": "@mixrelay/streamdeck-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test src/*.test.mjs",
+    "validate": "streamdeck validate dist/com.rawsector.mixrelay.sdPlugin",
+    "pack": "node build.mjs && streamdeck validate dist/com.rawsector.mixrelay.sdPlugin && streamdeck pack dist/com.rawsector.mixrelay.sdPlugin --output dist --force"
+  },
+  "dependencies": {
+    "@elgato/streamdeck": "3.0.4"
+  },
+  "devDependencies": {
+    "@elgato/cli": "1.10.4",
+    "@resvg/resvg-js": "2.6.2",
+    "esbuild": "0.28.2",
+    "ws": "8.21.3"
+  },
+  "author": "rawsector <support@rawsector.com>",
+  "homepage": "https://rawsector.com/products/mixrelay"
+}

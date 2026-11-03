@@ -1,0 +1,164 @@
+{
+  "enginePower": {
+    "enabled": false,
+    "transitioning": false,
+    "unsaved": true,
+    "pauseReason": "repeatedFailures"
+  },
+  "processorTimings": [
+    {
+      "graphId": "graph-1",
+      "nodeId": "gain",
+      "roundTripNs": 41000
+    }
+  ],
+  "processorLatencies": [
+    {
+      "graphId": "graph-1",
+      "nodeId": "gain",
+      "transportFrames": 128,
+      "intrinsicFrames": null
+    }
+  ],
+  "failedProcessors": [
+    {
+      "graphId": "graph-1",
+      "nodeId": "plugin",
+      "instanceId": "18446744073709551615"
+    }
+  ],
+  "recorderError": "disk full",
+  "protocolVersion": 1,
+  "driverState": "ready",
+  "sampleRate": 48000,
+  "bufferFrames": 128,
+  "underruns": 2,
+  "overruns": 1,
+  "sampleFaults": {
+    "sourceSamples": 0,
+    "inputSamples": 0,
+    "outputSamples": 3,
+    "blocks": 1
+  },
+  "audioSession": {
+    "endpointPreferencesUnavailable": false,
+    "virtualEndpointSettings": {
+      "canCreate": true,
+      "canRename": true,
+      "renderChannels": [
+        1,
+        2
+      ],
+      "captureChannels": [
+        1,
+        2
+      ],
+      "creationTemplate": {
+        "render": {
+          "channels": 2,
+          "channelLayout": "discrete"
+        },
+        "capture": {
+          "channels": 2,
+          "channelLayout": "discrete"
+        },
+        "supportedSampleRates": [
+          44100,
+          48000,
+          88200,
+          96000,
+          176400,
+          192000
+        ],
+        "defaultSampleRate": 48000
+      },
+      "devices": [
+        {
+          "spec": {
+            "id": "relay-1",
+            "displayName": "MixRelay 1",
+            "render": {
+              "channels": 2,
+              "channelLayout": "stereo"
+            },
+            "capture": null,
+            "supportedSampleRates": [
+              44100,
+              48000
+            ],
+            "defaultSampleRate": 48000
+          },
+          "nativeDeviceIds": [
+            "MixRelayDevice:relay-1"
+          ],
+          "observedSampleRate": 48000,
+          "supportedSampleRates": [
+            44100,
+            48000
+          ],
+          "canSetSampleRate": true,
+          "nativeFormats": {
+            "render": {
+              "current": {
+                "sampleRate": 48000,
+                "channels": 2,
+                "sampleFormat": "float32"
+              },
+              "supported": [
+                {
+                  "sampleRate": 48000,
+                  "channels": 2,
+                  "sampleFormat": "float32"
+                },
+                {
+                  "sampleRate": 48000,
+                  "channels": 2,
+                  "sampleFormat": "signed24"
+                }
+              ]
+            },
+            "capture": {
+              "current": null,
+              "supported": []
+            }
+          }
+        }
+      ]
+    },
+    "processingState": "running",
+    "discontinuities": 1,
+    "format": {
+      "sampleRate": 48000,
+      "blockFrames": 128
+    },
+    "preferredFormat": {
+      "sampleRate": 48000,
+      "blockFrames": 128
+    },
+    "clockAuthority": "device",
+    "observedDeviceSampleRate": 48000,
+    "observedDeviceBufferFrames": 128,
+    "issue": null,
+    "transportLatencyFrames": 256,
+    "capabilities": {
+      "backend": "core_audio",
+      "supportedSampleRates": [
+        44100,
+        48000,
+        96000
+      ],
+      "supportedBlockFrames": [
+        64,
+        128,
+        256
+      ],
+      "canReconfigureLive": true,
+      "hardwareInput": true,
+      "hardwareOutput": true,
+      "virtualEndpoint": true,
+      "applicationCapture": true,
+      "sampleRateConversion": false,
+      "driftCorrection": false
+    }
+  }
+}

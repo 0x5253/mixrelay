@@ -1,0 +1,25 @@
+[package]
+name = "mixrelay-pipewire-observer"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+# Diagnostic preload only: no application or production library depends on it.
+[lib]
+crate-type = ["cdylib"]
+
+[lints]
+workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+# Reuse the installed-version native ABI; do not duplicate PipeWire/SPA structs.
+pipewire = { version = "0.10.1", features = ["v0_3_50"] }
+# Dynamic-loader symbol resolution and native monotonic time, not scheduling changes.
+libc = "0.2.189"
+# Serialize only from the loader's finalizer after the owned clients close.
+serde.workspace = true
+serde_json.workspace = true
+
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+allocation-counter = "0.8.1"

@@ -1,0 +1,244 @@
+.root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--canvas-background);
+}
+
+/* The canvas is focused programmatically for selection cancellation, not by Tab. */
+.root:focus {
+  outline: none;
+}
+
+.root :global(.react-flow__node:focus-visible) {
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: 2px;
+}
+
+.root :global(.react-flow) {
+  /* Override the library's fixed dark canvas with the Core theme role. */
+  --xy-background-color: var(--canvas-background);
+  min-height: 0;
+}
+
+.emptyHint {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: var(--space-8);
+  color: var(--text-muted);
+  font-size: var(--font-body);
+  line-height: var(--line-height-body);
+  text-align: center;
+  pointer-events: none;
+}
+
+.nodeToolbar {
+  z-index: var(--layer-canvas-toolbar);
+  margin: var(--space-3);
+  margin-left: var(--space-3);
+}
+
+.addNode {
+  width: var(--control-height);
+  height: var(--control-height);
+  padding: 0;
+}
+
+.addNode > :first-child {
+  font-size: var(--font-command-symbol);
+  font-weight: 400;
+  line-height: 1;
+}
+
+.root :global(.react-flow__renderer),
+.root :global(.react-flow__pane.draggable),
+.root :global(.react-flow__pane.dragging),
+.root :global(.react-flow__pane.selection),
+.root :global(.react-flow__node.selectable),
+.root :global(.react-flow__node.draggable),
+.root :global(.react-flow__node.draggable.dragging),
+.root :global(.react-flow__nodesselection-rect),
+.root :global(.react-flow__edge.selectable),
+.root :global(.react-flow__edgeupdater),
+.root :global(.react-flow__handle.connectionindicator),
+.root :global(.react-flow__controls-button) {
+  cursor: default;
+}
+
+.root :global(.react-flow__selection) {
+  border: 1px solid var(--canvas-selection-border);
+  background: var(--canvas-selection-background);
+}
+
+.root :global(.react-flow__edge-path),
+.root :global(.react-flow__connection-path) {
+  stroke: var(--cable);
+  stroke-width: 1.5;
+}
+
+.root :global(svg.react-flow__connectionline) {
+  z-index: var(--layer-canvas-connection-line);
+}
+
+.root :global(.react-flow__edge.selected .react-flow__edge-path) {
+  stroke: var(--cable-selected);
+  stroke-width: 2;
+}
+
+.node {
+  display: flex;
+  flex-direction: column;
+  width: var(--node-default-width);
+  position: relative;
+  box-sizing: border-box;
+}
+
+.node[data-equalizer] {
+  width: var(--node-equalizer-width);
+  min-width: var(--node-equalizer-width);
+}
+
+.node[data-dynamics] {
+  width: var(--node-dynamics-width);
+  min-width: var(--node-dynamics-width);
+}
+
+.node .resizeHandle:global(.react-flow__resize-control.handle.bottom.right) {
+  display: grid;
+  place-items: end;
+  top: auto;
+  left: auto;
+  right: 1px;
+  bottom: 1px;
+  width: 10px;
+  height: 10px;
+  border: none;
+  border-radius: 0;
+  transform: none;
+  background: transparent;
+  cursor: nwse-resize;
+}
+
+.resizeHandle > svg {
+  display: block;
+  width: 10px;
+  height: 10px;
+}
+
+.node .resizeHandle {
+  color: var(--canvas-resize-text);
+}
+
+.node .resizeHandle:hover {
+  color: var(--canvas-resize-text-hover);
+}
+
+.handle {
+  --port-accent: var(--port-output-hover);
+  --port-accent-border: var(--port-output-border-hover);
+  --port-accent-ring: var(--port-output-ring-hover);
+  --port-selected: var(--port-output-selected);
+  --port-selected-border: var(--port-output-border-selected);
+  --port-selected-ring: var(--port-output-ring-selected);
+
+  z-index: var(--layer-canvas-handle);
+  /* React Flow anchors cables to this box, not the expanded pointer target. */
+  min-width: 0;
+  width: 3px;
+  height: 9px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.handle::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 16px;
+  content: "";
+  transform: translate(-50%, -50%);
+}
+
+.handle::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  height: 9px;
+  border: 1px solid var(--port-border);
+  border-radius: 1px;
+  background: var(--port-background);
+  content: "";
+  transform: translate(-50%, -50%);
+  transition:
+    width var(--motion-duration-instant) var(--motion-easing-standard),
+    height var(--motion-duration-instant) var(--motion-easing-standard),
+    background-color var(--motion-duration-instant) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-instant) var(--motion-easing-standard);
+}
+
+.handle:hover {
+  z-index: var(--layer-canvas-handle-hover);
+}
+
+.handle:hover::after,
+.handle:global(.connectingto)::after,
+.handle[data-connection-target]::after {
+  width: 4px;
+  height: 12px;
+  border-color: var(--port-accent-border);
+  background: var(--port-accent);
+  box-shadow: 0 0 0 2px var(--port-accent-ring);
+}
+
+.handle[data-port-selected]::after {
+  z-index: var(--layer-canvas-port-selection);
+  width: 3px;
+  height: 9px;
+  border-color: var(--port-selected-border);
+  background: var(--port-selected);
+  box-shadow: none;
+}
+
+.inputHandle {
+  --port-accent: var(--port-input-hover);
+  --port-accent-border: var(--port-input-border-hover);
+  --port-accent-ring: var(--port-input-ring-hover);
+  --port-selected: var(--port-input-selected);
+  --port-selected-border: var(--port-input-border-selected);
+  --port-selected-ring: var(--port-input-ring-selected);
+}
+
+.portSelectionFeedback {
+  position: absolute;
+  top: clamp(8px, var(--selection-y), calc(100% - 32px));
+  left: clamp(8px, var(--selection-x), calc(100% - 180px));
+  z-index: var(--layer-canvas-selection-feedback);
+  max-width: min(172px, calc(100% - 16px));
+  overflow: hidden;
+  padding: var(--tooltip-readout-padding);
+  border-radius: 3px;
+  background: var(--surface-floating);
+  color: var(--text-primary);
+  font-size: var(--font-label);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.root[data-midi-mode] :global(.react-flow__edge),
+.root[data-midi-mode] :global(.react-flow__handle),
+.root[data-midi-mode] :global(.react-flow__resize-control) {
+  opacity: var(--control-disabled-opacity);
+  pointer-events: none;
+}

@@ -1,0 +1,8 @@
+@prefix lv2: <http://lv2plug.in/ns/lv2core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<urn:mixrelay:multibus-fixture> a lv2:Plugin ; lv2:binary <multibus.so> ; rdfs:seeAlso <multibus.ttl> .
+<urn:mixrelay:multibus-ambiguous> a lv2:Plugin ; lv2:binary <multibus.so> ; rdfs:seeAlso <multibus.ttl> .
+<urn:mixrelay:multibus-conflict> a lv2:Plugin ; lv2:binary <multibus.so> ; rdfs:seeAlso <multibus.ttl> .
+<urn:mixrelay:multibus-indexed> a lv2:Plugin ; lv2:binary <multibus.so> ; rdfs:seeAlso <multibus.ttl> .
+<urn:mixrelay:multibus-type-conflict> a lv2:Plugin ; lv2:binary <multibus.so> ; rdfs:seeAlso <multibus.ttl> .

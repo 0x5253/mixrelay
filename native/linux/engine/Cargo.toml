@@ -1,0 +1,42 @@
+[package]
+name = "mixrelay-linux-engine"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[features]
+native-lab = []
+
+[target.'cfg(target_os = "linux")'.dependencies]
+mixrelay-engine = { path = "../../../crates/engine" }
+mixrelay-engine-runtime = { path = "../../common/engine-runtime" }
+mixrelay-audio-engine = { path = "../../../crates/audio-engine" }
+mixrelay-audio-graph = { path = "../../../crates/audio-graph" }
+mixrelay-audio-io.workspace = true
+mixrelay-control-protocol = { path = "../../../crates/control-protocol" }
+mixrelay-driver-control = { path = "../../../crates/driver-control" }
+mixrelay-linux-driver = { path = "../driver-control" }
+mixrelay-linux-audio-io = { path = "../audio-io" }
+mixrelay-pipewire = { path = "../pipewire" }
+mixrelay-time = { path = "../../../crates/time" }
+serde_json.workspace = true
+sha2 = "0.10.9"
+thiserror.workspace = true
+tokio.workspace = true
+tracing = "0.1.41"
+libc = "0.2.189"
+
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+axum.workspace = true
+mixrelay-local-socket = { path = "../../../crates/local-socket" }
+# Existing opt-in Driver inventory qualification; never linked into production.
+mixrelay-driver-adapters = { path = "../../../crates/driver-adapters" }
+mixrelay-engine = { path = "../../../crates/engine", features = ["test-util"] }
+mixrelay-time = { path = "../../../crates/time", features = ["test-util"] }
+mixrelay-pipewire = { path = "../pipewire", features = ["test-observation"] }
+mixrelay-test-support = { path = "../../../crates/test-support" }
+allocation-counter = "0.8.1"

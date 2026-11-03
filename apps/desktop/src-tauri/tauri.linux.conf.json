@@ -1,0 +1,95 @@
+{
+  "bundle": {
+    "targets": [
+      "deb",
+      "rpm"
+    ],
+    "externalBin": [
+      "binaries/mixrelay-driver-service",
+      "binaries/mixrelay-service"
+    ],
+    "linux": {
+      "deb": {
+        "preInstallScript": "../../../packaging/linux/driver-before-change.sh",
+        "preRemoveScript": "../../../packaging/linux/driver-pre-remove.sh",
+        "files": {
+          "/usr/share/doc/mix-relay/LICENSE.txt": "../../../LICENSE.txt",
+          "/usr/lib/mixrelay/uninstall.sh": "../../../packaging/linux/uninstall.sh",
+          "/usr/share/applications/mixrelay-uninstall.desktop": "../../../packaging/linux/mixrelay-uninstall.desktop",
+          "/usr/share/wireplumber/scripts/mixrelay-source-mute.lua": "../../../native/linux/wireplumber/mixrelay-source-mute.lua",
+          "/usr/share/wireplumber/wireplumber.conf.d/90-mixrelay-source-mute.conf": "../../../native/linux/wireplumber/90-mixrelay-source-mute.conf",
+          "/usr/share/mixrelay-driver/version.json": "../../../target/driver-package/version.json",
+          "/usr/share/doc/mix-relay-driver/third-party/truce-rack/LICENSE-MIT": "../../../vendor/LICENSE-MIT",
+          "/usr/share/doc/mix-relay-driver/third-party/truce-rack/LICENSE-APACHE": "../../../vendor/LICENSE-APACHE",
+          "/usr/lib/systemd/user/mixrelay-driver.service": "../../../packaging/linux/mixrelay-driver.service",
+          "/etc/xdg/autostart/mixrelay-driver.desktop": "../../../packaging/linux/mixrelay-driver-autostart.desktop",
+          "/usr/lib/mixrelay-driver/session-start.sh": "../../../packaging/linux/session-start.sh",
+          "/usr/lib/mixrelay-driver/before-change.sh": "../../../packaging/linux/driver-before-change.sh",
+          "/usr/share/doc/mix-relay-driver/LICENSE.txt": "../../../LICENSE.txt",
+          "/usr/share/icons/hicolor/symbolic/apps/mixrelay-desktop-symbolic.svg": "../../../branding/linux/mixrelay-desktop-symbolic.svg"
+        },
+        "depends": [
+          "libasound2t64",
+          "libpipewire-0.3-0t64 (>= 1.2.0)",
+          "liblilv-0-0",
+          "libgcc-s1",
+          "libc6",
+          "libayatana-appindicator3-1",
+          "pipewire (>= 1.2.0)",
+          "wireplumber (>= 0.5.0)",
+          "librsvg2-common",
+          "pkexec",
+          "polkit-1-auth-agent | lxpolkit",
+          "zenity",
+          "libc6 (>= 2.39)",
+          "systemd",
+          "util-linux"
+        ],
+        "postInstallScript": "../../../packaging/linux/driver-after-install.sh",
+        "postRemoveScript": "../../../packaging/linux/driver-after-remove.sh"
+      },
+      "rpm": {
+        "preInstallScript": "../../../packaging/linux/driver-before-change.sh",
+        "preRemoveScript": "../../../packaging/linux/driver-rpm-pre-remove.sh",
+        "files": {
+          "/usr/share/doc/mix-relay/LICENSE.txt": "../../../LICENSE.txt",
+          "/usr/lib/mixrelay/uninstall.sh": "../../../packaging/linux/uninstall.sh",
+          "/usr/share/applications/mixrelay-uninstall.desktop": "../../../packaging/linux/mixrelay-uninstall.desktop",
+          "/usr/share/wireplumber/scripts/mixrelay-source-mute.lua": "../../../native/linux/wireplumber/mixrelay-source-mute.lua",
+          "/usr/share/wireplumber/wireplumber.conf.d/90-mixrelay-source-mute.conf": "../../../native/linux/wireplumber/90-mixrelay-source-mute.conf",
+          "/usr/share/mixrelay-driver/version.json": "../../../target/driver-package/version.json",
+          "/usr/share/doc/mix-relay-driver/third-party/truce-rack/LICENSE-MIT": "../../../vendor/LICENSE-MIT",
+          "/usr/share/doc/mix-relay-driver/third-party/truce-rack/LICENSE-APACHE": "../../../vendor/LICENSE-APACHE",
+          "/usr/lib/systemd/user/mixrelay-driver.service": "../../../packaging/linux/mixrelay-driver.service",
+          "/etc/xdg/autostart/mixrelay-driver.desktop": "../../../packaging/linux/mixrelay-driver-autostart.desktop",
+          "/usr/lib/mixrelay-driver/session-start.sh": "../../../packaging/linux/session-start.sh",
+          "/usr/lib/mixrelay-driver/before-change.sh": "../../../packaging/linux/driver-before-change.sh",
+          "/usr/share/doc/mix-relay-driver/LICENSE.txt": "../../../LICENSE.txt",
+          "/usr/share/icons/hicolor/symbolic/apps/mixrelay-desktop-symbolic.svg": "../../../branding/linux/mixrelay-desktop-symbolic.svg"
+        },
+        "depends": [
+          "alsa-lib",
+          "pipewire-libs",
+          "lilv-libs",
+          "libgcc",
+          "glibc",
+          "gtk3",
+          "webkit2gtk4.1",
+          "librsvg2",
+          "libayatana-appindicator-gtk3",
+          "pipewire",
+          "wireplumber",
+          "polkit",
+          "PolicyKit-authentication-agent",
+          "zenity",
+          "libc.so.6(GLIBC_2.39)(64bit)",
+          "systemd",
+          "util-linux",
+          "lilv"
+        ],
+        "postInstallScript": "../../../packaging/linux/driver-after-install.sh",
+        "postRemoveScript": "../../../packaging/linux/driver-after-remove.sh"
+      }
+    }
+  }
+}

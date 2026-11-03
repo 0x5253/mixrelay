@@ -1,0 +1,14 @@
+[package]
+name = "mixrelay-time"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[features]
+# Exposes `ManualClock` to other crates' tests. Enable it only from `[dev-dependencies]`;
+# `pnpm check:crate-layers` rejects `test-*` features on normal and build dependencies.
+test-util = []

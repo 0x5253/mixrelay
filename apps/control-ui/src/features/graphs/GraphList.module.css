@@ -1,0 +1,6 @@
+.notice {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-control);
+  line-height: var(--line-height-body);
+  overflow-wrap: anywhere;
+}

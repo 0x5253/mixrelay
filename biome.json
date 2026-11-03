@@ -1,0 +1,64 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "files": {
+    "includes": [
+      "biome.json",
+      "apps/control-ui/src/**",
+      "apps/control-ui/.storybook/**",
+      "apps/control-ui/scripts/**",
+      "apps/control-ui/index.html",
+      "apps/control-ui/package.json",
+      "apps/control-ui/tsconfig.json",
+      "apps/control-ui/vite.config.ts",
+      "apps/streamdeck-plugin/src/**",
+      "apps/streamdeck-plugin/ui/**",
+      "apps/streamdeck-plugin/build.mjs",
+      "apps/streamdeck-plugin/package.json",
+      "apps/streamdeck-plugin/manifest.json"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "always",
+      "trailingCommas": "all"
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "complexity": {
+        "noExcessiveCognitiveComplexity": {
+          "level": "error",
+          "options": {
+            "maxAllowedComplexity": 15
+          }
+        },
+        "noExcessiveLinesPerFunction": {
+          "level": "error",
+          "options": {
+            "maxLines": 80,
+            "skipBlankLines": true
+          }
+        }
+      },
+      "correctness": {
+        "noUnusedImports": "error",
+        "noUnusedVariables": "error"
+      },
+      "style": {
+        "noNonNullAssertion": "error",
+        "useConst": "error"
+      },
+      "suspicious": {
+        "noExplicitAny": "error"
+      }
+    }
+  }
+}

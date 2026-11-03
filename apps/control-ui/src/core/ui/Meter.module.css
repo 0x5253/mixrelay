@@ -1,0 +1,26 @@
+.root {
+  display: inline-block;
+  position: relative;
+  width: var(--meter-width);
+  height: 100%;
+  overflow: hidden;
+  background: var(--meter-background);
+}
+
+.fill {
+  position: absolute;
+  inset: 0;
+  background: var(--meter-zones-vertical);
+  clip-path: inset(var(--meter-unfilled, 100%) 0 0);
+  transition: clip-path var(--meter-response-duration) linear;
+}
+
+.root[data-orientation="horizontal"] {
+  width: 100%;
+  height: var(--meter-height-horizontal);
+}
+
+.root[data-orientation="horizontal"] .fill {
+  background: var(--meter-zones-horizontal);
+  clip-path: inset(0 var(--meter-unfilled, 100%) 0 0);
+}

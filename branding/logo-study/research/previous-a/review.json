@@ -1,0 +1,217 @@
+{
+  "reviewedAt": "2026-10-11",
+  "requestedMarket": "worldwide",
+  "designAsset": "superseded separated A (removed draft)",
+  "imageSearchAsset": "previous-a/search-symbol.png",
+  "conclusion": {
+    "finishPreference": "A",
+    "commercialClearance": "not established",
+    "recommendation": "Retain the restrained square modular direction, but differentiate the column relationships, cut placement and external silhouette before final adoption. Corner finishing alone does not resolve the observed structural similarities."
+  },
+  "independentAiReviews": [
+    {
+      "perspective": "form",
+      "ranking": [
+        "A",
+        "C",
+        "B"
+      ],
+      "finding": "Rounded tops and flat baseline give A a direction and grounded character."
+    },
+    {
+      "perspective": "small sizes",
+      "ranking": [
+        "A",
+        "B",
+        "C"
+      ],
+      "finding": "No observed readability advantage from changing A to B or C at 16, 24 and 32 pixels."
+    },
+    {
+      "perspective": "typography",
+      "ranking": [
+        "A",
+        "B",
+        "C"
+      ],
+      "finding": "A best balances the curves and straight baseline of the outlined wordmark."
+    }
+  ],
+  "performedSearches": [
+    {
+      "database": "USPTO",
+      "query": "MixRelay",
+      "mode": "Wordmark; Live and Dead; no class filter",
+      "resultCount": 0,
+      "url": "https://tmsearch.uspto.gov/"
+    },
+    {
+      "database": "USPTO",
+      "query": "DE:(vertical AND bars AND diagonal) AND (IC:009 OR IC:042)",
+      "resultCount": 52,
+      "reviewScope": "Limited first visible results only; description keyword search can miss marks.",
+      "url": "https://tmsearch.uspto.gov/"
+    },
+    {
+      "database": "TMview",
+      "query": "MixRelay",
+      "mode": "Trademark name contains; no jurisdiction or class filter",
+      "resultCount": 0,
+      "url": "https://www.tmdn.org/tmview/#/tmview/results?page=1&pageSize=30&criteria=C&basicSearch=MixRelay"
+    },
+    {
+      "database": "TMview",
+      "query": "Mix Relay",
+      "mode": "Trademark name contains; no jurisdiction or class filter",
+      "resultCount": 0,
+      "url": "https://www.tmdn.org/tmview/#/tmview/results?page=1&pageSize=30&criteria=C&basicSearch=Mix%20Relay"
+    },
+    {
+      "database": "TMview",
+      "query": "Approved A symbol upload; full 512 x 512 image; colour=false; ocr=false",
+      "mode": "Image similarity; no jurisdiction or class filter",
+      "resultCount": 986,
+      "reviewScope": "Upper visible gallery results, followed by selected nearby record details; not all 986 records reviewed.",
+      "url": "https://www.tmdn.org/tmview/#/tmview/results?page=1&pageSize=30&criteria=C&imageId=8580311&imageName=071633160-11102026.png&segmentLeft=0&segmentRight=512&segmentTop=0&segmentBottom=512&colour=false&ocr=false"
+    },
+    {
+      "database": "TMview",
+      "query": "Same uploaded image with Nice class 9 filter",
+      "resultCount": 183,
+      "reviewScope": "First gallery page's available visible thumbnails and selected record details; unavailable images and remaining pages not cleared.",
+      "evidence": "tmview-image-class9.png",
+      "url": "https://www.tmdn.org/tmview/#/tmview/results?page=1&pageSize=30&criteria=C&imageId=8580311&imageName=071633160-11102026.png&segmentLeft=0&segmentRight=512&segmentTop=0&segmentBottom=512&colour=false&ocr=false&fNiceClass=9"
+    }
+  ],
+  "comparisonCandidates": [
+    {
+      "name": "BBC Three 2016 identity",
+      "url": "https://rts.org.uk/article/bbc-three-unveils-digital-rebrand",
+      "primaryVisualSource": "https://www.bbc.co.uk/news/entertainment-arts-35221706",
+      "observation": "Two complete vertical columns and a split right column. BBC's right column is an exclamation mark with a horizontal opening near its lower end; MixRelay uses a central diagonal opening.",
+      "recordStatus": "BBC's applicable registrations and current rights were not verified.",
+      "assessment": "Important structural comparison; no legal infringement determination."
+    },
+    {
+      "jurisdiction": "CN",
+      "applicationAndRegistration": "87982131",
+      "owner": "北京育创硕博信息技术研究院",
+      "statusAsDisplayedInTmview": "Registered",
+      "niceClasses": [
+        44
+      ],
+      "filed": "2025-10-11",
+      "registered": "2026-06-07",
+      "expires": "2036-06-06",
+      "goodsSummary": "Mental health, counselling, rehabilitation, art, dance and music therapy services.",
+      "observation": "Three rounded vertical columns; diagonal separations in the first and third columns. Strong shared visual vocabulary with A, although cut placement and silhouette differ.",
+      "assessment": "Close visual comparison; goods differ from MixRelay. No legal confusion determination.",
+      "evidence": "tmview-cn-87982131.png",
+      "url": "https://www.tmdn.org/tmview/#/tmview/detail/CN500008798213144"
+    },
+    {
+      "jurisdiction": "CN",
+      "applicationAndRegistration": "71169161",
+      "owner": "深圳市迷智科技有限公司",
+      "statusAsDisplayedInTmview": "Registered",
+      "niceClasses": [
+        9
+      ],
+      "registered": "2024-02-28",
+      "goodsSummary": "USB hubs, cables, chargers and electronic locks.",
+      "observation": "Two full rectangular vertical columns plus a right exclamation-mark column; horizontal separation.",
+      "assessment": "Relevant structural comparison in class 9; owner is not BBC. Relatedness and legal conflict not determined.",
+      "evidence": "tmview-cn-71169161.png",
+      "url": "https://www.tmdn.org/tmview/#/tmview/detail/CN500007116916109"
+    },
+    {
+      "jurisdiction": "CA",
+      "application": "1495455-00",
+      "registration": "TMA858217",
+      "owner": "Mercatus Technologies ULC",
+      "statusAsDisplayedInTmview": "Registered",
+      "registered": "2013-08-21",
+      "expires": "2028-08-21",
+      "goodsSummary": "Retail shopping systems, related computer software, communications and technology services.",
+      "observation": "Three vertical columns crossed by one continuous rising diagonal cut; different column heights and cut direction from A.",
+      "assessment": "Shared bars and diagonal separation with a software-related registration; retail scope differs. No legal conflict determination.",
+      "evidence": "tmview-ca-tma858217.png",
+      "url": "https://www.tmdn.org/tmview/#/tmview/detail/CA500000149545500"
+    },
+    {
+      "jurisdiction": "EM",
+      "application": "012350501",
+      "owner": "MEIZU TECHNOLOGY CO., LTD.",
+      "statusAsDisplayedInTmview": "Registered",
+      "niceClasses": [
+        9
+      ],
+      "goodsSummary": "Consumer electronics, recorded software and downloadable media among other goods.",
+      "observation": "Black rectangular M-like mark with two white vertical channels and a joined upper contour; no diagonal separation.",
+      "assessment": "Image search candidate with differing construction; not cleared as legally unrelated.",
+      "url": "https://www.tmdn.org/tmview/#/tmview/detail/EM500000012350501"
+    },
+    {
+      "jurisdiction": "KR",
+      "application": "4020250138185",
+      "owner": "주식회사 미래엔",
+      "statusAsDisplayedInTmview": "Application filed",
+      "niceClasses": [
+        9
+      ],
+      "filed": "2025-07-30",
+      "goodsSummary": "Educational application software and downloadable multimedia.",
+      "observation": "Three white vertical columns of unequal heights inside a black square, no diagonal cut.",
+      "assessment": "Shared modular bars but a different silhouette and construction; not a granted registration in the displayed record.",
+      "url": "https://www.tmdn.org/tmview/#/tmview/detail/KR402025000138185"
+    },
+    {
+      "jurisdiction": "CN",
+      "applicationAndRegistration": "71771321",
+      "owner": "东莞市华南好景电线电缆城有限公司",
+      "statusAsDisplayedInTmview": "Registered",
+      "niceClasses": [
+        37
+      ],
+      "goodsSummary": "Construction, installation and repair services.",
+      "observation": "Three vertical bars crossed by a rising diagonal cut across all columns.",
+      "assessment": "Visual reference with different services; legal significance not determined.",
+      "url": "https://www.tmdn.org/tmview/#/tmview/detail/CN500007177132137"
+    }
+  ],
+  "otherOfficialVisualReferences": [
+    {
+      "name": "Ableton",
+      "url": "https://www.ableton.com/en/legal/branding-trademark-guidelines/",
+      "observation": "Four vertical and four horizontal lines; audio/software field but different arrangement."
+    },
+    {
+      "name": "ElevenLabs",
+      "url": "https://elevenlabs.io/brand",
+      "observation": "Two vertical bars, no third split column."
+    },
+    {
+      "name": "Audiocube",
+      "url": "https://www.audiocube.app/media-kit",
+      "observation": "Three pill-like modules with central dot/stem arrangement; different height and cut pattern."
+    }
+  ],
+  "limits": [
+    "TMview is a participating-office aggregation, not exhaustive worldwide clearance or a legally authoritative national register.",
+    "No direct national-register verification of the selected records was completed.",
+    "Image result counts and rank are retrieval output, not legal risk scores.",
+    "No complete phonetic, transliteration, common-law, copyright or national legal review was completed.",
+    "WIPO search database was not automatically queried; its official FAQ prohibits automated searches.",
+    "Name-search zero results do not clear the symbol or establish worldwide availability.",
+    "A/B/C have the same principal construction, so corner changes alone do not eliminate the identified similarities."
+  ],
+  "officialGuidance": [
+    "https://www.tmdn.org/tmview/#/tmview/disclaimer",
+    "https://www.uspto.gov/trademarks/search/likelihood-confusion",
+    "https://www.uspto.gov/trademarks/search/comprehensive-clearance-search-similar-trademarks",
+    "https://www.wipo.int/en/web/global-brand-database",
+    "https://www.wipo.int/en/web/global-brand-database/faqs_branddb"
+  ],
+  "productionAssetsChanged": false,
+  "supersededBy": "../../symbols/mixrelay-mono.svg"
+}

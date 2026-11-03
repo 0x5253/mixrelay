@@ -1,0 +1,106 @@
+{
+  "UUID": "com.rawsector.mixrelay",
+  "Name": "MixRelay",
+  "Description": "Control MixRelay nodes through a private local connection.",
+  "Author": "rawsector",
+  "Version": "0.1.0.0",
+  "Icon": "images/app",
+  "Category": "MixRelay",
+  "CategoryIcon": "images/icon",
+  "CodePath": "bin/plugin.js",
+  "SDKVersion": 3,
+  "Software": {
+    "MinimumVersion": "7.1"
+  },
+  "OS": [
+    {
+      "Platform": "mac",
+      "MinimumVersion": "15.0"
+    }
+  ],
+  "Nodejs": {
+    "Version": "24"
+  },
+  "Actions": [
+    {
+      "UUID": "com.rawsector.mixrelay.power",
+      "Name": "Power",
+      "Tooltip": "Turn processing on or off for a selected node.",
+      "Icon": "images/power",
+      "Controllers": [
+        "Keypad"
+      ],
+      "PropertyInspectorPath": "ui/index.html",
+      "States": [
+        {
+          "Image": "images/key-power",
+          "TitleAlignment": "bottom",
+          "FontSize": 12
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.rawsector.mixrelay.mute",
+      "Name": "Mute",
+      "Tooltip": "Mute or unmute a selected node.",
+      "Icon": "images/mute",
+      "Controllers": [
+        "Keypad"
+      ],
+      "PropertyInspectorPath": "ui/index.html",
+      "States": [
+        {
+          "Image": "images/key-mute",
+          "TitleAlignment": "bottom",
+          "FontSize": 12
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.rawsector.mixrelay.volume",
+      "Name": "Volume",
+      "Tooltip": "Adjust volume with buttons or a dial.",
+      "Icon": "images/volume",
+      "Controllers": [
+        "Keypad",
+        "Encoder"
+      ],
+      "PropertyInspectorPath": "ui/index.html",
+      "States": [
+        {
+          "Image": "images/key-volume",
+          "TitleAlignment": "bottom",
+          "FontSize": 12
+        }
+      ],
+      "Encoder": {
+        "layout": "$B1",
+        "TriggerDescription": {
+          "Rotate": "Volume",
+          "Push": "Mute"
+        }
+      },
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.rawsector.mixrelay.recording",
+      "Name": "Recording",
+      "Tooltip": "Record, pause or stop a recorder node.",
+      "Icon": "images/recording",
+      "Controllers": [
+        "Keypad"
+      ],
+      "PropertyInspectorPath": "ui/index.html",
+      "States": [
+        {
+          "Image": "images/key-recording",
+          "TitleAlignment": "bottom",
+          "FontSize": 12
+        }
+      ],
+      "UserTitleEnabled": false
+    }
+  ]
+}

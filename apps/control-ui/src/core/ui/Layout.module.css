@@ -1,0 +1,67 @@
+.stack,
+.inline,
+.actions {
+  min-width: 0;
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+.inline {
+  display: flex;
+}
+.stack[data-gap="tight"],
+.inline[data-gap="tight"] {
+  gap: var(--composition-gap-tight);
+}
+.stack[data-gap="regular"],
+.inline[data-gap="regular"] {
+  gap: var(--composition-gap-regular);
+}
+.stack[data-gap="section"],
+.inline[data-gap="section"] {
+  gap: var(--composition-gap-section);
+}
+.stack[data-gap="wide"],
+.inline[data-gap="wide"] {
+  gap: var(--composition-gap-wide);
+}
+.inline[data-wrap="true"] {
+  flex-wrap: wrap;
+}
+.inline[data-wrap="false"] {
+  flex-wrap: nowrap;
+}
+.inline[data-align="center"] {
+  align-items: center;
+}
+.inline[data-align="start"] {
+  align-items: flex-start;
+}
+.inline[data-align="baseline"] {
+  align-items: baseline;
+}
+.stack[data-align="center"] {
+  align-items: center;
+  text-align: center;
+}
+.inline[data-justify="center"] {
+  justify-content: center;
+}
+.inline[data-justify="end"] {
+  justify-content: flex-end;
+}
+.inline[data-justify="between"] {
+  justify-content: space-between;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--form-actions-gap);
+  margin-top: var(--form-actions-inset);
+}
+.actions[data-align="start"] {
+  justify-content: flex-start;
+}

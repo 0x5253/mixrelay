@@ -1,0 +1,30 @@
+[package]
+name = "mixrelay-control-server"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+homepage.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+mixrelay-audio-io.workspace = true
+serde.workspace = true
+axum.workspace = true
+# Server-sent telemetry is an unfolded stream of meter windows.
+futures-util = { version = "0.3.34", default-features = false, features = ["std"] }
+serde_json.workspace = true
+tokio = { workspace = true, features = ["time", "sync"] }
+tracing = "0.1.41"
+mixrelay-audio-graph = { path = "../audio-graph" }
+mixrelay-control-protocol = { path = "../control-protocol" }
+mixrelay-local-socket = { path = "../local-socket" }
+mixrelay-time = { path = "../time" }
+
+[dev-dependencies]
+mixrelay-time = { path = "../time", features = ["test-util"] }
+tower.workspace = true
+tokio = { workspace = true, features = ["io-util"] }

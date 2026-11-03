@@ -1,0 +1,38 @@
+name: Conventional PR title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-title-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  title:
+    name: Squash commit title follows Conventional Commits
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.19.0
+      # The squash commit on main takes the PR title, but this repository's squash setting
+      # keeps the commit subject for a single-commit PR, so that subject is checked too.
+      - name: Check the title release-please will read
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          COMMIT_COUNT: ${{ github.event.pull_request.commits }}
+        run: |
+          titles=("$PR_TITLE")
+          if [[ "$COMMIT_COUNT" == 1 ]]; then
+            titles+=("$(git log -1 --format=%s HEAD)")
+          fi
+          node scripts/check-conventional-title.mjs "${titles[@]}"

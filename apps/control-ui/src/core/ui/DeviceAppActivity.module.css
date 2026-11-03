@@ -1,0 +1,31 @@
+.root {
+  display: inline-flex;
+  min-width: 0;
+  overflow: hidden;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--text-muted);
+  font: var(--font-caption) var(--font-sans);
+  letter-spacing: normal;
+}
+.direction {
+  width: var(--node-icon-size);
+  height: var(--node-icon-size);
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+.icon {
+  display: inline-flex;
+  flex: none;
+}
+.label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.overflow {
+  flex: none;
+  font-family: var(--font-mono);
+}

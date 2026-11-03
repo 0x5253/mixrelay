@@ -1,0 +1,123 @@
+{
+  "en": {
+    "confirmDetail": "Removing MixRelay stops its devices and loopback and briefly interrupts system audio. Quit recording and call apps before continuing.\n\nSaved MixRelay settings are kept unless you choose to delete them.",
+    "settingsPreserved": "Saved MixRelay settings were kept.",
+    "settingsDeleted": "Saved MixRelay settings were also deleted.",
+    "linuxDriverMessage": "Removes the virtual devices and service of MixRelay and briefly interrupts system audio.",
+    "settingsWillBePreserved": "Saved MixRelay settings will be kept.",
+    "settingsWillBeDeleted": "Saved MixRelay settings will also be deleted.",
+    "authorization": "Administrator authorization or the request to the MixRelay removal helper failed. Try again and approve administrator authorization if prompted. If the problem continues, contact support@rawsector.com.",
+    "working": "Removing MixRelay…",
+    "remove": "Remove MixRelay"
+  },
+  "ko": {
+    "confirmDetail": "MixRelay 장치와 루프백이 중지되며 시스템 오디오가 잠시 끊깁니다. 계속하기 전에 녹음과 통화 앱을 종료하십시오.\n\n저장된 MixRelay 설정은 삭제 옵션을 선택하지 않으면 보존합니다.",
+    "settingsPreserved": "저장된 MixRelay 설정은 보존했습니다.",
+    "settingsDeleted": "저장된 MixRelay 설정도 삭제했습니다.",
+    "linuxDriverMessage": "MixRelay의 가상 장치와 서비스를 제거하며 시스템 오디오가 잠시 끊깁니다.",
+    "settingsWillBePreserved": "저장된 MixRelay 설정은 보존됩니다.",
+    "settingsWillBeDeleted": "저장된 MixRelay 설정도 삭제됩니다.",
+    "authorization": "관리자 인증 또는 MixRelay 제거 도우미 요청에 실패했습니다. 다시 시도하고 관리자 인증 요청이 표시되면 승인하십시오. 문제가 계속되면 support@rawsector.com으로 문의하십시오.",
+    "working": "MixRelay를 제거하고 있습니다…",
+    "remove": "MixRelay 제거"
+  },
+  "ja": {
+    "confirmDetail": "MixRelayを削除すると、デバイスとループバックが停止し、システム音声が一時的に中断します。続行する前に録音・通話アプリを終了してください。\n\n削除オプションを選択しない限り、MixRelayの保存済み設定は保持されます。",
+    "settingsPreserved": "MixRelayの保存済み設定は保持されました。",
+    "settingsDeleted": "MixRelayの保存済み設定も削除されました。",
+    "linuxDriverMessage": "MixRelayの仮想デバイスとサービスを削除し、システム音声を一時的に中断します。",
+    "settingsWillBePreserved": "MixRelayの保存済み設定は保持されます。",
+    "settingsWillBeDeleted": "MixRelayの保存済み設定も削除されます。",
+    "authorization": "管理者認証、またはMixRelay削除ヘルパーへの要求に失敗しました。再試行し、管理者認証を求められたら承認してください。問題が続く場合はsupport@rawsector.comへお問い合わせください。",
+    "working": "MixRelayを削除しています…",
+    "remove": "MixRelayを削除"
+  },
+  "zh-Hans": {
+    "confirmDetail": "移除 MixRelay 将停止其设备和回环，并暂时中断系统音频。继续之前，请退出录音和通话应用。\n\n除非您选择删除设置，否则将保留已保存的 MixRelay 设置。",
+    "settingsPreserved": "已保留保存的 MixRelay 设置。",
+    "settingsDeleted": "已同时删除保存的 MixRelay 设置。",
+    "linuxDriverMessage": "移除 MixRelay 的虚拟设备和服务，并暂时中断系统音频。",
+    "settingsWillBePreserved": "将保留已保存的 MixRelay 设置。",
+    "settingsWillBeDeleted": "还将删除已保存的 MixRelay 设置。",
+    "authorization": "管理员授权或向 MixRelay 移除辅助程序发出的请求失败。请重试，并在出现管理员授权提示时批准。如果问题持续，请联系 support@rawsector.com。",
+    "working": "正在移除 MixRelay…",
+    "remove": "移除 MixRelay"
+  },
+  "zh-Hant": {
+    "confirmDetail": "移除 MixRelay 將停止其裝置和回送，並暫時中斷系統音訊。繼續之前，請結束錄音及通話應用程式。\n\n除非您選擇刪除設定，否則將保留已儲存的 MixRelay 設定。",
+    "settingsPreserved": "已保留儲存的 MixRelay 設定。",
+    "settingsDeleted": "已同時刪除儲存的 MixRelay 設定。",
+    "linuxDriverMessage": "移除 MixRelay 的虛擬裝置與服務，並暫時中斷系統音訊。",
+    "settingsWillBePreserved": "將保留已儲存的 MixRelay 設定。",
+    "settingsWillBeDeleted": "也將刪除已儲存的 MixRelay 設定。",
+    "authorization": "管理員授權或向 MixRelay 移除輔助程式提出的請求失敗。請重試，並在出現管理員授權提示時核准。如果問題持續，請聯絡 support@rawsector.com。",
+    "working": "正在移除 MixRelay…",
+    "remove": "移除 MixRelay"
+  },
+  "fr": {
+    "confirmDetail": "La suppression de MixRelay arrête ses périphériques et son bouclage audio, et interrompt brièvement l’audio du système. Fermez les applications d’enregistrement et d’appel avant de continuer.\n\nLes réglages enregistrés de MixRelay sont conservés, sauf si vous choisissez de les supprimer.",
+    "settingsPreserved": "Les réglages enregistrés de MixRelay ont été conservés.",
+    "settingsDeleted": "Les réglages enregistrés de MixRelay ont également été supprimés.",
+    "linuxDriverMessage": "Supprime les périphériques virtuels et le service de MixRelay, et interrompt brièvement l’audio du système.",
+    "settingsWillBePreserved": "Les réglages enregistrés de MixRelay seront conservés.",
+    "settingsWillBeDeleted": "Les réglages enregistrés de MixRelay seront également supprimés.",
+    "authorization": "L’autorisation administrateur ou la demande envoyée à l’outil auxiliaire de suppression de MixRelay a échoué. Réessayez et approuvez l’autorisation administrateur si elle vous est demandée. Si le problème persiste, contactez support@rawsector.com.",
+    "working": "Suppression de MixRelay en cours…",
+    "remove": "Supprimer MixRelay"
+  },
+  "de": {
+    "confirmDetail": "Das Entfernen von MixRelay beendet seine Geräte und das Loopback und unterbricht kurz das Systemaudio. Beenden Sie Aufnahme- und Anruf-Apps, bevor Sie fortfahren.\n\nDie gespeicherten Einstellungen von MixRelay bleiben erhalten, sofern Sie nicht deren Löschung auswählen.",
+    "settingsPreserved": "Die gespeicherten Einstellungen von MixRelay wurden beibehalten.",
+    "settingsDeleted": "Die gespeicherten Einstellungen von MixRelay wurden ebenfalls gelöscht.",
+    "linuxDriverMessage": "Entfernt die virtuellen Geräte und den Dienst von MixRelay und unterbricht kurz das Systemaudio.",
+    "settingsWillBePreserved": "Die gespeicherten Einstellungen von MixRelay bleiben bei der Entfernung erhalten.",
+    "settingsWillBeDeleted": "Die gespeicherten Einstellungen von MixRelay werden bei der Entfernung ebenfalls gelöscht.",
+    "authorization": "Die Administratorautorisierung oder die Anfrage an das Hilfsprogramm zum Entfernen von MixRelay ist fehlgeschlagen. Versuchen Sie es erneut und erteilen Sie die Administratorautorisierung, falls Sie dazu aufgefordert werden. Wenn das Problem weiterhin besteht, wenden Sie sich an support@rawsector.com.",
+    "working": "MixRelay wird entfernt…",
+    "remove": "MixRelay entfernen"
+  },
+  "es": {
+    "confirmDetail": "Eliminar MixRelay detiene sus dispositivos y el bucle de audio e interrumpe brevemente el audio del sistema. Cierre las aplicaciones de grabación y llamadas antes de continuar.\n\nLa configuración guardada de MixRelay se conserva, salvo que elija eliminarla.",
+    "settingsPreserved": "Se ha conservado la configuración guardada de MixRelay.",
+    "settingsDeleted": "También se ha eliminado la configuración guardada de MixRelay.",
+    "linuxDriverMessage": "Elimina los dispositivos virtuales y el servicio de MixRelay e interrumpe brevemente el audio del sistema.",
+    "settingsWillBePreserved": "Se conservará la configuración guardada de MixRelay.",
+    "settingsWillBeDeleted": "También se eliminará la configuración guardada de MixRelay.",
+    "authorization": "La autorización del administrador o la solicitud enviada a la herramienta auxiliar para eliminar MixRelay falló. Vuelva a intentarlo y apruebe la autorización del administrador si se le solicita. Si el problema continúa, contacte con support@rawsector.com.",
+    "working": "Eliminando MixRelay…",
+    "remove": "Eliminar MixRelay"
+  },
+  "pt": {
+    "confirmDetail": "A remoção do MixRelay interrompe seus dispositivos e o loopback, além de interromper brevemente o áudio do sistema. Feche os aplicativos de gravação e chamadas antes de continuar.\n\nAs configurações salvas do MixRelay são mantidas, a menos que você escolha excluí-las.",
+    "settingsPreserved": "As configurações salvas do MixRelay foram mantidas.",
+    "settingsDeleted": "As configurações salvas do MixRelay também foram excluídas.",
+    "linuxDriverMessage": "Remove os dispositivos virtuais e o serviço do MixRelay e interrompe brevemente o áudio do sistema.",
+    "settingsWillBePreserved": "As configurações salvas do MixRelay serão mantidas.",
+    "settingsWillBeDeleted": "As configurações salvas do MixRelay também serão excluídas.",
+    "authorization": "A autorização do administrador ou a solicitação enviada à ferramenta auxiliar de remoção do MixRelay falhou. Tente novamente e aprove a autorização do administrador se ela for solicitada. Se o problema continuar, entre em contato com support@rawsector.com.",
+    "working": "Removendo o MixRelay…",
+    "remove": "Remover MixRelay"
+  },
+  "it": {
+    "confirmDetail": "La rimozione di MixRelay arresta i dispositivi e il loopback e interrompe brevemente l’audio del sistema. Chiudete le app di registrazione e chiamata prima di continuare.\n\nLe impostazioni salvate di MixRelay vengono conservate, a meno che non scegliate di eliminarle.",
+    "settingsPreserved": "Le impostazioni salvate di MixRelay sono state conservate.",
+    "settingsDeleted": "Anche le impostazioni salvate di MixRelay sono state eliminate.",
+    "linuxDriverMessage": "Rimuove i dispositivi virtuali e il servizio di MixRelay e interrompe brevemente l’audio del sistema.",
+    "settingsWillBePreserved": "Le impostazioni salvate di MixRelay saranno conservate.",
+    "settingsWillBeDeleted": "Anche le impostazioni salvate di MixRelay saranno eliminate.",
+    "authorization": "L’autorizzazione amministratore o la richiesta all’assistente di rimozione di MixRelay non è riuscita. Riprovate e approvate l’autorizzazione amministratore, se richiesta. Se il problema persiste, contattate support@rawsector.com.",
+    "working": "Rimozione di MixRelay in corso…",
+    "remove": "Rimuovi MixRelay"
+  },
+  "ru": {
+    "confirmDetail": "Удаление MixRelay остановит его устройства и loopback и ненадолго прервёт системный звук. Перед продолжением закройте приложения записи и звонков.\n\nСохранённые настройки MixRelay останутся, если вы не выберете их удаление.",
+    "settingsPreserved": "Сохранённые настройки MixRelay оставлены.",
+    "settingsDeleted": "Сохранённые настройки MixRelay также удалены.",
+    "linuxDriverMessage": "Удаляет виртуальные устройства и службу MixRelay и ненадолго прерывает системный звук.",
+    "settingsWillBePreserved": "Сохранённые настройки MixRelay останутся.",
+    "settingsWillBeDeleted": "Сохранённые настройки MixRelay также будут удалены.",
+    "authorization": "Не удалось получить разрешение администратора или выполнить запрос к вспомогательной программе удаления MixRelay. Повторите попытку и, если появится запрос разрешения администратора, подтвердите его. Если проблема повторяется, обратитесь по адресу support@rawsector.com.",
+    "working": "Удаление MixRelay…",
+    "remove": "Удалить MixRelay"
+  }
+}

@@ -1,0 +1,86 @@
+.root {
+  position: relative;
+  width: var(--knob-hit-size);
+  height: var(--knob-layout-height, var(--knob-hit-size));
+  touch-action: none;
+  cursor: ns-resize;
+  border-radius: var(--control-radius);
+}
+.root::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  inset-inline: 0;
+  height: var(--knob-hit-size);
+}
+
+.dial {
+  display: block;
+  width: var(--knob-size);
+  margin-inline: auto;
+  height: var(--knob-size);
+  overflow: visible;
+}
+.focusArc {
+  fill: none;
+  stroke: var(--focus-color);
+  stroke-width: calc(var(--focus-width) * 2);
+  opacity: 0;
+}
+.root:has(.input:focus-visible) .focusArc {
+  opacity: 1;
+}
+.track,
+.value,
+.indicator {
+  fill: none;
+  /* Widths use the 48-unit viewBox: four units render as 2px at 24px. */
+  stroke-width: var(--knob-stroke-width);
+  stroke-linecap: round;
+}
+.track {
+  stroke: var(--knob-track);
+}
+.value,
+.indicator {
+  stroke: var(--knob-indicator);
+}
+.center {
+  stroke: var(--knob-track);
+  stroke-width: calc(var(--focus-width) * 2);
+  stroke-linecap: round;
+}
+.endpoints {
+  position: absolute;
+  inset-inline: calc(var(--space-half) * -1);
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: var(--font-caption);
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+/* Weight provides neutral hover/press feedback without filling the dial. */
+.root:hover:not([data-disabled]) .indicator {
+  stroke-width: var(--knob-pointer-width-hover);
+}
+.root:active:not([data-disabled]) .indicator {
+  stroke-width: var(--knob-pointer-width-active);
+}
+.input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: var(--knob-hit-size);
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.root[data-disabled] {
+  cursor: default;
+}
+.root[data-disabled] .dial,
+.root[data-disabled] .endpoints {
+  opacity: var(--control-disabled-opacity);
+}

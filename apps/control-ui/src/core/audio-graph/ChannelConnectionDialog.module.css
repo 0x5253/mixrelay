@@ -1,0 +1,16 @@
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--composition-gap-tight);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--font-control);
+  line-height: var(--line-height-body);
+  overflow-wrap: anywhere;
+}
+.preview li[data-skipped] {
+  color: var(--text-muted);
+}

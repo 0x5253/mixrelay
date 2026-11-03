@@ -1,0 +1,179 @@
+{
+  "version": "1.0",
+  "status": "frozen",
+  "approvedAt": "2026-10-12",
+  "geometry": "../source/wordmark.json",
+  "symbol": "../source/symbol.json",
+  "illustrator": "../../wordmark-study/plex/mixrelay-plex-wordmark.ai",
+  "illustratorSha256": "36174152ec108bb539fbb13361542472110252a88911c4e68ff9045af5bfb553",
+  "colors": "apps/control-ui/src/core/theme/tokens.ts#brandColors",
+  "colorValues": {
+    "primary": "#b02d23",
+    "ink": "#242622",
+    "inverse": "#edeee7",
+    "paper": "#faf9f5",
+    "dark": "#161918",
+    "muted": "#5c594f",
+    "white": "#ffffff"
+  },
+  "capToSymbol": 1,
+  "gapToSymbol": 0.26,
+  "clearSpaceToSymbol": 0.2,
+  "outlineWidth": 2,
+  "minimumCapHeight": {
+    "filled": 16,
+    "outline": 64
+  },
+  "minimumSizeStatus": "Conservative asset guidance; installed-app rendering not verified.",
+  "productionScreensUpdated": false,
+  "assets": [
+    {
+      "file": "mixrelay-lockup-light.svg",
+      "kind": "lockup",
+      "theme": "light",
+      "treatment": "filled",
+      "symbolColor": "#b02d23",
+      "wordColor": "#242622",
+      "width": 556.68149,
+      "height": 128.1765,
+      "sha256": "2129efcb5a8a4b8f044a910389f758358e13ed52ead529915134f209822a835d"
+    },
+    {
+      "file": "mixrelay-lockup-dark.svg",
+      "kind": "lockup",
+      "theme": "dark",
+      "treatment": "filled",
+      "symbolColor": "#b02d23",
+      "wordColor": "#edeee7",
+      "width": 556.68149,
+      "height": 128.1765,
+      "sha256": "510479df33ee028235053e374214eca2f5138e62edcff9fa7f27cfc0d7844157"
+    },
+    {
+      "file": "mixrelay-lockup-mono-light.svg",
+      "kind": "lockup",
+      "theme": "mono-light",
+      "treatment": "filled",
+      "symbolColor": "#242622",
+      "wordColor": "#242622",
+      "width": 556.68149,
+      "height": 128.1765,
+      "sha256": "19544fb3eb73a5d18d4a00a70eec98409694e4f1d7d2781924fda7c9b0268a22"
+    },
+    {
+      "file": "mixrelay-lockup-inverse-dark.svg",
+      "kind": "lockup",
+      "theme": "inverse-dark",
+      "treatment": "filled",
+      "symbolColor": "#edeee7",
+      "wordColor": "#edeee7",
+      "width": 556.68149,
+      "height": 128.1765,
+      "sha256": "60bd02f99e520c4a3df9da2102f99b27416ee5bccffa7e9fa9511a104eee9531"
+    },
+    {
+      "file": "mixrelay-wordmark-ink.svg",
+      "kind": "wordmark",
+      "theme": "light",
+      "treatment": "filled",
+      "wordColor": "#242622",
+      "width": 460.92149,
+      "height": 128.1765,
+      "sha256": "45f53bc23852c35e72413483b93abeecc5f8c002c92fe5b1ddb9f310bb62c35d"
+    },
+    {
+      "file": "mixrelay-wordmark-inverse.svg",
+      "kind": "wordmark",
+      "theme": "dark",
+      "treatment": "filled",
+      "wordColor": "#edeee7",
+      "width": 460.92149,
+      "height": 128.1765,
+      "sha256": "3db3ee6e6718568e88b482981e8b337b24a43f8d379d2db3a5fe5e4291c69d80"
+    },
+    {
+      "file": "mixrelay-wordmark-red.svg",
+      "kind": "wordmark",
+      "theme": "light",
+      "treatment": "filled",
+      "wordColor": "#b02d23",
+      "width": 460.92149,
+      "height": 128.1765,
+      "sha256": "fa0048a5b0662ec5b51775260174c92d854a0742246b1679f47282528cff6c15"
+    },
+    {
+      "file": "mixrelay-lockup-light-outline.svg",
+      "kind": "lockup",
+      "theme": "light",
+      "treatment": "outline",
+      "symbolColor": "#b02d23",
+      "wordColor": "#242622",
+      "width": 556.68149,
+      "height": 128.1765,
+      "sha256": "3b441359ae05369362044686f271a811f16b834da028c1c056c0e33cc7998aaa"
+    },
+    {
+      "file": "mixrelay-lockup-dark-outline.svg",
+      "kind": "lockup",
+      "theme": "dark",
+      "treatment": "outline",
+      "symbolColor": "#b02d23",
+      "wordColor": "#edeee7",
+      "width": 556.68149,
+      "height": 128.1765,
+      "sha256": "6ce78d8450e5c2bcf4b23ee4b706ec4c74460c60d8d79e6e337300ce7d59d1e0"
+    },
+    {
+      "file": "mixrelay-lockup-mono-light-outline.svg",
+      "kind": "lockup",
+      "theme": "mono-light",
+      "treatment": "outline",
+      "symbolColor": "#242622",
+      "wordColor": "#242622",
+      "width": 556.68149,
+      "height": 128.1765,
+      "sha256": "20db904994af9fcb92b95811c22bd53bea55a1968192b0619333d694e184477e"
+    },
+    {
+      "file": "mixrelay-lockup-inverse-dark-outline.svg",
+      "kind": "lockup",
+      "theme": "inverse-dark",
+      "treatment": "outline",
+      "symbolColor": "#edeee7",
+      "wordColor": "#edeee7",
+      "width": 556.68149,
+      "height": 128.1765,
+      "sha256": "1cc037632436f2b8accf376e78f60cea86e434f628e32e0c2f6ab733383ea5c9"
+    },
+    {
+      "file": "mixrelay-wordmark-ink-outline.svg",
+      "kind": "wordmark",
+      "theme": "light",
+      "treatment": "outline",
+      "wordColor": "#242622",
+      "width": 460.92149,
+      "height": 128.1765,
+      "sha256": "af54d787b00d52e71daa600ef9db67e3d82d455b4ba9b12b6ccb38aa996fe576"
+    },
+    {
+      "file": "mixrelay-wordmark-inverse-outline.svg",
+      "kind": "wordmark",
+      "theme": "dark",
+      "treatment": "outline",
+      "wordColor": "#edeee7",
+      "width": 460.92149,
+      "height": 128.1765,
+      "sha256": "e17e0f4e0540c765ba5afdd71b2276afe5314cb7c8a6c2efa5f9ba3909c1a95b"
+    },
+    {
+      "file": "mixrelay-wordmark-red-outline.svg",
+      "kind": "wordmark",
+      "theme": "light",
+      "treatment": "outline",
+      "wordColor": "#b02d23",
+      "width": 460.92149,
+      "height": 128.1765,
+      "sha256": "36e46f4c87b4ab940885960039ffa2be39d38be2829a2d97d1b2079591171045"
+    }
+  ]
+}

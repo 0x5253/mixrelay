@@ -1,0 +1,19 @@
+pkgname=mix-relay
+pkgver=@VERSION@
+pkgrel=1
+pkgdesc='MixRelay audio routing, recording and virtual devices'
+arch=('@ARCH@')
+url='@HOMEPAGE@'
+PACKAGER='@CONTACT@'
+license=('LicenseRef-MixRelay')
+depends=('glibc>=@GLIBC@' 'gcc-libs' 'alsa-lib' 'gtk3' 'webkit2gtk-4.1' 'librsvg'
+         'libayatana-appindicator' 'pipewire>=@PIPEWIRE@' 'libpipewire>=@PIPEWIRE@' 'wireplumber>=@WIREPLUMBER@'
+         'polkit' 'zenity' 'systemd' 'util-linux' 'lilv')
+options=('!strip' '!debug')
+install=mixrelay.install
+source=("$pkgname-$pkgver-$CARCH.tar.gz")
+sha256sums=('@SHA256@')
+
+package() {
+  cp -a "$srcdir/payload/." "$pkgdir/"
+}

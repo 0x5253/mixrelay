@@ -1,0 +1,21 @@
+.image,
+.glyph {
+  display: block;
+  width: var(--node-icon-size);
+  min-width: var(--node-icon-size);
+  height: var(--node-icon-size);
+}
+
+.image {
+  max-width: var(--node-icon-size);
+  object-fit: contain;
+}
+
+.glyph {
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  stroke-width: 1.25;
+}

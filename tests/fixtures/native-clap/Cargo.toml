@@ -1,0 +1,16 @@
+[package]
+name = "mixrelay-native-clap-fixture"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lib]
+name = "mixrelay_native_clap_fixture"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+clap-sys = "=0.5.0"
+
+[lints]
+workspace = true

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en" data-app="mixrelay">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>MixRelay</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Release webviews have no developer tools: report uncaught errors to the app log,
+         including ones thrown while the application module loads. -->
+    <script>
+      (() => {
+        const report = (message) => {
+          // A failed report is dropped: reporting it again would loop.
+          try {
+            window.__TAURI_INTERNALS__
+              ?.invoke('webview_error', { message: String(message).slice(0, 4096) })
+              ?.catch?.(() => {});
+          } catch {}
+        };
+        addEventListener('error', (event) => report(event.error?.stack || event.message));
+        addEventListener('unhandledrejection', (event) => report(event.reason?.stack || event.reason));
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

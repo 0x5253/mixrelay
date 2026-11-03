@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HOME</key><string>__MIXRELAY_SERVICE_HOME__</string>
+    <key>LOGNAME</key><string>__MIXRELAY_SERVICE_USER__</string>
+    <key>USER</key><string>__MIXRELAY_SERVICE_USER__</string>
+  </dict>
+  <key>GroupName</key><string>__MIXRELAY_SERVICE_GROUP__</string>
+  <key>KeepAlive</key><true/>
+  <key>Label</key><string>io.mixrelay.audio.driver</string>
+  <key>AssociatedBundleIdentifiers</key><string>io.mixrelay.desktop</string>
+  <key>MachServices</key>
+  <dict><key>io.mixrelay.audio.driver</key><true/></dict>
+  <key>ProcessType</key><string>Interactive</string>
+  <key>ProgramArguments</key>
+  <array><string>/Library/Application Support/MixRelay/bin/mixrelay-driver-service</string></array>
+  <key>RunAtLoad</key><true/>
+  <key>UserName</key><string>__MIXRELAY_SERVICE_USER__</string>
+</dict>
+</plist>

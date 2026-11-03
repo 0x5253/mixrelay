@@ -1,0 +1,8 @@
+{
+  "state": [
+    "ready",
+    "not_installed",
+    "installed_not_loaded",
+    "unavailable"
+  ]
+}

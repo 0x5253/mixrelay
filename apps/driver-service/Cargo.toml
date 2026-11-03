@@ -1,0 +1,32 @@
+[package]
+name = "mixrelay-driver-service"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+homepage.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+mixrelay-time = { path = "../../crates/time" }
+mixrelay-local-socket = { path = "../../crates/local-socket" }
+# Application startup and contextual fatal errors, outside real-time native callbacks.
+anyhow = "1.0.102"
+mixrelay-driver-control = { path = "../../crates/driver-control" }
+mixrelay-driver-adapters = { path = "../../crates/driver-adapters" }
+axum.workspace = true
+tokio.workspace = true
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.20", default-features = false, features = ["fmt"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+mixrelay-macos-transport = { path = "../../native/macos/common" }
+mixrelay-macos-driver = { path = "../../native/macos/driver-control" }
+# Public system logging preserves fatal launchd diagnostics without a log-file owner.
+libc = "0.2"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+mixrelay-linux-driver = { path = "../../native/linux/driver-control" }

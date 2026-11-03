@@ -1,0 +1,9 @@
+{
+  "[0].state": [
+    "available",
+    "current",
+    "published",
+    "not_published",
+    "unavailable"
+  ]
+}

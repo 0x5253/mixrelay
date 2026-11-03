@@ -1,0 +1,40 @@
+.root {
+  position: relative;
+  display: flex;
+  height: var(--app-status-height);
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 0 var(--app-status-padding-inline);
+  border-top: 1px solid var(--border-default);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: var(--font-caption);
+}
+
+.information {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+}
+
+.controls {
+  display: flex;
+  flex: 0 0 auto;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+/* Visually hidden; the live region exists before its text changes so the change is read. */
+.announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

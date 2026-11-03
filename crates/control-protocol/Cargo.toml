@@ -1,0 +1,22 @@
+[package]
+name = "mixrelay-control-protocol"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+homepage.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+base64.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+mixrelay-audio-io.workspace = true
+mixrelay-audio-graph = { path = "../audio-graph" }
+
+[dev-dependencies]
+mixrelay-test-support = { path = "../test-support" }

@@ -1,0 +1,26 @@
+.content {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.latency {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.error {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + var(--space-2));
+  width: min(340px, calc(100vw - var(--space-6)));
+  z-index: var(--layer-floating);
+}
+
+.error p {
+  margin: 0;
+}

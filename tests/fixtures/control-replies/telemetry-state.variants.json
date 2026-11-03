@@ -1,0 +1,15 @@
+{
+  "controls": [
+    null
+  ],
+  "editors[0].state": [
+    "unavailable",
+    "closed",
+    "opening",
+    "open",
+    "failed"
+  ],
+  "graph.pendingReason": [
+    "awaiting_microphone_permission"
+  ]
+}

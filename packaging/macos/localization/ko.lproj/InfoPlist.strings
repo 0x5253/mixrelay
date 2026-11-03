@@ -1,0 +1,2 @@
+NSAudioCaptureUsageDescription = "MixRelay는 선택한 앱의 오디오를 캡처하여 사용자의 오디오 장치와 방송으로 라우팅합니다.";
+NSMicrophoneUsageDescription = "MixRelay는 라우팅하거나 녹음할 때 선택한 마이크와 다른 오디오 입력 장치에 접근합니다.";

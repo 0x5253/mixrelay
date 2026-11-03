@@ -1,0 +1,10 @@
+.screen {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-10) var(--space-6);
+  background: var(--background);
+}
+.content {
+  width: min(100%, 480px);
+}

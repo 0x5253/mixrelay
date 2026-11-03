@@ -1,0 +1,307 @@
+name: Test installed candidate on hosted environments
+
+on:
+  workflow_dispatch:
+    inputs:
+      linux_build_run:
+        description: Successful Build Linux release candidates run ID
+        type: string
+        required: true
+      macos_candidate_tag:
+        description: Draft release with signed notarized PKG and source-revision.txt
+        type: string
+        required: true
+      baseline_linux_build_run:
+        description: Successful earlier Linux candidate build run ID
+        type: string
+        required: true
+      baseline_macos_candidate_tag:
+        description: Earlier draft/prerelease with PKG and source-revision.txt
+        type: string
+        required: true
+      targets:
+        description: Optional comma-separated target IDs for diagnosis; empty tests all
+        type: string
+        default: ''
+      linux_control_trace:
+        description: Focused diagnosis of UI control errors; detach before native audio
+        type: boolean
+        default: false
+      macos_scheduler_trace:
+        description: Focused diagnosis of one fresh-install PCM measurement with Apple System Trace
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  prepare:
+    if: github.event_name == 'workflow_dispatch' && github.repository == '0x5253/mixrelay'
+    # GitHub exposes draft releases only to callers with push access.
+    permissions:
+      contents: write
+      actions: read
+      statuses: write
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.baseline.outputs.matrix }}
+      macos: ${{ steps.groups.outputs.macos }}
+      linux: ${{ steps.groups.outputs.linux }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.19.0
+      - name: Mark full installed qualification pending on the tested commit
+        if: inputs.targets == ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state=pending -f context='Installed candidate / full support contract' \
+            -f description='Full installed qualification is running; source checks do not replace it' \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+      - name: Fetch final installers without rebuilding
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_RUN: ${{ inputs.linux_build_run }}
+          MACOS_TAG: ${{ inputs.macos_candidate_tag }}
+        run: |
+          mkdir -p inputs/linux inputs/macos candidate
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$BUILD_RUN" > inputs/build-run.json
+          gh release view "$MACOS_TAG" --json isDraft,isPrerelease | jq -e '.isDraft or .isPrerelease'
+          gh release download "$MACOS_TAG" --dir inputs/macos --pattern '*.pkg' --pattern '*.streamDeckPlugin' --pattern source-revision.txt
+          gh run download "$BUILD_RUN" --pattern 'candidate-*' --dir inputs/linux
+      - name: Install archive inspection tools
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libarchive-tools
+      - name: Pin source, contract and every installer byte
+        id: selection
+        env:
+          TARGET_IDS: ${{ inputs.targets }}
+        run: node scripts/e2e/select-candidate.mjs --inputs inputs --output candidate
+      - name: Install Stream Deck validation tools
+        run: |
+          npm install --global pnpm@11.9.0
+          pnpm install --frozen-lockfile
+      - name: Qualify the packed Stream Deck bytes without running Stream Deck
+        run: node scripts/streamdeck-artifact.mjs qualify --directory candidate --output streamdeck-evidence
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          overwrite: true
+          name: installed-target-streamdeck-plugin
+          path: streamdeck-evidence/
+          retention-days: 90
+          if-no-files-found: error
+      - name: Verify suite changes preserve the installed product source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          installer_source=$(jq -r .sourceRevision candidate/mix-relay.candidate.json)
+          installer_tree=$(gh api "repos/$GITHUB_REPOSITORY/git/commits/$installer_source" --jq .tree.sha)
+          gh api "repos/$GITHUB_REPOSITORY/git/trees/$installer_tree?recursive=1" > inputs/installer-source-tree.json
+          node scripts/e2e/suite-source.mjs candidate/mix-relay.candidate.json \
+            inputs/installer-source-tree.json candidate/suite-source.json
+      - name: Fetch previous installers and verify upgrade ancestry
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASELINE_BUILD_RUN: ${{ inputs.baseline_linux_build_run }}
+          BASELINE_MACOS_TAG: ${{ inputs.baseline_macos_candidate_tag }}
+        run: |
+          [[ "$BASELINE_BUILD_RUN" =~ ^[1-9][0-9]*$ ]] || { echo 'Invalid baseline Linux build run ID'; exit 1; }
+          [[ -n "$BASELINE_MACOS_TAG" && "$BASELINE_MACOS_TAG" != -* ]] || { echo 'Missing or invalid baseline release tag'; exit 1; }
+          mkdir -p baseline-inputs/linux baseline-inputs/macos
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$BASELINE_BUILD_RUN" > baseline-inputs/build-run.json
+          gh release view "$BASELINE_MACOS_TAG" --json isDraft,isPrerelease | jq -e '.isDraft or .isPrerelease'
+          gh release download "$BASELINE_MACOS_TAG" --dir baseline-inputs/macos --pattern '*.pkg' --pattern source-revision.txt
+          gh run download "$BASELINE_BUILD_RUN" --pattern 'candidate-*' --dir baseline-inputs/linux
+          baseline_source="$(tr -d '\n' < baseline-inputs/macos/source-revision.txt)"
+          candidate_source="$(jq -r .sourceRevision candidate/mix-relay.candidate.json)"
+          [[ "$baseline_source" =~ ^[a-f0-9]{40}$ ]] || { echo 'Invalid baseline source SHA'; exit 1; }
+          [[ "$baseline_source" != "$candidate_source" ]] || { echo 'Baseline source is identical to candidate'; exit 1; }
+          gh api "repos/$GITHUB_REPOSITORY/compare/$baseline_source...$candidate_source?per_page=100" > baseline-inputs/comparison.json
+      - name: Pin baseline bytes and show missing baseline types for every target
+        id: baseline
+        env:
+          TARGET_IDS: ${{ inputs.targets }}
+        run: node scripts/e2e/baseline.mjs --inputs baseline-inputs --output candidate/baseline --candidate candidate/mix-relay.candidate.json --comparison baseline-inputs/comparison.json
+      - name: Separate scheduling while preserving every selected target
+        id: groups
+        env:
+          MATRIX: ${{ steps.baseline.outputs.matrix }}
+          CONTROL_TRACE: ${{ inputs.linux_control_trace }}
+          SCHEDULER_TRACE: ${{ inputs.macos_scheduler_trace }}
+          TARGET_IDS: ${{ inputs.targets }}
+        run: |
+          if [[ ( "$CONTROL_TRACE" == true || "$SCHEDULER_TRACE" == true ) && -z "$TARGET_IDS" ]]; then
+            echo 'Additional diagnosis requires explicit target IDs; full qualification uses the required suite'
+            exit 1
+          fi
+          jq -e '.include | all(.os == "macos" or .os == "linux")' <<< "$MATRIX" > /dev/null
+          printf 'macos=%s\n' "$(jq -c '{include: [.include[] | select(.os == "macos")]}' <<< "$MATRIX")" >> "$GITHUB_OUTPUT"
+          printf 'linux=%s\n' "$(jq -c '{include: [.include[] | select(.os == "linux")]}' <<< "$MATRIX")" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          overwrite: true
+          name: installed-candidate
+          path: candidate/
+          retention-days: 90
+          if-no-files-found: error
+
+  installed-macos:
+    if: needs.prepare.outputs.macos != '{"include":[]}'
+    needs: prepare
+    name: Installed E2E ${{ matrix.id }}
+    strategy:
+      fail-fast: false
+      # Keep native audio measurements separate from other macOS test builds.
+      max-parallel: 1
+      matrix: ${{ fromJSON(needs.prepare.outputs.macos) }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.19.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: installed-candidate
+          path: candidate
+      - name: Prepare native macOS UI test tools
+        run: |
+          node scripts/e2e/prepare-macos-host.mjs macos-host
+          node scripts/e2e/prepare-macos-ui.mjs
+          bash scripts/e2e/macos-ui.sh --prepare installed-ui-tools
+          zsh scripts/probe-macos-roundtrip.sh --self-test
+      - name: Install and exercise final PKG on macOS
+        env:
+          TARGET: ${{ matrix.id }}
+          MIXRELAY_E2E_MACOS_UI_TOOLS: ${{ github.workspace }}/installed-ui-tools
+          MIXRELAY_E2E_SCHEDULER_TRACE: ${{ inputs.macos_scheduler_trace }}
+        run: node scripts/e2e/installed.mjs --target "$TARGET" --directory candidate --candidate candidate/mix-relay.candidate.json --output evidence --disposable-environment
+      - name: Preserve macOS failure diagnostics
+        if: always()
+        run: node scripts/e2e/collect-macos.mjs --output evidence
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          overwrite: true
+          name: installed-target-${{ matrix.id }}
+          path: |
+            macos-host/*.json
+            macos-host/*.log
+            installed-ui-tools/*.json
+            evidence/*
+            !evidence/**/payload/**
+            !evidence/**/ui-tools/**
+            !evidence/**/source-comparison/tools/**
+          retention-days: 90
+          if-no-files-found: error
+
+  installed-linux:
+    if: needs.prepare.outputs.linux != '{"include":[]}'
+    needs: prepare
+    name: Installed E2E ${{ matrix.id }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.linux) }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.19.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: installed-candidate
+          path: candidate
+      - name: Prepare full Linux VM tools
+        env:
+          TARGET_ARCH: ${{ matrix.arch }}
+        run: bash scripts/e2e/github-vm-tools.sh "$TARGET_ARCH"
+      - name: Install and exercise final package in the distro VM
+        env:
+          TARGET: ${{ matrix.id }}
+          MIXRELAY_E2E_CONTROL_TRACE: ${{ inputs.linux_control_trace }}
+        run: node scripts/e2e/github-vm.mjs --target "$TARGET" --directory candidate --output evidence
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          overwrite: true
+          name: installed-target-${{ matrix.id }}
+          path: |
+            evidence/*
+            !evidence/**/payload/**
+            !evidence/**/ui-tools/**
+          retention-days: 90
+          if-no-files-found: error
+
+  inventory:
+    if: always() && needs.prepare.result == 'success'
+    needs: [prepare, installed-macos, installed-linux]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+      statuses: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.19.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: installed-candidate
+          path: candidate
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: installed-target-*
+          path: qualification
+      - name: Install archive inspection tools
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libarchive-tools
+      - name: Record passed, failed, blocked and unavailable environments
+        run: node scripts/qualification.mjs inventory --directory candidate --candidate candidate/mix-relay.candidate.json --reports qualification --output inventory.md
+      - name: Preserve exact candidate and raw results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          overwrite: true
+          name: installed-e2e-evidence
+          path: |
+            candidate/
+            qualification/
+            inventory.md
+          retention-days: 90
+          if-no-files-found: error
+      - name: Apply the full support contract
+        id: gate
+        run: node scripts/qualification.mjs gate --directory candidate --candidate candidate/mix-relay.candidate.json --reports qualification
+      - name: Reflect the full installed verdict on the tested commit
+        if: always() && inputs.targets == ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GATE_OUTCOME: ${{ steps.gate.outcome }}
+          MACOS_RESULT: ${{ needs.installed-macos.result }}
+          LINUX_RESULT: ${{ needs.installed-linux.result }}
+        run: |
+          qualification_state=failure
+          qualification_description='Full installed qualification failed or did not finish; see inventory'
+          if [[ "$GATE_OUTCOME" == success && "$MACOS_RESULT" == success && "$LINUX_RESULT" == success ]]; then
+            qualification_state=success
+            qualification_description='Every required installed scenario and cleanup passed on all targets'
+          fi
+          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$qualification_state" -f context='Installed candidate / full support contract' \
+            -f description="$qualification_description" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"

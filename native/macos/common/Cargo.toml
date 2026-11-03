@@ -1,0 +1,44 @@
+[package]
+name = "mixrelay-macos-transport"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lib]
+path = "lib.rs"
+crate-type = ["rlib", "staticlib"]
+
+[lints]
+workspace = true
+
+[features]
+# Synthetic integration tests admit an explicit native layout before invoking the real IOProc.
+test-observation = []
+
+[dependencies]
+mixrelay-time = { path = "../../../crates/time" }
+sha2 = "0.10.9"
+mixrelay-audio-io = { path = "../../../crates/audio-io" }
+# Shared native PCM ownership; the device adapter does not reimplement its queue.
+mixrelay-pcm-ring = { path = "../../pcm-ring" }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+mixrelay-realtime = { path = "../../../crates/realtime" }
+# CoreAudio owns copied listener blocks; shared atomic captures survive late delivery safely.
+block2 = "0.6.2"
+
+[build-dependencies]
+# Compile only the blocks-based XPC adapter; ownership/producer policy is Rust.
+cc = "1.2"
+
+[dev-dependencies]
+# Count allocator traffic at the actual native callback entry; never linked into runtime.
+allocation-counter = "0.8.1"
+# Model-check actual callback publication atomics; never linked into the HAL/engine runtime.
+loom = "0.7.2"
+mixrelay-test-support = { path = "../../../crates/test-support" }
+
+[dev-dependencies.mixrelay-time]
+path = "../../../crates/time"
+features = ["test-util"]

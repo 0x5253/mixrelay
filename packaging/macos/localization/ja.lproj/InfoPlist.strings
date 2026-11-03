@@ -1,0 +1,2 @@
+NSAudioCaptureUsageDescription = "MixRelay は選択したアプリの音声を取得し、ご自身のオーディオデバイスや配信へルーティングします。";
+NSMicrophoneUsageDescription = "MixRelay はルーティングや録音時に、選択したマイクやその他のオーディオ入力デバイスにアクセスします。";

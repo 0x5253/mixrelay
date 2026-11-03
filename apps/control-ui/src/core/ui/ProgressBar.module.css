@@ -1,0 +1,54 @@
+.root {
+  position: relative;
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+}
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+}
+.label {
+  color: var(--text-primary);
+  font-size: var(--font-body);
+  line-height: var(--line-height-body);
+  overflow-wrap: anywhere;
+}
+.value {
+  color: var(--text-muted);
+  font-size: var(--font-caption);
+  line-height: var(--line-height-body);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* Visually hidden; assistive technology reads each new label once. */
+.announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.track {
+  display: block;
+  height: var(--progress-height);
+  overflow: hidden;
+  background: var(--progress-track);
+}
+.fill {
+  display: block;
+  width: var(--progress-filled, 0%);
+  height: 100%;
+  background: var(--progress-indicator);
+  transition: width var(--motion-duration-state) var(--motion-easing-standard);
+}
+@media (prefers-reduced-motion: reduce) {
+  .fill {
+    transition-duration: var(--motion-duration-reduced);
+  }
+}

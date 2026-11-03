@@ -1,0 +1,44 @@
+.button {
+  display: grid;
+  place-items: center;
+  width: var(--node-control-size);
+  height: var(--node-control-size);
+  padding: 0;
+  border: 0;
+  border-radius: var(--control-radius);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: default;
+}
+.button svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.button:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+.button:focus-visible {
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: -1px;
+}
+.button[data-action="mute"][aria-pressed="true"] {
+  color: var(--status-warning);
+  background: color-mix(in srgb, var(--status-warning) 10%, transparent);
+}
+.button[data-action="power"][aria-pressed="true"] {
+  /* On is the normal state: neutral and bright. Off stays muted; colour is for exceptions. */
+  color: var(--text-primary);
+}
+.button:disabled {
+  opacity: var(--control-disabled-opacity);
+}
+
+.button[data-midi-selected] {
+  background: var(--midi-map-surface);
+  color: var(--midi-map-colour);
+}

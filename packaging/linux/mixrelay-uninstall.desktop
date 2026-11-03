@@ -1,0 +1,20 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Uninstall MixRelay
+Name[ko]=MixRelay 제거
+Comment=Remove MixRelay and optionally delete saved graphs and settings
+Comment[ko]=MixRelay를 제거하고 저장된 그래프와 설정의 삭제 여부 선택
+Name[ja]=MixRelay のアンインストール
+Name[zh_CN]=卸载 MixRelay
+Name[zh_TW]=解除安裝 MixRelay
+Name[fr]=Désinstaller MixRelay
+Name[de]=MixRelay deinstallieren
+Name[es]=Desinstalar MixRelay
+Name[pt]=Desinstalar MixRelay
+Name[it]=Disinstallare MixRelay
+Name[ru]=Удалить MixRelay
+Exec=/bin/sh /usr/lib/mixrelay/uninstall.sh
+Icon=mixrelay-desktop
+Terminal=false
+Categories=Settings;

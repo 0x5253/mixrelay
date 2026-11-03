@@ -1,0 +1,25 @@
+[package]
+name = "mixrelay-driver-adapters"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+mixrelay-driver-control = { path = "../driver-control" }
+mixrelay-local-socket = { path = "../local-socket" }
+axum.workspace = true
+parking_lot.workspace = true
+reqwest = { workspace = true, features = ["blocking"] }
+serde.workspace = true
+serde_json.workspace = true
+tracing = "0.1.41"
+tokio = { workspace = true, features = ["sync", "time"] }
+
+[dev-dependencies]
+mixrelay-driver-control = { path = "../driver-control", features = ["test-util"] }
+mixrelay-audio-io.workspace = true
+mixrelay-test-support = { path = "../test-support" }
+tower = { workspace = true, features = ["util"] }
+
+[lints]
+workspace = true

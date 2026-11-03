@@ -1,0 +1,68 @@
+.root {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  min-width: 0;
+  min-height: var(--control-height-compact);
+  touch-action: none;
+}
+.root::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: var(--control-height-compact);
+  transform: translateY(-50%);
+}
+.root[data-density="compact"] {
+  min-height: 0;
+}
+.bundle {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--space-half);
+  padding-block: var(--border-width);
+  padding-inline: var(--space-half);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--control-radius);
+}
+.bundle:hover:has(input:not(:disabled)) {
+  border-color: var(--border-control);
+}
+.bundle:focus-within {
+  border-color: var(--focus-color);
+}
+.input {
+  box-sizing: content-box;
+  min-width: 1ch;
+  max-width: 100%;
+  height: var(--numeric-input-height, calc(var(--font-label) * var(--line-height-compact)));
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--numeric-value-font-size);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--line-height-compact);
+  text-align: right;
+  cursor: ns-resize;
+  outline: none;
+}
+.input:focus {
+  cursor: text;
+}
+.input:disabled {
+  color: var(--text-muted);
+  cursor: default;
+}
+.unit {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--numeric-value-font-size);
+  line-height: var(--line-height-compact);
+}

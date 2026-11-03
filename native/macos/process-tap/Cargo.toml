@@ -1,0 +1,29 @@
+[package]
+name = "mixrelay-process-tap"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lib]
+crate-type = ["rlib", "staticlib"]
+
+[lints]
+workspace = true
+
+[dependencies]
+# Typed capture failures retain their native status at the C boundary.
+thiserror.workspace = true
+# Native control procedures use the desktop's existing structured log subscriber.
+tracing = "0.1.41"
+# Share transport/clock primitives without making HAL/engine depend on AppKit.
+mixrelay-realtime = { path = "../../../crates/realtime" }
+mixrelay-macos-transport = { path = "../common" }
+
+[build-dependencies]
+# Only Objective-C object construction and AppKit adapters require this compiler.
+cc = "1.2"
+
+[dev-dependencies]
+# Verify callback allocation behavior; never linked into production.
+allocation-counter = "0.8.1"

@@ -1,0 +1,74 @@
+{
+  "IBMPlexSans-Regular.woff2": {
+    "family": "IBM Plex Sans",
+    "weight": 400,
+    "source": "https://raw.githubusercontent.com/IBM/plex/master/packages/plex-sans/fonts/complete/woff2/IBMPlexSans-Regular.woff2",
+    "sha256": "ba711a3085ff9f27440b6b9c4550cfc47c97bf36591d5da958b975bb3add8c1a"
+  },
+  "IBMPlexSans-Medium.woff2": {
+    "family": "IBM Plex Sans",
+    "weight": 500,
+    "source": "https://raw.githubusercontent.com/IBM/plex/master/packages/plex-sans/fonts/complete/woff2/IBMPlexSans-Medium.woff2",
+    "sha256": "5660f8a658f8bb50dbc005232f885eadffd2bc1c235c4f6fbb63469d1f9cde6d"
+  },
+  "IBMPlexMono-Regular.woff2": {
+    "family": "IBM Plex Mono",
+    "weight": 400,
+    "source": "https://raw.githubusercontent.com/IBM/plex/master/packages/plex-mono/fonts/complete/woff2/IBMPlexMono-Regular.woff2",
+    "sha256": "ba204497f16b6d334cee9d1e963a831b73e3a56e1d6300a8489d18df7214b350"
+  },
+  "IBMPlexMono-Medium.woff2": {
+    "family": "IBM Plex Mono",
+    "weight": 500,
+    "source": "https://raw.githubusercontent.com/IBM/plex/master/packages/plex-mono/fonts/complete/woff2/IBMPlexMono-Medium.woff2",
+    "sha256": "33faf307fa6031fb4062276d7320a6d632de890cbb347576fd80cfa01077bc25"
+  },
+  "IBMPlexSansKR-Regular.woff2": {
+    "family": "IBM Plex Sans KR",
+    "weight": 400,
+    "source": "https://raw.githubusercontent.com/IBM/plex/master/packages/plex-sans-kr/fonts/complete/woff2/hinted/IBMPlexSansKR-Regular.woff2",
+    "sha256": "055a35664c3c3965161c92292504c5633ba9604ec904edc1ed799bf2a436276d"
+  },
+  "IBMPlexSansKR-Medium.woff2": {
+    "family": "IBM Plex Sans KR",
+    "weight": 500,
+    "source": "https://raw.githubusercontent.com/IBM/plex/master/packages/plex-sans-kr/fonts/complete/woff2/hinted/IBMPlexSansKR-Medium.woff2",
+    "sha256": "c00dcd8a9c32a6b6ab8c6b3119e68b3d7aa6eba6f4441d5493019cc019dcdd1e"
+  },
+  "IBMPlexSansJP-Regular.woff2": {
+    "family": "IBM Plex Sans JP",
+    "weight": 400,
+    "source": "https://raw.githubusercontent.com/IBM/plex/master/packages/plex-sans-jp/fonts/complete/woff2/hinted/IBMPlexSansJP-Regular.woff2",
+    "sha256": "ec27e9b75cd90a6f7abe96ede49d00b151eb5b1c2c886bfe9b4fc845f40be1ff"
+  },
+  "IBMPlexSansJP-Medium.woff2": {
+    "family": "IBM Plex Sans JP",
+    "weight": 500,
+    "source": "https://raw.githubusercontent.com/IBM/plex/master/packages/plex-sans-jp/fonts/complete/woff2/hinted/IBMPlexSansJP-Medium.woff2",
+    "sha256": "48bcbdb2bca0ddea63b86ec6aaa96baf49861955b2b9498299d5c0808d023b37"
+  },
+  "IBMPlexSansSC-Regular.woff2": {
+    "family": "IBM Plex Sans SC",
+    "weight": 400,
+    "source": "https://raw.githubusercontent.com/IBM/plex/master/packages/plex-sans-sc/fonts/complete/woff2/hinted/IBMPlexSansSC-Regular.woff2",
+    "sha256": "dc51399ce38f7200806df891476d7216a81c8aede47284e421a54413608c407c"
+  },
+  "IBMPlexSansSC-Medium.woff2": {
+    "family": "IBM Plex Sans SC",
+    "weight": 500,
+    "source": "https://raw.githubusercontent.com/IBM/plex/master/packages/plex-sans-sc/fonts/complete/woff2/hinted/IBMPlexSansSC-Medium.woff2",
+    "sha256": "e0b63393631466eaca682444a0734eac6f3d6e9667d133e50ae1eeafae525cb6"
+  },
+  "IBMPlexSansTC-Regular.woff2": {
+    "family": "IBM Plex Sans TC",
+    "weight": 400,
+    "source": "https://raw.githubusercontent.com/IBM/plex/master/packages/plex-sans-tc/fonts/complete/woff2/hinted/IBMPlexSansTC-Regular.woff2",
+    "sha256": "49312dc07daded0d15eb0a63dc4cfb52eead7d7c3b867908b80faa2876b2ec5a"
+  },
+  "IBMPlexSansTC-Medium.woff2": {
+    "family": "IBM Plex Sans TC",
+    "weight": 500,
+    "source": "https://raw.githubusercontent.com/IBM/plex/master/packages/plex-sans-tc/fonts/complete/woff2/hinted/IBMPlexSansTC-Medium.woff2",
+    "sha256": "aa58ce5e18349fc1e46a1d2f8b54fae3a30cd70601c1f2f748dff4202d72613c"
+  }
+}

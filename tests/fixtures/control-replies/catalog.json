@@ -1,0 +1,130 @@
+{
+  "protocolVersion": 1,
+  "catalogRevision": 3,
+  "activeId": "graph-1",
+  "graphs": [
+    {
+      "id": "graph-1",
+      "name": "Studio"
+    },
+    {
+      "id": "graph-2",
+      "name": "Podcast"
+    }
+  ],
+  "document": {
+    "schemaVersion": 2,
+    "revision": 2,
+    "nodes": [
+      {
+        "id": "mic",
+        "label": "Microphone",
+        "control": {
+          "enabled": true,
+          "muted": false
+        },
+        "type": "audio_device_input",
+        "config": {
+          "selector": {
+            "match": "default_input"
+          },
+          "outputChannels": 2,
+          "gainDb": 0.0
+        }
+      },
+      {
+        "id": "gain",
+        "label": null,
+        "control": {
+          "enabled": true,
+          "muted": true
+        },
+        "type": "gain",
+        "config": {
+          "channels": 2,
+          "gainDb": -6.0
+        }
+      },
+      {
+        "id": "speakers",
+        "label": "Speakers",
+        "control": {
+          "enabled": true,
+          "muted": false
+        },
+        "type": "audio_device_output",
+        "config": {
+          "selector": {
+            "match": "persistent_uid",
+            "uid": "BuiltInSpeakerDevice"
+          },
+          "inputChannels": 2
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "mic-gain",
+        "source": {
+          "nodeId": "mic",
+          "portId": "audio"
+        },
+        "destination": {
+          "nodeId": "gain",
+          "portId": "audio"
+        },
+        "channelMapping": {
+          "mode": "auto"
+        }
+      },
+      {
+        "id": "gain-speakers",
+        "source": {
+          "nodeId": "gain",
+          "portId": "audio"
+        },
+        "destination": {
+          "nodeId": "speakers",
+          "portId": "audio"
+        },
+        "channelMapping": {
+          "mode": "explicit",
+          "routes": [
+            {
+              "sourceChannel": 0,
+              "destinationChannel": 1
+            },
+            {
+              "sourceChannel": 1,
+              "destinationChannel": 0
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "layoutRevision": 4,
+  "layout": {
+    "nodeLabels": {
+      "speakers": "Desk speakers"
+    },
+    "positions": {
+      "mic": {
+        "x": 0.0,
+        "y": 40.0
+      }
+    },
+    "sizes": {
+      "gain": {
+        "width": 240.0,
+        "height": 160.0
+      }
+    },
+    "viewport": {
+      "x": -20.0,
+      "y": 10.0,
+      "zoom": 1.25
+    }
+  },
+  "persistenceError": "disk full"
+}

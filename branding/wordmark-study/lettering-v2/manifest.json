@@ -1,0 +1,157 @@
+{
+  "status": "on hold; approved graphic symbol only; excluded from production and kit",
+  "text": "MixRelay",
+  "origin": "Original hand-drawn vector contours for these eight characters. No installed font outlines are used in the candidates.",
+  "selectedSymbol": "Optical Grid",
+  "source": "source.json",
+  "lockup": {
+    "typeHeightToSymbol": 0.75,
+    "gapToSymbol": 0.4,
+    "baselineToSymbol": 0.86,
+    "note": "Study composition only; production contract remains unchanged."
+  },
+  "colors": {
+    "primary": "#b02d23",
+    "ink": "#242622",
+    "inverse": "#edeee7",
+    "paper": "#faf9f5",
+    "dark": "#161918",
+    "muted": "#5c594f",
+    "white": "#ffffff"
+  },
+  "variants": [
+    {
+      "id": "a",
+      "name": "Structured",
+      "width": 471.5,
+      "capHeight": 100,
+      "xHeight": 75,
+      "gaps": [
+        9.5,
+        7,
+        8,
+        8,
+        10.5,
+        7,
+        2
+      ],
+      "glyphs": [
+        {
+          "character": "M",
+          "x": 0,
+          "width": 80,
+          "change": "Narrowed the broad reference M; raised and opened the internal valley. Straight stems and restrained top-corner relief."
+        },
+        {
+          "character": "i",
+          "x": 89.5,
+          "width": 12.5,
+          "change": "A square dot with one-unit corner relief; aligns to the cap line, with a clear 12.5-unit separation from the body."
+        },
+        {
+          "character": "x",
+          "x": 109,
+          "width": 61,
+          "change": "Redrawn intersection and diagonal widths to avoid a heavy central knot."
+        },
+        {
+          "character": "R",
+          "x": 178,
+          "width": 70,
+          "change": "Replaced the curled reference leg with a straight diagonal; shaped a short vertical on the bowl and a flatter shoulder."
+        },
+        {
+          "character": "e",
+          "x": 256,
+          "width": 58,
+          "change": "Flattened the outer side through its middle, opened a 13-unit aperture, and made the crossbar lighter than the verticals."
+        },
+        {
+          "character": "l",
+          "x": 324.5,
+          "width": 22,
+          "change": "Added a short foot so l remains distinguishable and does not leave a hollow gap before a."
+        },
+        {
+          "character": "a",
+          "x": 353.5,
+          "width": 56,
+          "change": "Redrawn double-storey a, larger lower counter and a level shoulder terminal; no curled terminal."
+        },
+        {
+          "character": "y",
+          "x": 411.5,
+          "width": 60,
+          "change": "Straightened both arms; shortened and flattened the returning tail."
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "name": "Open",
+      "width": 465.5,
+      "capHeight": 100,
+      "xHeight": 75,
+      "gaps": [
+        9.5,
+        7,
+        8,
+        8.5,
+        10.5,
+        10,
+        2
+      ],
+      "glyphs": [
+        {
+          "character": "M",
+          "x": 0,
+          "width": 80,
+          "change": "Narrowed the broad reference M; raised and opened the internal valley. Straight stems and restrained top-corner relief."
+        },
+        {
+          "character": "i",
+          "x": 89.5,
+          "width": 12.5,
+          "change": "A square dot with one-unit corner relief; aligns to the cap line, with a clear 12.5-unit separation from the body."
+        },
+        {
+          "character": "x",
+          "x": 109,
+          "width": 61,
+          "change": "Redrawn intersection and diagonal widths to avoid a heavy central knot."
+        },
+        {
+          "character": "R",
+          "x": 178,
+          "width": 70,
+          "change": "Same straight leg, with a fuller continuous bowl and a larger upper counter than A."
+        },
+        {
+          "character": "e",
+          "x": 256.5,
+          "width": 58,
+          "change": "Retained the open aperture and lighter crossbar; replaced A's straight midsection with continuous curves."
+        },
+        {
+          "character": "l",
+          "x": 325,
+          "width": 12.5,
+          "change": "Straight vertical terminal; re-spaced la independently to preserve rhythm."
+        },
+        {
+          "character": "a",
+          "x": 347.5,
+          "width": 56,
+          "change": "The same double-storey construction with a slightly fuller upper curve; lower counter preserved."
+        },
+        {
+          "character": "y",
+          "x": 405.5,
+          "width": 60,
+          "change": "A continuous diagonal tail with a flat end; no hook or decorative cut."
+        }
+      ]
+    }
+  ],
+  "productionUpdated": false
+}

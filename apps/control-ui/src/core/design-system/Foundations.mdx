@@ -1,0 +1,23 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as Foundations from '../theme/Foundations.stories';
+import { DocsLayout } from './DocsLayout';
+import { TokenReference } from './FoundationsReference';
+
+<Meta title="Design System/Foundations" />
+
+<DocsLayout>
+
+# Foundations
+
+값은 `core/theme/tokens.ts`, 컴포넌트의 속성과 예제는 각 Story의 Controls에서 확인합니다.
+
+<Canvas of={Foundations.ColorRoles} />
+<Canvas of={Foundations.FullPalette} />
+<Canvas of={Foundations.TypeAndDensity} />
+<Canvas of={Foundations.SpacingAndComposition} />
+
+## 토큰 값
+
+<TokenReference />
+
+</DocsLayout>

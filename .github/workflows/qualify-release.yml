@@ -1,0 +1,245 @@
+name: Qualify exact release artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_tag:
+        description: Draft or prerelease containing all installers and mix-relay.candidate.json
+        type: string
+        required: true
+      baseline_linux_build_run:
+        description: Successful earlier Linux candidate build run ID
+        type: string
+        required: true
+      baseline_macos_candidate_tag:
+        description: Earlier draft/prerelease with PKG and source-revision.txt
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: qualification-${{ inputs.candidate_tag }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.repository == '0x5253/mixrelay' && github.ref == 'refs/heads/main'
+    # GitHub exposes draft releases only to callers with push access.
+    permissions:
+      contents: write
+      actions: read
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.baseline.outputs.matrix }}
+      macos: ${{ steps.groups.outputs.macos }}
+      linux: ${{ steps.groups.outputs.linux }}
+      source: ${{ steps.prepare.outputs.source }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.19.0
+      - name: Download immutable candidate selection
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE_TAG: ${{ inputs.candidate_tag }}
+        run: |
+          gh release view "$CANDIDATE_TAG" --json isDraft,isPrerelease | jq -e '.isDraft or .isPrerelease'
+          mkdir candidate
+          gh release download "$CANDIDATE_TAG" --dir candidate --pattern '*.pkg' --pattern '*.deb' --pattern '*.pkg.tar.zst' --pattern '*.streamDeckPlugin' --pattern 'mix-relay.candidate.json'
+      - name: Install archive inspection tools
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libarchive-tools
+      - name: Check source, contract, bytes and hosted execution matrix
+        id: prepare
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/qualification-ci.mjs prepare --directory candidate
+      - name: Install Stream Deck validation tools
+        run: |
+          npm install --global pnpm@11.9.0
+          pnpm install --frozen-lockfile
+      - name: Qualify the packed Stream Deck bytes without running Stream Deck
+        run: node scripts/streamdeck-artifact.mjs qualify --directory candidate --output streamdeck-evidence
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          overwrite: true
+          name: qualification-target-streamdeck-plugin
+          path: streamdeck-evidence/
+          retention-days: 90
+          if-no-files-found: error
+      - name: Fetch previous installers and verify upgrade ancestry
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASELINE_BUILD_RUN: ${{ inputs.baseline_linux_build_run }}
+          BASELINE_MACOS_TAG: ${{ inputs.baseline_macos_candidate_tag }}
+        run: |
+          [[ "$BASELINE_BUILD_RUN" =~ ^[1-9][0-9]*$ ]] || { echo 'Invalid baseline Linux build run ID'; exit 1; }
+          [[ -n "$BASELINE_MACOS_TAG" && "$BASELINE_MACOS_TAG" != -* ]] || { echo 'Missing or invalid baseline release tag'; exit 1; }
+          mkdir -p baseline-inputs/linux baseline-inputs/macos
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$BASELINE_BUILD_RUN" > baseline-inputs/build-run.json
+          gh release view "$BASELINE_MACOS_TAG" --json isDraft,isPrerelease | jq -e '.isDraft or .isPrerelease'
+          gh release download "$BASELINE_MACOS_TAG" --dir baseline-inputs/macos --pattern '*.pkg' --pattern source-revision.txt
+          gh run download "$BASELINE_BUILD_RUN" --pattern 'candidate-*' --dir baseline-inputs/linux
+          baseline_source="$(tr -d '\n' < baseline-inputs/macos/source-revision.txt)"
+          candidate_source="$(jq -r .sourceRevision candidate/mix-relay.candidate.json)"
+          [[ "$baseline_source" =~ ^[a-f0-9]{40}$ ]] || { echo 'Invalid baseline source SHA'; exit 1; }
+          [[ "$baseline_source" != "$candidate_source" ]] || { echo 'Baseline source is identical to candidate'; exit 1; }
+          gh api "repos/$GITHUB_REPOSITORY/compare/$baseline_source...$candidate_source?per_page=100" > baseline-inputs/comparison.json
+      - name: Pin baseline bytes and show missing baseline types for every target
+        id: baseline
+        env:
+          TARGET_IDS: ''
+        run: node scripts/e2e/baseline.mjs --inputs baseline-inputs --output candidate/baseline --candidate candidate/mix-relay.candidate.json --comparison baseline-inputs/comparison.json
+      - name: Separate scheduling while preserving every selected target
+        id: groups
+        env:
+          MATRIX: ${{ steps.baseline.outputs.matrix }}
+        run: |
+          jq -e '.include | all(.os == "macos" or .os == "linux")' <<< "$MATRIX" > /dev/null
+          printf 'macos=%s\n' "$(jq -c '{include: [.include[] | select(.os == "macos")]}' <<< "$MATRIX")" >> "$GITHUB_OUTPUT"
+          printf 'linux=%s\n' "$(jq -c '{include: [.include[] | select(.os == "linux")]}' <<< "$MATRIX")" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          overwrite: true
+          name: qualification-candidate
+          path: candidate/
+          retention-days: 90
+          if-no-files-found: error
+
+  installed-macos:
+    if: needs.prepare.outputs.macos != '{"include":[]}'
+    needs: prepare
+    name: Install and qualify ${{ matrix.id }}
+    strategy:
+      fail-fast: false
+      # Keep native audio measurements separate from other macOS test builds.
+      max-parallel: 1
+      matrix: ${{ fromJSON(needs.prepare.outputs.macos) }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.19.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: qualification-candidate
+          path: candidate
+      - name: Prepare native macOS UI test tools
+        run: |
+          node scripts/e2e/prepare-macos-host.mjs macos-host
+          node scripts/e2e/prepare-macos-ui.mjs
+          bash scripts/e2e/macos-ui.sh --prepare installed-ui-tools
+          zsh scripts/probe-macos-roundtrip.sh --self-test
+      - name: Install and exercise final PKG on macOS
+        env:
+          TARGET: ${{ matrix.id }}
+          MIXRELAY_E2E_MACOS_UI_TOOLS: ${{ github.workspace }}/installed-ui-tools
+        run: node scripts/e2e/installed.mjs --target "$TARGET" --directory candidate --candidate candidate/mix-relay.candidate.json --output evidence --disposable-environment
+      - name: Preserve macOS failure diagnostics
+        if: always()
+        run: node scripts/e2e/collect-macos.mjs --output evidence
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          overwrite: true
+          name: qualification-target-${{ matrix.id }}
+          path: |
+            macos-host/*.json
+            macos-host/*.log
+            installed-ui-tools/*.json
+            evidence/*
+            !evidence/**/payload/**
+            !evidence/**/ui-tools/**
+          retention-days: 90
+          if-no-files-found: error
+
+  installed-linux:
+    if: needs.prepare.outputs.linux != '{"include":[]}'
+    needs: prepare
+    name: Install and qualify ${{ matrix.id }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.linux) }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.19.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: qualification-candidate
+          path: candidate
+      - name: Prepare full Linux VM tools
+        env:
+          TARGET_ARCH: ${{ matrix.arch }}
+        run: bash scripts/e2e/github-vm-tools.sh "$TARGET_ARCH"
+      - name: Install and exercise final package in the distro VM
+        env:
+          TARGET: ${{ matrix.id }}
+        run: node scripts/e2e/github-vm.mjs --target "$TARGET" --directory candidate --output evidence
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          overwrite: true
+          name: qualification-target-${{ matrix.id }}
+          path: |
+            evidence/*
+            !evidence/**/payload/**
+            !evidence/**/ui-tools/**
+          retention-days: 90
+          if-no-files-found: error
+
+  gate:
+    if: always() && needs.prepare.result == 'success'
+    needs: [prepare, installed-macos, installed-linux]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.19.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: qualification-target-*
+          path: qualification
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: qualification-candidate
+          path: qualification/qualification-candidate
+      - name: Install archive inspection tools
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libarchive-tools
+      - name: Produce inventory even when an environment failed
+        run: node scripts/qualification.mjs inventory --directory qualification/qualification-candidate --candidate qualification/qualification-candidate/mix-relay.candidate.json --reports qualification --output inventory.md
+      - name: Require every environment, scenario and exact artifact
+        run: node scripts/qualification.mjs gate --directory qualification/qualification-candidate --candidate qualification/qualification-candidate/mix-relay.candidate.json --reports qualification
+      - name: Prepare publication receipt and manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/qualification-ci.mjs seal --directory qualification/qualification-candidate --reports qualification --output publication
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          overwrite: true
+          name: qualification-evidence
+          path: |
+            qualification/
+            inventory.md
+            publication/
+          retention-days: 90
+          if-no-files-found: error

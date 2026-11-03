@@ -1,0 +1,20 @@
+[package]
+name = "mixrelay-engine-process"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+# One control-thread notification; no audio callbacks depend on this crate.
+tokio = { workspace = true, features = ["sync"] }
+# Process cleanup failures are control-plane diagnostics, never realtime logs.
+tracing = "0.1.41"
+mixrelay-time = { path = "../time" }
+
+[dev-dependencies]
+mixrelay-time = { path = "../time", features = ["test-util"] }
+tempfile = "3.27.0"

@@ -1,0 +1,16 @@
+packages:
+  - apps/*
+allowBuilds:
+  esbuild: true
+minimumReleaseAgeExclude:
+  - react-i18next@17.0.13
+  - '@types/node@26.4.1'
+  - '@elgato/schemas@0.6.0'
+  - '@elgato/streamdeck@3.0.4'
+  - '@elgato/utils@0.6.2'
+  - '@elgato/cli@1.10.4'
+overrides:
+  # Elgato already imports zod/v4-mini; pin its patched v4 implementation.
+  '@elgato/utils>zod': 4.6.6
+  '@joshwooding/vite-plugin-react-docgen-typescript>glob': 14.0.2
+  'filelist>minimatch': 11.0.1

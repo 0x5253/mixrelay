@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 2,
+  "revision": 1,
+  "nodes": [
+    {
+      "id": "qa-source",
+      "type": "virtual_endpoint",
+      "config": {
+        "id": "17e59d73-42c1-4f11-a8b4-6c2d913357e0",
+        "displayName": "MixRelay IO",
+        "reference": { "render": true, "capture": false },
+        "render": { "channels": 2, "channelLayout": "stereo" },
+        "capture": { "channels": 2, "channelLayout": "stereo" },
+        "supportedSampleRates": [48000],
+        "defaultSampleRate": 48000
+      }
+    },
+    { "id": "qa-recorder", "type": "recorder", "config": { "channels": 2 } }
+  ],
+  "edges": [
+    {
+      "id": "qa-recording",
+      "source": { "nodeId": "qa-source", "portId": "from_os" },
+      "destination": { "nodeId": "qa-recorder", "portId": "audio" },
+      "channelMapping": { "mode": "auto" }
+    }
+  ]
+}

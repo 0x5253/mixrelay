@@ -1,0 +1,44 @@
+.root {
+  display: grid;
+  gap: var(--space-half);
+  min-width: 0;
+}
+.number {
+  display: grid;
+  gap: var(--space-half);
+  min-width: 0;
+}
+.entry {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  min-width: 0;
+}
+.entry input {
+  flex: 1;
+  min-width: 0;
+}
+.unit {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+}
+.knobField {
+  grid-row: span 3;
+  grid-template-rows: subgrid;
+  justify-items: center;
+  align-content: start;
+  gap: 0;
+  --knob-layout-height: var(--knob-compact-height);
+  --numeric-value-font-size: var(--knob-value-font-size);
+  --numeric-input-height: calc(var(--knob-value-font-size) * var(--line-height-compact));
+}
+.knobLabel {
+  color: var(--text-secondary);
+  font-size: var(--font-label);
+  line-height: var(--line-height-compact);
+  text-align: center;
+  overflow-wrap: anywhere;
+  width: 100%;
+}

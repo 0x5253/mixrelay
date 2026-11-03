@@ -1,0 +1,80 @@
+{
+  "protocolVersion": 1,
+  "revision": 5,
+  "state": "ready",
+  "installedVersion": "1.2.10",
+  "ownerProcessId": 412,
+  "settings": {
+    "canCreate": true,
+    "canRename": true,
+    "renderChannels": [
+      1,
+      2
+    ],
+    "captureChannels": [
+      1,
+      2
+    ],
+    "creationTemplate": {
+      "render": {
+        "channels": 2,
+        "channelLayout": "discrete"
+      },
+      "capture": {
+        "channels": 2,
+        "channelLayout": "discrete"
+      },
+      "supportedSampleRates": [
+        44100,
+        48000,
+        88200,
+        96000,
+        176400,
+        192000
+      ],
+      "defaultSampleRate": 48000
+    },
+    "devices": [
+      {
+        "spec": {
+          "id": "relay-1",
+          "displayName": "MixRelay 1",
+          "render": null,
+          "capture": {
+            "channels": 2,
+            "channelLayout": "stereo"
+          },
+          "supportedSampleRates": [
+            48000
+          ],
+          "defaultSampleRate": 48000
+        },
+        "nativeDeviceIds": [
+          "MixRelayDevice:relay-1"
+        ],
+        "observedSampleRate": null,
+        "supportedSampleRates": [
+          48000
+        ],
+        "canSetSampleRate": false,
+        "nativeFormats": {
+          "render": {
+            "current": null,
+            "supported": []
+          },
+          "capture": {
+            "current": null,
+            "supported": [
+              {
+                "sampleRate": 48000,
+                "channels": 2,
+                "sampleFormat": "float32"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "persistenceError": "disk full"
+}

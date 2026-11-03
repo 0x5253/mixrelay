@@ -1,0 +1,28 @@
+[package]
+name = "mixrelay-linux-audio-io"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+[features]
+native-lab = []
+
+[lints]
+workspace = true
+
+[dependencies]
+mixrelay-audio-io = { path = "../../../crates/audio-io" }
+mixrelay-time = { path = "../../../crates/time" }
+serde.workspace = true
+serde_json.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+base64.workspace = true
+gdk-pixbuf = "0.18.5"
+png = "0.17.16"
+libc = "0.2.183"
+
+[dev-dependencies]
+mixrelay-test-support = { path = "../../../crates/test-support" }
+mixrelay-time = { path = "../../../crates/time", features = ["test-util"] }

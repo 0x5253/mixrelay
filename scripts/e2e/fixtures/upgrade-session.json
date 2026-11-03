@@ -1,0 +1,66 @@
+{
+  "format": "MixRelay",
+  "version": 1,
+  "catalog": {
+    "version": 1,
+    "revision": 1,
+    "activeId": "graph-1",
+    "graphs": [
+      {
+        "id": "graph-1",
+        "name": "Untitled Graph",
+        "document": {
+          "schemaVersion": 2,
+          "revision": 2,
+          "nodes": [
+            {
+              "id": "upgrade-gain",
+              "label": null,
+              "control": {
+                "enabled": true,
+                "muted": false
+              },
+              "type": "gain",
+              "config": {
+                "channels": 2,
+                "gainDb": -6.0
+              }
+            },
+            {
+              "id": "upgrade-recorder",
+              "label": null,
+              "control": {
+                "enabled": true,
+                "muted": false
+              },
+              "type": "recorder",
+              "config": {
+                "channels": 2
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "upgrade-routing",
+              "source": {
+                "nodeId": "upgrade-gain",
+                "portId": "audio"
+              },
+              "destination": {
+                "nodeId": "upgrade-recorder",
+                "portId": "audio"
+              },
+              "channelMapping": {
+                "mode": "auto"
+              }
+            }
+          ]
+        },
+        "layoutRevision": 0,
+        "layout": {
+          "positions": {}
+        }
+      }
+    ]
+  }
+}

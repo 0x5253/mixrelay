@@ -1,0 +1,65 @@
+[package]
+name = "mixrelay-processor-host"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+homepage.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+# Owned private worker/discovery namespaces retained by mapped transport views.
+tempfile = "3.27.0"
+# Inline, capacity-checked channel references without local unsafe or heap allocation.
+arrayvec = { version = "0.7.8", default-features = false }
+base64.workspace = true
+memmap2.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+# Stable bus topology identities across disposable probe and worker processes.
+sha2 = "0.10.9"
+# Typed preparation failures; error formatting stays outside the audio callback.
+thiserror.workspace = true
+# Native editor lifecycle diagnostics, emitted only on the worker's control thread.
+tracing = "0.1.41"
+mixrelay-audio-engine = { path = "../audio-engine" }
+mixrelay-audio-graph = { path = "../audio-graph" }
+mixrelay-audio-io = { path = "../audio-io" }
+mixrelay-control-protocol = { path = "../control-protocol" }
+mixrelay-processor-state = { path = "../processor-state" }
+mixrelay-time = { path = "../time" }
+truce-rack-clap.workspace = true
+truce-rack-core.workspace = true
+truce-rack-vst3.workspace = true
+
+[target.'cfg(target_vendor = "apple")'.dependencies]
+truce-rack-au.workspace = true
+truce-rack-au3.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+truce-rack-lv2.workspace = true
+x11-dl.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+# Immediate isolated-worker exit must not enter stalled vendor atexit handlers.
+libc = "0.2.189"
+
+[dev-dependencies]
+# Assert that channel-reference assembly stays allocation-free during processing.
+allocation-counter = "0.8.1"
+mixrelay-test-support = { path = "../test-support" }
+mixrelay-time = { path = "../time", features = ["test-util"] }
+tracing-subscriber = { version = "0.3.20", default-features = false, features = ["fmt"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# Realtime DSP scheduling and a shared-memory wake from the engine's submit.
+mixrelay-realtime = { path = "../realtime" }
+# Main-thread-owned native UI surfaces and timers; no plug-in objects cross processes.
+block2 = "0.6.2"
+dispatch2 = "0.3.1"
+objc2 = "0.6.4"
+objc2-app-kit = { version = "0.3.2", default-features = false, features = ["std", "NSApplication", "NSBitmapImageRep", "NSImageRep", "NSGraphics", "NSGraphicsContext", "NSResponder", "NSView", "NSWindow", "NSEvent"] }
+objc2-foundation = { version = "0.3.2", default-features = false, features = ["std", "NSData", "NSDate", "NSDictionary", "NSGeometry", "NSRunLoop", "NSString", "NSTimer", "block2"] }

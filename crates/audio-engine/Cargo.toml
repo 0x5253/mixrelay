@@ -1,0 +1,21 @@
+[package]
+name = "mixrelay-audio-engine"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+homepage.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+parking_lot.workspace = true
+thiserror.workspace = true
+mixrelay-audio-graph = { path = "../audio-graph" }
+mixrelay-audio-io.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+mixrelay-test-support = { path = "../test-support" }

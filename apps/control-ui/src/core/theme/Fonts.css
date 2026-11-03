@@ -1,0 +1,123 @@
+/* IBM Plex originals. Core owns faces and locale selection; see fonts/sources.json. */
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/IBMPlexSans-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: block;
+  src: url("./fonts/IBMPlexSans-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/IBMPlexMono-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: block;
+  src: url("./fonts/IBMPlexMono-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Sans KR";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/IBMPlexSansKR-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Sans KR";
+  font-style: normal;
+  font-weight: 500;
+  font-display: block;
+  src: url("./fonts/IBMPlexSansKR-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Sans JP";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/IBMPlexSansJP-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Sans JP";
+  font-style: normal;
+  font-weight: 500;
+  font-display: block;
+  src: url("./fonts/IBMPlexSansJP-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Sans SC";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/IBMPlexSansSC-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Sans SC";
+  font-style: normal;
+  font-weight: 500;
+  font-display: block;
+  src: url("./fonts/IBMPlexSansSC-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Sans TC";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/IBMPlexSansTC-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Sans TC";
+  font-style: normal;
+  font-weight: 500;
+  font-display: block;
+  src: url("./fonts/IBMPlexSansTC-Medium.woff2") format("woff2");
+}
+
+:root,
+[lang] {
+  --font-sans-region: "IBM Plex Sans KR";
+}
+:root:lang(ko),
+[lang]:lang(ko) {
+  --font-sans-region: "IBM Plex Sans KR";
+}
+:root:lang(ja),
+[lang]:lang(ja) {
+  --font-sans-region: "IBM Plex Sans JP";
+}
+:root:lang(zh),
+[lang]:lang(zh) {
+  --font-sans-region: "IBM Plex Sans SC";
+}
+:root:lang(zh-Hant),
+:root:lang(zh-TW),
+:root:lang(zh-HK),
+:root:lang(zh-MO),
+[lang]:lang(zh-Hant),
+[lang]:lang(zh-TW),
+[lang]:lang(zh-HK),
+[lang]:lang(zh-MO) {
+  --font-sans-region: "IBM Plex Sans TC";
+}

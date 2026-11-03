@@ -1,0 +1,19 @@
+.terms {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-default);
+}
+.terms summary {
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+}
+.termsText {
+  max-height: 320px;
+  margin: var(--space-3) 0 0;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: var(--font-control);
+  line-height: 1.5;
+}

@@ -1,0 +1,50 @@
+[package]
+name = "mixrelay-pipewire"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lib]
+crate-type = ["rlib", "staticlib"]
+
+[[example]]
+name = "application-source"
+path = "examples/application_source/main.rs"
+
+[[example]]
+name = "application-mute-sink"
+path = "examples/application_mute_sink/main.rs"
+
+[lints]
+workspace = true
+
+[features]
+# Explicit private normal-user lab, excluded from default tests.
+native-lab = []
+# Existing bounded control observations used by engine/native regression fixtures.
+test-observation = ["dep:serde"]
+
+[target.'cfg(target_os = "linux")'.dependencies]
+# Owning types plus safe requested-buffer/time getters (0.3.49/0.3.50).
+# All are covered by the native >=0.3.65 minimum checked by build.rs; no codecs.
+pipewire = { version = "0.10.1", features = ["v0_3_50"] }
+thiserror.workspace = true
+mixrelay-time = { path = "../../../crates/time" }
+mixrelay-audio-io = { path = "../../../crates/audio-io" }
+serde = { workspace = true, optional = true }
+# Native callback PCM storage; included in the same static library for native probes.
+mixrelay-pcm-ring = { path = "../../pcm-ring" }
+
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+mixrelay-time = { path = "../../../crates/time", features = ["test-util"] }
+serde.workspace = true
+serde_json.workspace = true
+# Exact frame markers complement the sine fixture on unconverted native paths.
+mixrelay-test-support = { path = "../../../crates/test-support" }
+# Verify native driver dispatch allocates nothing; never linked into runtime.
+allocation-counter = "0.8.1"
+
+[build-dependencies]
+cc = "1.2.57"
+pkg-config = "0.3.32"

@@ -1,0 +1,24 @@
+.root {
+  display: block;
+  width: var(--status-indicator-size);
+  height: var(--status-indicator-size);
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--status-indicator-neutral);
+}
+
+.root[data-tone="accent"] {
+  background: var(--status-accent);
+}
+
+.root[data-tone="positive"] {
+  background: var(--status-positive);
+}
+
+.root[data-tone="warning"] {
+  background: var(--status-warning);
+}
+
+.root[data-tone="critical"] {
+  background: var(--status-danger);
+}

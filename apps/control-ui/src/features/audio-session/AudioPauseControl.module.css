@@ -1,0 +1,14 @@
+.control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.error {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + var(--space-2));
+  width: min(340px, calc(100vw - var(--space-6)));
+  z-index: var(--layer-floating);
+}

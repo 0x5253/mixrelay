@@ -1,0 +1,46 @@
+{
+  "en": [
+    "Stop all audio from the MixRelay status menu, close the MixRelay editor and MixRelay, then retry.",
+    "Run MixRelay as the signed-in user."
+  ],
+  "ko": [
+    "MixRelay 상태 메뉴에서 모든 오디오를 중지하고 MixRelay 편집 앱과 MixRelay를 종료한 뒤 다시 시도하세요.",
+    "로그인한 사용자로 MixRelay를 실행하세요."
+  ],
+  "ja": [
+    "MixRelayのステータスメニューですべてのオーディオを停止し、MixRelayエディターとMixRelayを終了してから再試行してください。",
+    "ログイン中のユーザーとしてMixRelayを実行してください。"
+  ],
+  "zh-Hans": [
+    "请从 MixRelay 状态菜单停止所有音频，关闭 MixRelay 编辑器和 MixRelay，然后重试。",
+    "请以已登录的用户身份运行 MixRelay。"
+  ],
+  "zh-Hant": [
+    "請從 MixRelay 狀態選單停止所有音訊，關閉 MixRelay 編輯器與 MixRelay，然後重試。",
+    "請以已登入的使用者身分執行 MixRelay。"
+  ],
+  "fr": [
+    "Arrêtez tout l’audio depuis le menu d’état de MixRelay, fermez l’éditeur MixRelay et MixRelay, puis réessayez.",
+    "Exécutez MixRelay avec le compte utilisateur connecté."
+  ],
+  "de": [
+    "Stoppen Sie alle Audiovorgänge im MixRelay-Statusmenü, schließen Sie den MixRelay-Editor und MixRelay und versuchen Sie es erneut.",
+    "Führen Sie MixRelay als angemeldeter Benutzer aus."
+  ],
+  "es": [
+    "Detenga todo el audio desde el menú de estado de MixRelay, cierre el editor de MixRelay y MixRelay y vuelva a intentarlo.",
+    "Ejecute MixRelay con el usuario que ha iniciado sesión."
+  ],
+  "pt": [
+    "Pare todo o áudio pelo menu de estado do MixRelay, feche o editor do MixRelay e o MixRelay e tente novamente.",
+    "Execute o MixRelay como o utilizador com sessão iniciada."
+  ],
+  "it": [
+    "Interrompi tutto l’audio dal menu di stato di MixRelay, chiudi l’editor MixRelay e MixRelay e riprova.",
+    "Eseguire MixRelay con l’utente che ha effettuato l’accesso."
+  ],
+  "ru": [
+    "Остановите всё аудио через меню состояния MixRelay, закройте редактор MixRelay и MixRelay, затем повторите попытку.",
+    "Запустите MixRelay от имени пользователя, вошедшего в систему."
+  ]
+}

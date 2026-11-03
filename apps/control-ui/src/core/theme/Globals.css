@@ -1,0 +1,81 @@
+@import "./Fonts.css";
+
+:root {
+  color: var(--text-primary);
+  background: var(--background);
+  font-family: var(--font-sans);
+  font-size: var(--font-body);
+  line-height: 1.5;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  overscroll-behavior: none;
+}
+
+html[data-app="mixrelay"],
+html[data-app="mixrelay"] body,
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100dvh;
+  margin: 0;
+  background: var(--background);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+:root
+  :is(
+    button,
+    select,
+    summary,
+    a,
+    [role="button"],
+    [role="option"],
+    [role="menuitem"],
+    [role="slider"],
+    input[readonly]
+  ) {
+  cursor: default;
+}
+
+.storybook-frame {
+  width: 100%;
+  padding: var(--space-6);
+}
+
+.action-button {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-easing-standard),
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    color var(--motion-duration-fast) var(--motion-easing-standard),
+    opacity var(--motion-duration-state) var(--motion-easing-standard);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: Reduced motion must override component styles. */
+    scroll-behavior: auto !important;
+    /* biome-ignore lint/complexity/noImportantStyles: Reduced motion must override component styles. */
+    transition-duration: var(--motion-duration-reduced) !important;
+    /* biome-ignore lint/complexity/noImportantStyles: Reduced motion must override component styles. */
+    animation-duration: var(--motion-duration-reduced) !important;
+  }
+}

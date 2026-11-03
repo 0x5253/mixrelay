@@ -1,0 +1,130 @@
+{
+  "reviewedAt": "2026-10-11",
+  "requestedMarket": "worldwide",
+  "designAsset": "../symbols/mixrelay-mono.svg",
+  "imageSearchAsset": "search-symbol.png",
+  "imageSha256": "b7e7662e356a953d091e58e97358ffbf765a1c8b24074d83603789a23f183d4b",
+  "selectedDirection": "B / Optical Grid, right-hand option",
+  "conclusion": {
+    "identicalLogo": "No identical design observed within the reviewed visible results; not an exhaustive absence finding.",
+    "closestVerifiedStructuralCandidate": "Meizu EUTM 012350501",
+    "commercialClearance": "not established",
+    "recommendation": "Preserve the user-selected B design. Before commercial adoption or filing, obtain a jurisdiction-specific comparison of EUTM 012350501 and a broader clearance search. Do not interpret retrieval counts or first-page absence as worldwide availability."
+  },
+  "performedSearches": [
+    {
+      "database": "TMview",
+      "mode": "Uploaded selected B symbol, 512×512 black on white, full image, colour=false, ocr=false; no jurisdiction or class filter",
+      "resultCount": 990,
+      "url": "https://www.tmdn.org/tmview/#/tmview/results?page=1&pageSize=30&criteria=C&imageId=8860932&imageName=075034609-11102026.png&segmentLeft=0&segmentRight=512&segmentTop=0&segmentBottom=512&colour=false&ocr=false",
+      "evidence": "tmview-all-classes.png",
+      "reviewScope": "Upper visible gallery only; many hits are simple wedges or strips and do not share the complete M/R construction. The retrieval has limited apparent relevance."
+    },
+    {
+      "database": "TMview",
+      "mode": "Same image, Nice class 9",
+      "resultCount": 191,
+      "url": "https://www.tmdn.org/tmview/#/tmview/results?page=1&pageSize=30&criteria=C&imageId=8860932&imageName=075034609-11102026.png&segmentLeft=0&segmentRight=512&segmentTop=0&segmentBottom=512&colour=false&ocr=false&fNiceClass=9",
+      "evidence": [
+        "tmview-class9.png",
+        "tmview-class9-page1.png"
+      ],
+      "reviewScope": "First page, positions 1–30; available visible thumbnails compared, missing-image placeholders not cleared. Remaining pages not reviewed."
+    },
+    {
+      "database": "TMview",
+      "mode": "Same image, Nice class 42 only (class 9 unchecked)",
+      "resultCount": 110,
+      "url": "https://www.tmdn.org/tmview/#/tmview/results?page=1&pageSize=30&criteria=C&imageId=8860932&imageName=075034609-11102026.png&segmentLeft=0&segmentRight=512&segmentTop=0&segmentBottom=512&colour=false&ocr=false&fNiceClass=42",
+      "evidence": [
+        "tmview-class42.png",
+        "tmview-class42-page1.png"
+      ],
+      "reviewScope": "First page, positions 1–30; available visible thumbnails compared, missing-image placeholders not cleared. Remaining pages not reviewed; records can overlap with class 9."
+    },
+    {
+      "database": "Web search",
+      "queries": [
+        "\"MR\" logo monogram diagonal letter m music software",
+        "MEIZU trademark 012350501 logo"
+      ],
+      "reviewScope": "Opened Numerical/MIDIRack official press kit. Meizu registry reviewed separately, rather than relying on secondary trademark summaries."
+    },
+    {
+      "database": "Web image search",
+      "queries": [
+        "MR monogram logo black square connected M R diagonal",
+        "letter m logo square two vertical cut"
+      ],
+      "reviewScope": "Returned stock designs and existing M identities. Verified Greenlines Studios MR product page and actual image; did not inspect or clear every search result."
+    }
+  ],
+  "comparisonCandidates": [
+    {
+      "name": "Meizu figurative M",
+      "jurisdiction": "EU",
+      "application": "012350501",
+      "owner": "MEIZU TECHNOLOGY CO., LTD.",
+      "status": "Registered",
+      "registrationDate": "2014-04-24",
+      "expiryDate": "2033-11-28",
+      "renewalDate": "2023-11-10",
+      "niceClasses": [
+        9
+      ],
+      "goodsSummary": "Recorded computer software, operating programs, game programs, downloadable music and ringtones, portable media players, headphones, computers, telecommunications apparatus and other electronics.",
+      "verification": "Registration status, owner, dates, renewal and goods were directly read in EUIPO eSearch, in addition to TMview. Full legal history and current enforcement/use not investigated.",
+      "visualObservation": "Meizu is a wide solid rectangular M-like shape with two narrow straight white channels and an unbroken top. MixRelay has a square silhouette, equal straight stem/gap modules, lighter top and a diagonal opening plus lower right return. Both share the connected-top, three-stem, two-channel construction.",
+      "assessment": "Closest verified structural comparison in this review. Relevant overlapping software/audio goods warrant formal comparison. No infringement or non-infringement finding.",
+      "url": "https://euipo.europa.eu/eSearch/#details/trademarks/012350501",
+      "tmviewUrl": "https://www.tmdn.org/tmview/#/tmview/detail/EM500000012350501",
+      "evidence": [
+        "tmview-meizu-012350501.png",
+        "euipo-meizu-012350501.png"
+      ]
+    },
+    {
+      "name": "MIDIRack",
+      "ownerAsStatedInOfficialPressKit": "Numerical (Kai Aras)",
+      "field": "Music/MIDI software for iPad and iPhone",
+      "url": "https://numericalaudio.com/midirack/press/",
+      "visualSource": "https://numericalaudio.com/midirack/press/midirack-mark.png",
+      "evidence": "midirack-official-mark.png",
+      "visualObservation": "Orange/blue outlined MR; a V-shaped M crown, curved R bowl, multiple separated inner uprights, and an exposed sloping leg. Letter initials and audio field coincide, but complete construction differs visibly from the filled square MixRelay mark.",
+      "assessment": "Not identical; actual trademark registrations, territory and confusion not established."
+    },
+    {
+      "name": "Greenlines Studios Monogram MR Logo Design",
+      "listedDate": "2019-03-01",
+      "productId": "998064",
+      "url": "https://www.creativefabrica.com/product/monogram-mr-logo-design/",
+      "evidence": "stock-mr-comparison.png",
+      "visualObservation": "Literal capital M and R with a steep slash between them, pointed M valley and a curved R bowl. Different from MixRelay’s connected flat crown, equal modules and shallow right-side cut.",
+      "assessment": "Not identical; source listing is evidence of public design availability, not a verified trademark right or legal clearance."
+    }
+  ],
+  "previousResearch": {
+    "record": "previous-a/review.json",
+    "reusedOnlyAsHistoricalContext": true,
+    "note": "Earlier separated-A searches and name searches remain historical records. They were not presented as image-search results for selected B. BBC Three, CN87982131, CN71169161 and Mercatus TMA858217 were earlier comparisons, not freshly reverified here."
+  },
+  "limits": [
+    "TMview image search retrieves candidates; its ranks and counts do not measure legal risk. Many retrieved marks differed substantially, limiting recall confidence.",
+    "Only the first page of classes 9 and 42 and the upper all-class gallery were visually inspected; remaining records and unavailable images were not cleared.",
+    "TMview contains participating-office data; this is not an exhaustive worldwide search. No blanket worldwide safety finding is possible from this work.",
+    "Only Meizu EUTM 012350501 was directly verified against its native register in this turn. Other countries, unregistered use, copyrights, phonetic/transliteration variants and full legal histories were not comprehensively reviewed.",
+    "WIPO database was not automatically queried, consistent with its automated-query restriction. Its official public guidance was read.",
+    "Earlier MixRelay / Mix Relay zero-result name searches do not clear the symbol and were not rerun in this turn."
+  ],
+  "officialGuidance": [
+    "https://www.tmdn.org/tmview/#/tmview/disclaimer",
+    "https://www.uspto.gov/trademarks/search/likelihood-confusion",
+    "https://www.wipo.int/en/web/global-brand-database"
+  ],
+  "productionAssetsChanged": false,
+  "cleanup": {
+    "discardedDraftFilesRemoved": 79,
+    "selectedContourExactlyPreserved": true,
+    "priorResearchPreserved": true
+  }
+}

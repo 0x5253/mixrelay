@@ -1,0 +1,18 @@
+[
+  {
+    "product": "mix-relay",
+    "installedVersion": "1.2.9",
+    "latestVersion": "1.2.10",
+    "state": "available",
+    "downloads": [
+      {
+        "os": "macos",
+        "arch": "universal",
+        "url": "https://downloads.example.test/macos-universal.pkg",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "size": 1024
+      }
+    ],
+    "notesUrl": "https://mixrelay.com/releases/1.2.10"
+  }
+]

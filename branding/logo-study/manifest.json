@@ -1,0 +1,48 @@
+{
+  "selectedAt": "2026-10-11",
+  "selectedDirection": "B / Optical Grid (right-hand option)",
+  "status": "User-approved product identity; research is not a legal clearance",
+  "source": "../identity/source/symbol.json",
+  "canvas": [
+    96,
+    96
+  ],
+  "silhouetteBounds": [
+    10,
+    10,
+    86,
+    86
+  ],
+  "pathCountPerSymbol": 1,
+  "module": 15.2,
+  "straightStemWidth": 15.2,
+  "straightGapWidth": 15.2,
+  "roofWidth": 15.2,
+  "slope": 0.5,
+  "diagonalGapNormal": 13.59529330319872,
+  "diagonalStrokeNormal": 13.59529330319872,
+  "diagonalVerticalCrossSection": 15.2,
+  "upperAndLowerRightChannelLength": 15.2,
+  "cornerTrims": {
+    "outerTop": 4,
+    "innerTop": 2,
+    "cutEnds": 1.8,
+    "returnJoins": 0.8,
+    "bottom": 0
+  },
+  "colors": {
+    "paper": "#faf9f5",
+    "ink": "#242622",
+    "red": "#b02d23",
+    "light": "#edeee7",
+    "muted": "#5c594f",
+    "dark": "#161918"
+  },
+  "wordmark": {
+    "source": "../identity/source/wordmark.json",
+    "font": "Helvetica Neue Regular",
+    "trackingAt100pt": -1.2
+  },
+  "integratedIntoProduct": true,
+  "research": "research/review.json"
+}

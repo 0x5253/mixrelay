@@ -1,0 +1,21 @@
+[package]
+name = "mixrelay-local-socket"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+description = "User-owned Unix sockets for MixRelay's local control services"
+
+[lints]
+workspace = true
+
+[dependencies]
+# Listener trait for serving HTTP directly on an authenticated Unix socket.
+axum = { workspace = true }
+libc = "0.2.189"
+tokio = { workspace = true, features = ["net", "time"] }
+tracing = "0.1.41"
+
+[dev-dependencies]
+mixrelay-test-support = { path = "../test-support" }
+tokio = { workspace = true, features = ["io-util", "macros", "rt-multi-thread"] }

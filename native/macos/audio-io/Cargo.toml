@@ -1,0 +1,18 @@
+[package]
+name = "mixrelay-macos-audio-io"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+[features]
+native-lab = []
+
+[lints]
+workspace = true
+
+[dependencies]
+mixrelay-audio-io = { path = "../../../crates/audio-io" }
+
+[dev-dependencies]
+mixrelay-test-support = { path = "../../../crates/test-support" }

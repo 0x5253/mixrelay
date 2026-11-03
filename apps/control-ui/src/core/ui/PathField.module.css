@@ -1,0 +1,28 @@
+.root {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+}
+.label {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-label);
+}
+.wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.path {
+  width: 100%;
+  height: var(--control-height);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--font-control);
+  text-overflow: ellipsis;
+  min-width: 0;
+}

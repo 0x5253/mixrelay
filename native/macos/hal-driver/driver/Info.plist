@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleExecutable</key>
+	<string>MixRelayHAL</string>
+	<key>CFBundleIdentifier</key>
+	<string>io.mixrelay.audio.driver</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>MixRelay Driver</string>
+	<key>CFBundlePackageType</key>
+	<string>BNDL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.1.0</string>
+	<key>CFBundleVersion</key>
+	<string>0.1.0</string>
+	<key>AudioServerPlugIn_MachServices</key>
+	<array>
+		<string>io.mixrelay.audio.driver</string>
+		<string>io.mixrelay.audio.engine</string>
+	</array>
+	<key>CFPlugInFactories</key>
+	<dict>
+		<key>1E74B82D-D4E7-45C3-8DF0-9FEE0A3092AE</key>
+		<string>MixRelayHAL_Create</string>
+	</dict>
+	<key>CFPlugInTypes</key>
+	<dict>
+		<key>443ABAB8-E7B3-491A-B985-BEB9187030DB</key>
+		<array>
+			<string>1E74B82D-D4E7-45C3-8DF0-9FEE0A3092AE</string>
+		</array>
+	</dict>
+</dict>
+</plist>

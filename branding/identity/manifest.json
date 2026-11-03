@@ -1,0 +1,41 @@
+{
+  "version": "1.1",
+  "approvedAt": "2026-10-11",
+  "direction": "B / Optical Grid",
+  "geometry": "source/symbol.json",
+  "colors": "apps/control-ui/src/core/theme/tokens.ts#brandColors",
+  "colorValues": {
+    "primary": "#b02d23",
+    "ink": "#242622",
+    "inverse": "#edeee7",
+    "paper": "#faf9f5",
+    "dark": "#161918",
+    "muted": "#5c594f",
+    "white": "#ffffff"
+  },
+  "approval": "Optical Grid symbol and frozen Optical wordmark",
+  "wordmarkStatus": "frozen 2026-10-12; wordmark/manifest.json; product screens currently symbol-only",
+  "canvas": 96,
+  "bounds": [
+    10,
+    10,
+    86,
+    86
+  ],
+  "module": 15.2,
+  "clearSpace": "0.2 × silhouette height",
+  "minimumCanvas": {
+    "filled": 16,
+    "outline": 64,
+    "knockout": 32
+  },
+  "outlineWidth": 2,
+  "productSymbolSizes": {
+    "compact": 16,
+    "standard": 24,
+    "display": 64
+  },
+  "integratedIntoProduct": true,
+  "installedAppVerified": false,
+  "research": "../logo-study/research/review.json"
+}

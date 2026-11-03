@@ -1,0 +1,22 @@
+[package]
+name = "mixrelay-audio-io"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+homepage.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+rubato.workspace = true
+audioadapter-buffers.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+allocation-counter = "0.8.1"
+mixrelay-test-support = { path = "../test-support" }
+serde_json.workspace = true

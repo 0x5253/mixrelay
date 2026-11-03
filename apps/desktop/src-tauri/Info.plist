@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleIconName</key>
+	<string>MixRelay</string>
+	<key>CFBundleDisplayName</key>
+	<string>MixRelay</string>
+	<key>CFBundleIdentifier</key>
+	<string>io.mixrelay.desktop</string>
+	<key>CFBundleName</key>
+	<string>MixRelay</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSAudioCaptureUsageDescription</key>
+	<string>MixRelay captures audio from applications you select so you can route it to your own audio devices and broadcasts.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>MixRelay accesses selected microphones and other audio input devices when you route or record them.</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>ja</string>
+		<string>ko</string>
+		<string>zh-Hans</string>
+		<string>zh-Hant</string>
+		<string>fr</string>
+		<string>de</string>
+		<string>es</string>
+		<string>pt</string>
+		<string>it</string>
+		<string>ru</string>
+	</array>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+</dict>
+</plist>

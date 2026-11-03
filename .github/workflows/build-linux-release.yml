@@ -1,0 +1,121 @@
+name: Build Linux release candidates once per CPU
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      source_ref:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  support:
+    if: github.repository == '0x5253/mixrelay'
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.matrix.outputs.linuxBuild }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.source_ref || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.19.0
+      - run: node scripts/support-contract.mjs check
+      - id: matrix
+        run: node scripts/support-contract.mjs matrix >> "$GITHUB_OUTPUT"
+  deb:
+    needs: support
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.support.outputs.matrix) }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.source_ref || github.sha }}
+          persist-credentials: false
+      - name: Free runner disk
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+      - run: docker compose -f infra/lab/compose.yaml build ${{ matrix.distro }}
+      - name: Build the final DEB once on its native CPU
+        env:
+          RELEASE_ARCH: ${{ matrix.arch }}
+        run: >-
+          docker compose -f infra/lab/compose.yaml run --name mixrelay-release-build
+          -e RELEASE_ARCH="$RELEASE_ARCH"
+          --entrypoint bash ${{ matrix.distro }}
+          -c 'set -euo pipefail; pnpm desktop:build --bundles deb;
+          version=$(node --input-type=module -e "import {checkVersion} from \"./scripts/product-version.mjs\"; console.log(checkVersion())");
+          for package in target/release/bundle/deb/*.deb; do
+          test "$(dpkg-deb --field "$package" Version)" = "$version";
+          done;
+          if [ "$RELEASE_ARCH" = x64 ]; then
+          node scripts/prepare-arch-driver-package.mjs target/release/bundle/deb/*.deb target/arch-recipe;
+          fi'
+      - name: Collect inspected final package
+        run: |
+          mkdir -p candidate
+          docker cp mixrelay-release-build:/workspace/target/release/bundle/deb/. candidate/
+          git rev-parse HEAD > candidate/source-revision.txt
+          (cd candidate && sha256sum *.deb > SHA256SUMS-${{ matrix.id }})
+      - name: Prepare Arch wrapper from the same x64 DEB payload
+        if: matrix.arch == 'x64'
+        run: |
+          mkdir arch-recipe
+          docker cp mixrelay-release-build:/workspace/target/arch-recipe/. arch-recipe/
+      - if: matrix.arch == 'x64'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          overwrite: true
+          name: arch-recipe
+          path: arch-recipe/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          overwrite: true
+          name: candidate-${{ matrix.id }}
+          path: candidate/
+          if-no-files-found: error
+  arch:
+    needs: deb
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.source_ref || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.19.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: arch-recipe
+          path: packaging/linux/candidate-input
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libarchive-tools
+      - run: docker compose -f infra/lab/compose.yaml build arch
+      - name: Wrap the checked DEB payload without compiling or stripping
+        run: docker compose -f infra/lab/compose.yaml run --name mixrelay-arch-wrap --entrypoint bash arch -c 'cd packaging/linux/candidate-input && makepkg --nodeps --noconfirm'
+      - run: |
+          mkdir candidate
+          docker cp mixrelay-arch-wrap:/workspace/packaging/linux/candidate-input/. candidate/
+          version="$(node --input-type=module -e 'import {checkVersion} from "./scripts/product-version.mjs"; console.log(checkVersion())')"
+          for package in candidate/*.pkg.tar.zst; do
+            bsdtar -xOf "$package" .PKGINFO | grep -Fx "pkgver = $version-1"
+            bsdtar -xOf "$package" .PKGINFO | grep -Fx 'arch = x86_64'
+          done
+          (cd candidate && sha256sum *.pkg.tar.zst > SHA256SUMS-linux-x64-arch)
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          overwrite: true
+          name: candidate-linux-x64-arch
+          path: |
+            candidate/*.pkg.tar.zst
+            candidate/SHA256SUMS-linux-x64-arch
+          if-no-files-found: error

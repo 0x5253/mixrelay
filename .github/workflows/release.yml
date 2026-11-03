@@ -1,0 +1,166 @@
+name: Build and publish official installers
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing version tag (vMAJOR.MINOR.PATCH)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: official-release-${{ inputs.release_tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  source:
+    if: github.repository == '0x5253/mixrelay'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      tag: ${{ steps.source.outputs.tag }}
+      version: ${{ steps.source.outputs.version }}
+      revision: ${{ steps.source.outputs.revision }}
+    env:
+      RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
+    steps:
+      - name: Require a stable version tag
+        run: '[[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]'
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: refs/tags/${{ env.RELEASE_TAG }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.19.0
+      - name: Bind all builds to the tag's exact source and product version
+        id: source
+        run: |
+          set -euo pipefail
+          node scripts/product-version.mjs check
+          VERSION="${RELEASE_TAG#v}"
+          test "$(node -p 'require("./package.json").version')" = "$VERSION"
+          REVISION="$(git rev-parse HEAD)"
+          test "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")" = "$REVISION"
+          git merge-base --is-ancestor "$REVISION" origin/main
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "revision=$REVISION" >> "$GITHUB_OUTPUT"
+
+  linux:
+    needs: source
+    uses: ./.github/workflows/build-linux-release.yml
+    with:
+      source_ref: ${{ needs.source.outputs.revision }}
+
+  macos:
+    needs: source
+    runs-on: macos-15
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ needs.source.outputs.revision }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.19.0
+      - name: Install the universal build toolchain
+        run: |
+          npm install --global pnpm@11.9.0
+          rustup toolchain install 1.96.0 --profile minimal --target aarch64-apple-darwin,x86_64-apple-darwin
+          rustup default 1.96.0
+          pnpm install --frozen-lockfile
+      - name: Import temporary signing assets, preflight, build and notarize
+        env:
+          MIXRELAY_MACOS_TEAM_ID: ${{ vars.MIXRELAY_MACOS_TEAM_ID }}
+          MIXRELAY_MACOS_APPLICATION_IDENTITY: ${{ vars.MIXRELAY_MACOS_APPLICATION_IDENTITY }}
+          MIXRELAY_MACOS_INSTALLER_IDENTITY: ${{ vars.MIXRELAY_MACOS_INSTALLER_IDENTITY }}
+          MIXRELAY_MACOS_APPLICATION_P12_BASE64: ${{ secrets.MIXRELAY_MACOS_APPLICATION_P12_BASE64 }}
+          MIXRELAY_MACOS_INSTALLER_P12_BASE64: ${{ secrets.MIXRELAY_MACOS_INSTALLER_P12_BASE64 }}
+          MIXRELAY_MACOS_P12_PASSWORD: ${{ secrets.MIXRELAY_MACOS_P12_PASSWORD }}
+          MIXRELAY_MACOS_INTERMEDIATE_CERTIFICATE_BASE64: ${{ secrets.MIXRELAY_MACOS_INTERMEDIATE_CERTIFICATE_BASE64 }}
+          MIXRELAY_NOTARIZATION_KEY_BASE64: ${{ secrets.MIXRELAY_NOTARIZATION_KEY_BASE64 }}
+          MIXRELAY_NOTARIZATION_KEY_ID: ${{ secrets.MIXRELAY_NOTARIZATION_KEY_ID }}
+          MIXRELAY_NOTARIZATION_ISSUER: ${{ secrets.MIXRELAY_NOTARIZATION_ISSUER }}
+        run: node scripts/prepare-ci-macos-signing.mjs --output candidate
+      - name: Remove private CI signing assets on every outcome
+        if: always()
+        run: node scripts/prepare-ci-macos-signing.mjs --cleanup
+      - name: Verify final notarization and version, then hash distributables
+        env:
+          RELEASE_VERSION: ${{ needs.source.outputs.version }}
+        run: |
+          set -euo pipefail
+          node --input-type=module -e 'import assert from "node:assert/strict"; import {readFileSync} from "node:fs"; const r=JSON.parse(readFileSync("candidate/build-result.json")); assert.equal(r.version,process.env.RELEASE_VERSION); assert.equal(r.status,"notarized-artifacts-built"); for(const key of ["notarized","stapled","validated"]) assert.equal(r.notarization[key],true);'
+          /usr/sbin/pkgutil --check-signature "candidate/MixRelay-Installer-$RELEASE_VERSION.pkg"
+          /usr/bin/xcrun stapler validate "candidate/MixRelay-Installer-$RELEASE_VERSION.pkg"
+          git rev-parse HEAD > candidate/source-revision.txt
+          (cd candidate && shasum -a 256 *.pkg *.streamDeckPlugin > SHA256SUMS-macos-universal)
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: candidate-macos-universal
+          path: |
+            candidate/*.pkg
+            candidate/*.streamDeckPlugin
+            candidate/SHA256SUMS-macos-universal
+            candidate/source-revision.txt
+          if-no-files-found: error
+
+  publish:
+    needs: [source, macos, linux]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ needs.source.outputs.tag }}
+      RELEASE_VERSION: ${{ needs.source.outputs.version }}
+      SOURCE_REVISION: ${{ needs.source.outputs.revision }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ needs.source.outputs.revision }}
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: candidate-*
+          path: inputs
+      - name: Verify build hashes and the complete versioned asset set
+        run: |
+          set -euo pipefail
+          for directory in inputs/candidate-*; do
+            (cd "$directory" && sha256sum --check SHA256SUMS-*)
+            if [[ -f "$directory/source-revision.txt" ]]; then
+              test "$(cat "$directory/source-revision.txt")" = "$SOURCE_REVISION"
+            fi
+          done
+          mkdir release-assets
+          find inputs -type f \( -name '*.pkg' -o -name '*.deb' -o -name '*.pkg.tar.zst' -o -name '*.streamDeckPlugin' \) -exec cp --no-clobber {} release-assets/ \;
+          test "$(find release-assets -type f | wc -l)" -eq 5
+          test -f "release-assets/MixRelay-Installer-$RELEASE_VERSION.pkg"
+          test -f "release-assets/MixRelay-StreamDeck-$RELEASE_VERSION.streamDeckPlugin"
+          test -f "release-assets/MixRelay_${RELEASE_VERSION}_amd64.deb"
+          test -f "release-assets/MixRelay_${RELEASE_VERSION}_arm64.deb"
+          test -f "release-assets/mix-relay-${RELEASE_VERSION}-1-x86_64.pkg.tar.zst"
+          (cd release-assets && sha256sum * > SHA256SUMS && sha256sum --check SHA256SUMS)
+      - name: Publish installers and checksums to the version's GitHub Release
+        run: |
+          set -euo pipefail
+          # An existing public release is immutable through this workflow.
+          if gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" > release.json 2> release-error.txt; then
+            jq -e '.draft == true and .prerelease == false' release.json >/dev/null
+            gh release upload "$RELEASE_TAG" release-assets/* --clobber
+          else
+            grep -q 'HTTP 404' release-error.txt
+            gh release create "$RELEASE_TAG" release-assets/* --verify-tag --draft --title "MixRelay $RELEASE_VERSION" --generate-notes
+          fi
+          gh release edit "$RELEASE_TAG" --draft=false --prerelease=false --latest
+          gh release view "$RELEASE_TAG" --json isDraft,isPrerelease,url | jq -e '.isDraft == false and .isPrerelease == false'

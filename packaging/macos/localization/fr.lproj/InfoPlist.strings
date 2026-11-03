@@ -1,0 +1,2 @@
+NSAudioCaptureUsageDescription = "MixRelay capture le son des applications que vous sélectionnez pour l’acheminer vers vos périphériques audio et vos diffusions.";
+NSMicrophoneUsageDescription = "MixRelay accède aux microphones et autres entrées audio sélectionnés lorsque vous les acheminez ou les enregistrez.";

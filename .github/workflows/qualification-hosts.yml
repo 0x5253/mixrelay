@@ -1,0 +1,61 @@
+name: Qualification VM readiness
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - support/environments.json
+      - scripts/e2e/**
+      - scripts/support-contract.mjs
+      - .github/workflows/qualification-hosts.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qualification-hosts-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  matrix:
+    runs-on: ubuntu-24.04
+    outputs:
+      linux: ${{ steps.matrix.outputs.linux }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - id: matrix
+        run: |
+          node --input-type=module -e 'import {loadContract,qualificationMatrix} from "./scripts/support-contract.mjs"; console.log("linux="+JSON.stringify({include:qualificationMatrix(loadContract().contract).include.filter(t=>t.os==="linux")}));' >> "$GITHUB_OUTPUT"
+  boot:
+    needs: matrix
+    name: Boot ${{ matrix.id }} on ${{ matrix.runner }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.matrix.outputs.linux) }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.19.0
+      - name: Prepare VM tools
+        env:
+          TARGET_ARCH: ${{ matrix.arch }}
+        run: bash scripts/e2e/github-vm-tools.sh "$TARGET_ARCH"
+      - name: Boot actual distro and check desktop audio prerequisites
+        env:
+          TARGET: ${{ matrix.id }}
+        run: node scripts/e2e/github-vm.mjs --target "$TARGET" --output evidence --smoke
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          overwrite: true
+          name: host-readiness-${{ matrix.id }}
+          path: evidence/
+          retention-days: 14
+          if-no-files-found: error

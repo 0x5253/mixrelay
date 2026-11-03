@@ -1,0 +1,46 @@
+[package]
+name = "mixrelay-macos-engine"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+build = "build.rs"
+
+[lints]
+workspace = true
+
+[features]
+native-lab = []
+test-util = ["mixrelay-macos-transport/test-observation", "mixrelay-time/test-util"]
+
+[dependencies]
+mixrelay-engine = { path = "../../../crates/engine" }
+mixrelay-engine-runtime = { path = "../../common/engine-runtime" }
+mixrelay-audio-engine = { path = "../../../crates/audio-engine" }
+mixrelay-audio-graph = { path = "../../../crates/audio-graph" }
+mixrelay-audio-io.workspace = true
+mixrelay-control-protocol = { path = "../../../crates/control-protocol" }
+mixrelay-driver-control = { path = "../../../crates/driver-control" }
+mixrelay-time = { path = "../../../crates/time" }
+mixrelay-realtime = { path = "../../../crates/realtime" }
+mixrelay-pcm-ring = { path = "../../pcm-ring" }
+mixrelay-macos-transport = { path = "../common" }
+mixrelay-macos-audio-io = { path = "../audio-io" }
+parking_lot.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["sync", "time"] }
+tracing = "0.1.41"
+libc = "0.2.189"
+
+[build-dependencies]
+cc = "1.2.57"
+
+[dev-dependencies]
+serde.workspace = true
+serde_json.workspace = true
+tracing-subscriber = { version = "0.3.20", default-features = false, features = ["fmt"] }
+allocation-counter = "0.8.1"
+mixrelay-time = { path = "../../../crates/time", features = ["test-util"] }
+mixrelay-test-support = { path = "../../../crates/test-support" }
+mixrelay-macos-test-support = { path = "../../../crates/macos-test-support" }
+mixrelay-macos-transport = { path = "../common", features = ["test-observation"] }

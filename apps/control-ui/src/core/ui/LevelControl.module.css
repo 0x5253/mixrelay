@@ -1,0 +1,17 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--control-gap);
+  min-width: 0;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.value {
+  color: var(--text-muted);
+  font: var(--font-label) var(--font-mono);
+}

@@ -1,0 +1,30 @@
+import { expect, it, vi } from 'vitest';
+import type { DeviceAppActivity } from '../../../core/domain/control/inventory';
+import { fakeScheduler } from '../../../test-support/fakeScheduler';
+import { type DeviceActivityObservation, DeviceActivitySession } from './DeviceActivitySession';
+
+it('expires a hung observation and fences the reply across visibility and disposal', async () => {
+  const time = fakeScheduler();
+  const first = Promise.withResolvers<Record<string, DeviceAppActivity[]>>();
+  const second = Promise.withResolvers<Record<string, DeviceAppActivity[]>>();
+  const read = vi.fn().mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+  const values: DeviceActivityObservation[] = [];
+  const port = { getVirtualDeviceAppActivity: read };
+  const session = new DeviceActivitySession(port, read, (value) => values.push(value), time);
+  session.setVisible(true);
+  time.advance(3000);
+  expect(values).toEqual([{ state: 'loading' }, { state: 'unavailable' }]);
+  expect(read).toHaveBeenCalledTimes(1);
+  session.setVisible(false);
+  session.setVisible(true);
+  first.resolve({ old: [] });
+  await first.promise;
+  expect(values.at(-1)).toEqual({ state: 'unavailable' });
+  second.resolve({ fresh: [] });
+  await second.promise;
+  expect(values.at(-1)).toEqual({ state: 'observed', devices: { fresh: [] } });
+  session.dispose();
+  expect(time.pending()).toBe(0);
+  time.advance(10_000);
+  expect(values.at(-1)).toEqual({ state: 'observed', devices: { fresh: [] } });
+});

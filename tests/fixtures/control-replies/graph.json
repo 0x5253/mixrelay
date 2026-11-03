@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 2,
+  "revision": 2,
+  "nodes": [
+    {
+      "id": "mic",
+      "label": "Microphone",
+      "control": {
+        "enabled": true,
+        "muted": false
+      },
+      "type": "audio_device_input",
+      "config": {
+        "selector": {
+          "match": "default_input"
+        },
+        "outputChannels": 2,
+        "gainDb": 0.0
+      }
+    },
+    {
+      "id": "gain",
+      "label": null,
+      "control": {
+        "enabled": true,
+        "muted": true
+      },
+      "type": "gain",
+      "config": {
+        "channels": 2,
+        "gainDb": -6.0
+      }
+    },
+    {
+      "id": "speakers",
+      "label": "Speakers",
+      "control": {
+        "enabled": true,
+        "muted": false
+      },
+      "type": "audio_device_output",
+      "config": {
+        "selector": {
+          "match": "persistent_uid",
+          "uid": "BuiltInSpeakerDevice"
+        },
+        "inputChannels": 2
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "mic-gain",
+      "source": {
+        "nodeId": "mic",
+        "portId": "audio"
+      },
+      "destination": {
+        "nodeId": "gain",
+        "portId": "audio"
+      },
+      "channelMapping": {
+        "mode": "auto"
+      }
+    },
+    {
+      "id": "gain-speakers",
+      "source": {
+        "nodeId": "gain",
+        "portId": "audio"
+      },
+      "destination": {
+        "nodeId": "speakers",
+        "portId": "audio"
+      },
+      "channelMapping": {
+        "mode": "explicit",
+        "routes": [
+          {
+            "sourceChannel": 0,
+            "destinationChannel": 1
+          },
+          {
+            "sourceChannel": 1,
+            "destinationChannel": 0
+          }
+        ]
+      }
+    }
+  ]
+}

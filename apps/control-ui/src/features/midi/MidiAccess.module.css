@@ -1,0 +1,17 @@
+.workspace {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  height: 100%;
+  min-height: 0;
+}
+.panel {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
+  padding: var(--space-3);
+}
+
+.workspace[data-midi-mode] [data-midi-inactive] {
+  opacity: var(--control-disabled-opacity);
+}

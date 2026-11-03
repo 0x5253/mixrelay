@@ -1,0 +1,90 @@
+[
+  {
+    "language": "en",
+    "uiLocale": "en",
+    "name": "English",
+    "guideTitle": "Installation Guide",
+    "beforeHeading": "Before installation",
+    "afterHeading": "After installation"
+  },
+  {
+    "language": "ja",
+    "uiLocale": "ja",
+    "name": "日本語",
+    "guideTitle": "インストールガイド",
+    "beforeHeading": "インストール前",
+    "afterHeading": "インストール後"
+  },
+  {
+    "language": "ko",
+    "uiLocale": "ko-KR",
+    "name": "한국어",
+    "guideTitle": "설치 안내",
+    "beforeHeading": "설치 전",
+    "afterHeading": "설치 후"
+  },
+  {
+    "language": "zh-Hans",
+    "uiLocale": "zh-Hans",
+    "name": "简体中文",
+    "guideTitle": "安装指南",
+    "beforeHeading": "安装前",
+    "afterHeading": "安装后"
+  },
+  {
+    "language": "zh-Hant",
+    "uiLocale": "zh-Hant",
+    "name": "繁體中文",
+    "guideTitle": "安裝指南",
+    "beforeHeading": "安裝前",
+    "afterHeading": "安裝後"
+  },
+  {
+    "language": "fr",
+    "uiLocale": "fr",
+    "name": "Français",
+    "guideTitle": "Guide d’installation",
+    "beforeHeading": "Avant l’installation",
+    "afterHeading": "Après l’installation"
+  },
+  {
+    "language": "de",
+    "uiLocale": "de",
+    "name": "Deutsch",
+    "guideTitle": "Installationsanleitung",
+    "beforeHeading": "Vor der Installation",
+    "afterHeading": "Nach der Installation"
+  },
+  {
+    "language": "es",
+    "uiLocale": "es",
+    "name": "Español",
+    "guideTitle": "Guía de instalación",
+    "beforeHeading": "Antes de la instalación",
+    "afterHeading": "Después de la instalación"
+  },
+  {
+    "language": "pt",
+    "uiLocale": "pt",
+    "name": "Português",
+    "guideTitle": "Guia de instalação",
+    "beforeHeading": "Antes da instalação",
+    "afterHeading": "Após a instalação"
+  },
+  {
+    "language": "it",
+    "uiLocale": "it",
+    "name": "Italiano",
+    "guideTitle": "Guida all’installazione",
+    "beforeHeading": "Prima dell’installazione",
+    "afterHeading": "Dopo l’installazione"
+  },
+  {
+    "language": "ru",
+    "uiLocale": "ru",
+    "name": "Русский",
+    "guideTitle": "Руководство по установке",
+    "beforeHeading": "Перед установкой",
+    "afterHeading": "После установки"
+  }
+]

@@ -1,0 +1,29 @@
+[package]
+name = "mixrelay-desktop-application"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+homepage.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+mixrelay-time = { path = "../time" }
+mixrelay-audio-graph = { path = "../audio-graph" }
+mixrelay-midi-control = { path = "../midi-control" }
+mixrelay-audio-io = { path = "../audio-io" }
+mixrelay-control-protocol = { path = "../control-protocol" }
+mixrelay-driver-control = { path = "../driver-control" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+semver = "1.0.28"
+url = "2.5.8"
+
+[dev-dependencies]
+mixrelay-time = { path = "../time", features = ["test-util"] }
+mixrelay-test-support = { path = "../test-support" }
+tokio = { workspace = true, features = ["macros", "rt", "test-util"] }

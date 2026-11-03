@@ -1,0 +1,134 @@
+.root {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-1);
+}
+.plot {
+  display: block;
+  width: 100%;
+  touch-action: none;
+  overflow: visible;
+}
+.grid {
+  stroke: var(--eq-grid);
+  stroke-width: 0.5;
+  fill: none;
+}
+.zero {
+  stroke: var(--eq-zero);
+  stroke-width: 0.7;
+  fill: none;
+}
+.axis {
+  fill: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-caption);
+}
+.curve {
+  fill: none;
+  stroke: var(--eq-curve);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+.handle {
+  fill: var(--eq-handle-surface);
+  stroke: var(--eq-curve);
+  stroke-width: 1;
+  pointer-events: none;
+}
+.bandNumber {
+  fill: var(--eq-handle-text);
+  font-family: var(--font-mono);
+  font-size: var(--font-caption);
+  text-anchor: middle;
+  pointer-events: none;
+}
+.plot [data-selected="true"] .handle {
+  fill: var(--eq-curve);
+}
+.plot [data-selected="true"] .bandNumber {
+  fill: var(--eq-handle-surface);
+}
+.root[data-bypassed] .curve {
+  stroke-dasharray: 3 2;
+  stroke: var(--text-muted);
+}
+.summary {
+  display: grid;
+}
+.summaryLabels,
+.summaryRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(0, 0.9fr);
+  align-items: center;
+  gap: var(--space-half);
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--font-caption);
+}
+.summaryLabels {
+  color: var(--text-muted);
+  padding-inline: var(--space-half);
+}
+.summaryRow {
+  min-height: var(--control-height-compact);
+  width: 100%;
+  padding: var(--space-half);
+  background: transparent;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--control-radius);
+  color: var(--text-secondary);
+}
+.summaryRow[data-selected="true"] {
+  background: var(--surface-active);
+  color: var(--text-primary);
+}
+.bandSelect {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-half);
+  min-height: var(--control-height-compact);
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+}
+.bandLabel {
+  overflow-wrap: anywhere;
+}
+.bandSelect:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+.bandSelect:focus-visible {
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: -1px;
+}
+.bandSelect:disabled {
+  color: var(--text-muted);
+}
+
+.plotFrame {
+  position: relative;
+  touch-action: none;
+}
+.handleButton {
+  position: absolute;
+  width: var(--node-control-size);
+  height: var(--node-control-size);
+  margin: calc(var(--node-control-size) / -2);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: 50%;
+  cursor: move;
+}
+.handleButton:focus-visible {
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: -1px;
+}
+.handleButton:disabled {
+  cursor: default;
+}

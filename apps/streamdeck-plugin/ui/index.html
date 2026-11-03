@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src ws://127.0.0.1:*; style-src 'self'; script-src 'self'">
+  <title>MixRelay</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <p id="status" role="status">Connecting to MixRelay…</p>
+  <label><span data-i18n="Graph">Graph</span><select id="graph"></select></label>
+  <label><span data-i18n="Node">Node</span><select id="node"></select></label>
+  <label id="operation-label" hidden><span data-i18n="Control">Control</span><select id="operation"></select></label>
+  <label id="direction-label" hidden><span data-i18n="Direction">Direction</span><select id="direction"></select></label>
+  <label id="step-label" hidden><span data-i18n="Step">Step</span><select id="step"></select></label>
+  <dl id="recording-settings" hidden>
+    <dt data-i18n="Folder">Folder</dt><dd id="recording-folder"></dd>
+    <dt data-i18n="Format">Format</dt><dd id="recording-format"></dd>
+  </dl>
+  <p id="hint" hidden></p>
+  <script src="inspector.js"></script>
+</body>
+</html>

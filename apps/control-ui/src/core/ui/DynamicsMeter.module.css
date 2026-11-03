@@ -1,0 +1,97 @@
+.root {
+  padding-block: var(--space-1);
+  padding-inline: var(--node-inset);
+  color: var(--text-primary);
+}
+.banks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.bank {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: var(--space-16) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--control-gap);
+}
+.label {
+  font-size: var(--font-caption);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+.rails {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-half);
+}
+.channel {
+  display: grid;
+  grid-template-columns: var(--space-3) minmax(0, 1fr) var(--space-12);
+  align-items: center;
+  gap: var(--space-half);
+}
+.scale {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+  font-size: var(--dynamics-scale-font-size);
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+.rail {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: var(--space-1);
+  background: var(--dynamics-rail-background);
+}
+.fill {
+  position: absolute;
+  inset: 0;
+  background: var(--meter-zones-horizontal);
+  clip-path: inset(0 var(--meter-unfilled, 100%) 0 0);
+}
+/* Gain reduction is an amount, not a level: one neutral bar from the left. */
+.reduction .fill {
+  right: auto;
+  width: var(--layout-dynamics-level);
+  background: var(--text-secondary);
+  clip-path: none;
+}
+.threshold {
+  position: absolute;
+  inset-block: calc(-1 * var(--space-half));
+  width: var(--border-width);
+  background: var(--text-primary);
+}
+.threshold::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: calc(-1 * var(--space-half));
+  width: calc(2 * var(--space-half) + var(--border-width));
+  height: var(--space-half);
+  background: var(--text-primary);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+.channelName {
+  font-size: var(--font-caption);
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+.value {
+  font-size: var(--font-caption);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-align: right;
+}
+.thresholdValue {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--font-caption);
+  font-family: var(--font-mono);
+  text-align: right;
+}

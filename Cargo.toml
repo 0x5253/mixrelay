@@ -1,0 +1,128 @@
+[workspace]
+resolver = "2"
+exclude = ["vendor/truce-rack-au", "vendor/truce-rack-lv2"]
+members = [
+  "vendor/truce-rack-core",
+  "vendor/truce-rack-clap",
+  "vendor/truce-rack-vst3",
+  "apps/desktop/src-tauri",
+  "apps/service",
+  "apps/driver-service",
+  "crates/audio-io",
+  "crates/audio-graph",
+  "crates/audio-engine",
+  "crates/audio-recorder",
+  "crates/processor-host",
+  "crates/processor-state",
+  "crates/realtime",
+  "crates/time",
+  "crates/control-protocol",
+  "crates/control-server",
+  "crates/driver-control",
+  "crates/driver-adapters",
+  "crates/engine",
+  "crates/desktop-application",
+  "crates/engine-process",
+  "native/macos/audio-io",
+  "native/macos/engine",
+  "native/common/engine-runtime",
+  "native/linux/audio-io",
+  "native/linux/engine",
+  "crates/local-socket",
+  "crates/midi-control",
+  "crates/macos-test-support",
+  "crates/test-support",
+  "tests/fixtures/native-clap",
+  "native/macos/hal-driver/rust",
+  "native/macos/hal-driver/bundle",
+  "native/macos/common",
+  "native/macos/driver-control",
+  "native/macos/installer",
+  "native/macos/process-tap",
+  "native/pcm-ring",
+  "native/linux/pipewire",
+  "native/linux/driver-control",
+  "native/linux/pipewire/tests/buffer-observer",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.96"
+authors = ["rawsector <support@rawsector.com>"]
+homepage = "https://rawsector.com/products/mixrelay"
+
+[workspace.dependencies]
+mixrelay-time = { path = "crates/time" }
+rubato = { version = "5.0.0", default-features = false }
+audioadapter-buffers = "5.2.0"
+axum = "0.8.9"
+parking_lot = "0.12.5"
+reqwest = { version = "0.13.4", default-features = false, features = ["json"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+thiserror = "2.0.20"
+base64 = "0.22.1"
+memmap2 = "0.9.9"
+truce-rack-core = "1.1.5"
+truce-rack-clap = "1.1.5"
+truce-rack-au = "1.1.5"
+truce-rack-au3 = "1.1.5"
+truce-rack-lv2 = "1.1.5"
+truce-rack-vst3 = "1.1.5"
+x11-dl = "2.21.0"
+tokio = { version = "1.53.1", features = ["macros", "net", "rt-multi-thread", "signal"] }
+mixrelay-audio-io = { path = "crates/audio-io" }
+mixrelay-audio-graph = { path = "crates/audio-graph" }
+mixrelay-audio-recorder = { path = "crates/audio-recorder" }
+tower = "0.5.3"
+tower-http = { version = "0.7.1", features = ["cors"] }
+
+[workspace.lints.rust]
+rust_2018_idioms = { level = "deny", priority = -1 }
+unreachable_pub = "deny"
+unused = { level = "deny", priority = -1 }
+
+[workspace.lints.clippy]
+all = { level = "deny", priority = -1 }
+complexity = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+perf = { level = "deny", priority = -1 }
+module_name_repetitions = "allow"
+unwrap_used = "deny"
+expect_used = "deny"
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+panic = "abort"
+strip = "symbols"
+
+# Stripped proc-macro dylibs can have invalid LINKEDIT alignment on macOS 27.
+# Build-only tools are not shipped; keep their symbols without changing product stripping.
+[profile.release.build-override]
+strip = "none"
+
+# Keep real-time sample conversion within its callback budget in `tauri dev`.
+# The application remains debuggable; only the measured DSP hot path is optimized.
+[profile.dev.package.mixrelay-audio-io]
+opt-level = 3
+
+# Recorder-side generic SRC is instantiated here, not solely inside rubato.
+# Keep debug-app recording throughput under the same measured DSP policy.
+[profile.dev.package.mixrelay-audio-recorder]
+opt-level = 3
+
+[profile.dev.package.rubato]
+opt-level = 3
+
+[profile.dev.package.audioadapter-buffers]
+opt-level = 3
+
+# Source-preserving native format/state/latency fixes; see vendor/README.md.
+[patch.crates-io]
+truce-rack-core = { path = "vendor/truce-rack-core" }
+truce-rack-au = { path = "vendor/truce-rack-au" }
+truce-rack-vst3 = { path = "vendor/truce-rack-vst3" }
+truce-rack-clap = { path = "vendor/truce-rack-clap" }
+truce-rack-lv2 = { path = "vendor/truce-rack-lv2" }

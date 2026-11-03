@@ -1,0 +1,21 @@
+.identity {
+  display: inline-block;
+  flex: none;
+  vertical-align: middle;
+  color: var(--brand-ink);
+}
+
+.identity[data-tone="primary"] .symbol {
+  color: var(--brand-primary);
+}
+
+.identity[data-tone="inverse"] {
+  color: var(--brand-inverse);
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  line-height: 1;
+}

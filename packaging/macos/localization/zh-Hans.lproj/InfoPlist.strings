@@ -1,0 +1,2 @@
+NSAudioCaptureUsageDescription = "MixRelay 捕获您选择的应用音频，以便将其路由到您自己的音频设备和广播。";
+NSMicrophoneUsageDescription = "MixRelay 在路由或录音时访问您选择的麦克风和其他音频输入设备。";

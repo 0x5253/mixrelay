@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 2,
+  "revision": 7,
+  "nodes": [
+    {
+      "id": "chrome",
+      "label": "Chrome",
+      "type": "application_capture",
+      "config": {
+        "selector": {
+          "match": "bundle_id",
+          "bundle_id": "com.google.Chrome",
+          "include_descendants": true
+        },
+        "stream": {
+          "channels": 2,
+          "channelLayout": "stereo"
+        },
+        "sourcePlayback": "preserve"
+      }
+    },
+    {
+      "id": "spat-ingress",
+      "label": "SPAT Revolution ingress",
+      "type": "virtual_endpoint",
+      "config": {
+        "id": "io.mixrelay.virtual.spat",
+        "displayName": "MixRelay SPAT In",
+        "reference": { "render": true, "capture": false },
+        "render": null,
+        "capture": {
+          "channels": 64,
+          "channelLayout": "discrete"
+        },
+        "supportedSampleRates": [48000, 96000],
+        "defaultSampleRate": 48000
+      }
+    },
+    {
+      "id": "microphone",
+      "label": "Default microphone",
+      "type": "audio_device_input",
+      "config": {
+        "selector": { "match": "default_input" },
+        "outputChannels": 2
+      }
+    },
+    {
+      "id": "broadcast-mix",
+      "label": "Broadcast mix",
+      "type": "mixer",
+      "config": {
+        "inputs": ["browser", "voice", "spat"],
+        "channels": 2
+      }
+    },
+    {
+      "id": "mixrelay-stream",
+      "label": "MixRelay Stream",
+      "type": "virtual_endpoint",
+      "config": {
+        "id": "io.mixrelay.virtual.stream.default",
+        "displayName": "MixRelay OBS Mix",
+        "reference": { "render": false, "capture": true },
+        "render": {
+          "channels": 2,
+          "channelLayout": "stereo"
+        },
+        "capture": null,
+        "supportedSampleRates": [48000, 96000],
+        "defaultSampleRate": 48000
+      }
+    },
+    {
+      "id": "monitor",
+      "label": "System output",
+      "type": "audio_device_output",
+      "config": {
+        "selector": { "match": "default_output" },
+        "inputChannels": 2
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "spat-to-mix",
+      "source": { "nodeId": "spat-ingress", "portId": "from_os" },
+      "destination": { "nodeId": "broadcast-mix", "portId": "spat" },
+      "channelMapping": {
+        "mode": "explicit",
+        "routes": [
+          { "sourceChannel": 0, "destinationChannel": 0 },
+          { "sourceChannel": 1, "destinationChannel": 1 }
+        ]
+      }
+    },
+    {
+      "id": "chrome-to-mix",
+      "source": { "nodeId": "chrome", "portId": "audio" },
+      "destination": { "nodeId": "broadcast-mix", "portId": "browser" }
+    },
+    {
+      "id": "microphone-to-mix",
+      "source": { "nodeId": "microphone", "portId": "audio" },
+      "destination": { "nodeId": "broadcast-mix", "portId": "voice" }
+    },
+    {
+      "id": "mix-to-stream",
+      "source": { "nodeId": "broadcast-mix", "portId": "audio" },
+      "destination": { "nodeId": "mixrelay-stream", "portId": "to_os" }
+    },
+    {
+      "id": "mix-to-monitor",
+      "source": { "nodeId": "broadcast-mix", "portId": "audio" },
+      "destination": { "nodeId": "monitor", "portId": "audio" }
+    }
+  ]
+}

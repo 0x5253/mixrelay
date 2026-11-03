@@ -1,0 +1,71 @@
+.target {
+  display: inline-flex;
+}
+:root .root {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--transport-size);
+  height: var(--transport-size);
+  padding: 0;
+  border-radius: var(--control-radius);
+  flex: 0 0 auto;
+  border: var(--border-width) solid var(--transport-border);
+  background: var(--transport-background);
+  color: var(--transport-text);
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-easing-standard),
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    color var(--motion-duration-fast) var(--motion-easing-standard);
+}
+:root .root[data-transport="record"] {
+  color: var(--transport-record-text);
+}
+:root .root[data-tone="critical"] {
+  color: var(--status-danger);
+}
+:root .root[data-tone="warning"] {
+  color: var(--status-warning);
+}
+:root .root[data-tone="positive"] {
+  color: var(--status-positive);
+}
+:root .root[data-tone="accent"] {
+  color: var(--status-accent);
+}
+:root .root:hover:not(:disabled) {
+  border-color: var(--transport-border-hover);
+  background: var(--transport-background-hover);
+}
+:root .root:disabled {
+  border-color: var(--transport-border-disabled);
+  background: var(--transport-background-disabled);
+  color: var(--transport-text-disabled);
+}
+:root .root[data-active],
+:root .root[data-active]:disabled {
+  border-color: var(--transport-border-active);
+  color: var(--transport-text-active);
+  background: var(--transport-background-active);
+  opacity: 1;
+}
+:root .root[data-transport="pause"][data-active],
+:root .root[data-transport="pause"][data-active]:disabled {
+  border-color: var(--transport-pause-border-active);
+  color: var(--transport-pause-text-active);
+  background: var(--transport-pause-background-active);
+}
+:root .root:focus-visible {
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: var(--focus-offset);
+}
+
+.root[data-compact="true"] {
+  width: var(--control-height-compact);
+  height: var(--control-height-compact);
+}
+
+.root[data-midi-selected] {
+  background: var(--midi-map-surface);
+  color: var(--midi-map-colour);
+}

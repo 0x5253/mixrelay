@@ -1,0 +1,16 @@
+[package]
+name = "mixrelay-pcm-ring"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lib]
+crate-type = ["rlib", "staticlib"]
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+# Callback allocation evidence only; never linked into the runtime.
+allocation-counter = "0.8.1"

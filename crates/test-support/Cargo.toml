@@ -1,0 +1,18 @@
+[package]
+name = "mixrelay-test-support"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+# Serialize measured PCM evidence from native/offline tests, never production callbacks.
+serde.workspace = true
+# Write the JSON reply fixtures the control UI decodes.
+serde_json.workspace = true
+
+# Decode PCM in RF64 test fixtures independently of the production writer.
+hound = "3.5.1"

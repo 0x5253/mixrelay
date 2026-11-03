@@ -1,0 +1,25 @@
+.root {
+  min-width: 0;
+}
+/* The divider side carries the inset; the parent Stack gap supplies the other side. */
+.root[data-divider="before"] {
+  padding-top: var(--section-divider-inset);
+  border-top: var(--border-width) solid var(--border-default);
+}
+.root[data-divider="after"] {
+  padding-bottom: var(--section-divider-inset);
+  border-bottom: var(--border-width) solid var(--border-default);
+}
+.title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--section-title-size);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-body);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+.root[data-level="3"] .title {
+  font-size: var(--subsection-title-size);
+  color: var(--text-secondary);
+}

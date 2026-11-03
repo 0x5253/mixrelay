@@ -1,0 +1,51 @@
+:root {
+  color-scheme: dark;
+  font:
+    12px -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  background: #252525;
+  color: #ddd;
+}
+body {
+  margin: 8px 10px;
+}
+label {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+select {
+  min-width: 0;
+  width: 100%;
+  height: 28px;
+  padding: 3px 6px;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: #353535;
+  color: inherit;
+}
+#recording-folder {
+  overflow-wrap: anywhere;
+}
+p {
+  color: #aaa;
+  line-height: 1.5;
+}
+[hidden],
+#recording-settings[hidden] {
+  display: none;
+}
+#recording-settings {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 6px 8px;
+  margin: 0;
+  color: #aaa;
+  line-height: 1.5;
+}
+#recording-settings dd {
+  margin: 0;
+}

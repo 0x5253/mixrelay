@@ -1,0 +1,13 @@
+[package]
+name = "mixrelay-hal-bundle"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+[target.'cfg(target_os = "macos")'.dependencies]
+core-foundation-sys = "0.8.7"
+libc = "0.2.189"
+
+[lints]
+workspace = true

@@ -1,0 +1,33 @@
+.root {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  max-width: 100%;
+  color: var(--text-secondary);
+  font-size: var(--font-label);
+  font-weight: 400;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.root::before {
+  width: 4px;
+  height: 4px;
+  flex: 0 0 auto;
+  align-self: center;
+  background: currentColor;
+  content: "";
+}
+
+.root[data-tone="positive"] {
+  color: var(--status-positive);
+}
+.root[data-tone="accent"] {
+  color: var(--status-accent);
+}
+.root[data-tone="warning"] {
+  color: var(--status-warning);
+}
+.root[data-tone="critical"] {
+  color: var(--status-danger);
+}

@@ -1,0 +1,66 @@
+{
+  "status": "on hold; approved graphic symbol only; excluded from production and kit",
+  "recommendation": null,
+  "nextBasis": "typography-brief.md",
+  "symbol": "../identity/source/symbol.json",
+  "typeHeightToSymbol": 0.6,
+  "gapToSymbol": 0.4,
+  "candidates": [
+    {
+      "id": "01-compact",
+      "name": "Compact",
+      "note": "Mixed case / firm weight / optical spacing",
+      "text": "MixRelay",
+      "font": "HelveticaNeue-Medium",
+      "tracking": -1.1,
+      "pairAdjustments": {
+        "ay": -0.8,
+        "ix": -0.2,
+        "la": 0.3,
+        "Mi": -0.3,
+        "Re": -0.5,
+        "xR": 1.1
+      }
+    },
+    {
+      "id": "02-instrument",
+      "name": "Instrument",
+      "note": "Uppercase / open rhythm / straight construction",
+      "text": "MIXRELAY",
+      "font": "DINAlternate-Bold",
+      "tracking": 1.2,
+      "pairAdjustments": {
+        "AY": -1.1,
+        "EL": -0.3,
+        "IX": -0.5,
+        "LA": -1.8,
+        "RE": -0.6,
+        "XR": -0.6
+      }
+    },
+    {
+      "id": "03-lowercase",
+      "name": "Lowercase",
+      "note": "Quiet rhythm / geometric curves / softer voice",
+      "text": "mixrelay",
+      "font": "AvenirNext-DemiBold",
+      "tracking": -0.6,
+      "pairAdjustments": {
+        "ay": -0.8,
+        "ix": -0.3,
+        "la": 0.1,
+        "re": -0.9,
+        "xr": 0.5
+      }
+    }
+  ],
+  "colors": {
+    "primary": "#b02d23",
+    "ink": "#242622",
+    "inverse": "#edeee7",
+    "paper": "#faf9f5",
+    "dark": "#161918",
+    "muted": "#5c594f",
+    "white": "#ffffff"
+  }
+}

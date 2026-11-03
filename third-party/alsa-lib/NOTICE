@@ -1,0 +1,11 @@
+MixRelay uses the Advanced Linux Sound Architecture library (libasound) on Linux.
+The ALSA library and its use are covered by the GNU Lesser General Public License
+version 2.1; the licence text is included in COPYING.
+
+MixRelay dynamically links to the system's ALSA library. The distribution supplies
+that library, its copyright notices and corresponding source code. An ABI-compatible
+modified system library can be substituted. Modification for the customer's own use
+and reverse engineering to debug such modifications are permitted as required by
+section 6 of the LGPL.
+
+Upstream source: https://github.com/alsa-project/alsa-lib

@@ -1,0 +1,54 @@
+MixRelay Source-Available License 1.0
+Copyright (c) 2026 rawsector.
+
+1. Free use
+You may download, build and run MixRelay, including its Driver, without payment
+for personal or business audio work. Commercial recording, production and
+broadcasting are permitted. No account, activation or purchase is required.
+You retain all rights in your recordings, projects and other output.
+
+2. Source access and private changes
+You may read, study, copy and privately modify the first-party source code,
+and build and use those changes for your own personal or internal business
+purposes. You may fork the public source repository to propose contributions
+to MixRelay, provided the fork retains this license and the original notices
+and is not presented or distributed as a separate product.
+
+3. Redistribution and product restrictions
+Without prior written permission from the copyright holder, you may not:
+- redistribute unofficial binaries, installers or repackaged distributions;
+- sell or resell MixRelay, its source code, or modified versions;
+- rebrand, white-label or offer MixRelay or its derivatives as another product;
+- incorporate first-party MixRelay code into a product or service for others;
+- sublicense the first-party code or remove its copyright or license notices.
+These restrictions do not prohibit copying source code or copying and
+installing builds within your organization solely for the internal use
+permitted by section 2.
+Sharing links to official releases is permitted. Ordinary use of MixRelay to
+create or process audio for others is permitted under section 1.
+
+4. Names and third-party components
+This license grants no ownership of MixRelay names, logos or trademarks, and
+no permission to imply endorsement or official status for a fork.
+Third-party components and modifications covered by their original licenses
+remain governed by those licenses. Those terms prevail for the corresponding
+components, including MIT, Apache-2.0, MPL-2.0, OFL and Apple sample code.
+Preserve their notices and any required source or modification rights.
+These restrictions do not override rights granted by applicable law.
+
+5. Contributions
+If you submit a contribution to the official MixRelay repository, you confirm
+that you have the right to submit it. You grant the copyright holder a
+perpetual, worldwide, royalty-free and irrevocable license to use, modify,
+sublicense and distribute that contribution as part of MixRelay under this or
+any later license. You keep the copyright in your contribution.
+
+6. No warranty
+To the extent permitted by law, the software is provided AS IS, without
+warranties or liability for loss, damage, interrupted work or lost data.
+This does not limit liability for intentional misconduct or gross negligence,
+or any liability that cannot be excluded under applicable law.
+Permission for first-party code ends if you violate this license; this does
+not terminate rights independently granted by third-party licenses or law.
+
+Permissions beyond these terms: support@rawsector.com

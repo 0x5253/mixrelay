@@ -1,0 +1,17 @@
+[package]
+name = "mixrelay-midi-control"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+allocation-counter = "0.8.1"
+serde_json.workspace = true

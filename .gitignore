@@ -1,0 +1,42 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+
+
+# Rust
+target/
+# LLVM coverage output from tests that run in a source directory
+*.profraw
+
+# JavaScript
+node_modules/
+dist/
+storybook-static/
+coverage/
+
+# Tauri
+apps/desktop/src-tauri/gen/
+apps/desktop/src-tauri/binaries/
+
+# IDE
+.idea/
+.vscode/
+
+# Local cross-OS lab reports and guest artifacts
+.lab/
+
+# Generated release bundles and packages
+/artifacts/
+
+# Local recordings and raw diagnostic captures
+/output/
+
+# Reproducible local work and tool caches
+/.work/
+.cache/
+.vite/
+.vite-temp/
+__pycache__/
+*.pyc
+*.tsbuildinfo

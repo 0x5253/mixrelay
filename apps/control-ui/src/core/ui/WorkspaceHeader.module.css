@@ -1,0 +1,12 @@
+.root {
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 0 var(--workspace-header-height);
+  align-items: center;
+  gap: var(--space-3);
+  height: var(--workspace-header-height);
+  min-height: var(--workspace-header-height);
+  padding: 0 var(--region-inset) 0 var(--layout-workspace-header-inset, var(--region-inset));
+  border-bottom: 1px solid var(--border-default);
+  background: var(--surface);
+}

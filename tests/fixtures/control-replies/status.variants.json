@@ -1,0 +1,56 @@
+{
+  "audioSession.capabilities.backend": [
+    "core_audio",
+    "pipe_wire",
+    "contract_only"
+  ],
+  "audioSession.clockAuthority": [
+    "engine_timer",
+    "device",
+    "audio_server",
+    "host"
+  ],
+  "audioSession.issue": [
+    "device_unavailable",
+    "processing_failed",
+    "application_unavailable",
+    "application_ambiguous",
+    "sample_rate_mismatch",
+    "block_size_mismatch",
+    "clock_not_synchronized",
+    "invalid_format",
+    "reconfiguration_failed",
+    "preferences_unavailable",
+    "stored_format_unavailable"
+  ],
+  "audioSession.processingState": [
+    "idle",
+    "running",
+    "stopped"
+  ],
+  "audioSession.virtualEndpointSettings.devices[0].nativeFormats.render.supported[0].sampleFormat": [
+    "float32",
+    "signed16",
+    "signed24",
+    "signed32"
+  ],
+  "audioSession.virtualEndpointSettings.devices[0].spec.render.channelLayout": [
+    "mono",
+    "stereo",
+    "discrete"
+  ],
+  "driverState": [
+    "not_installed",
+    "installing",
+    "restart_required",
+    "installed_not_loaded",
+    "blocked",
+    "unavailable",
+    "invalid_permissions",
+    "version_mismatch",
+    "ready"
+  ],
+  "enginePower.pauseReason": [
+    "repeatedFailures"
+  ]
+}

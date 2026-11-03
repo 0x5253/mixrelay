@@ -1,0 +1,30 @@
+.root {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.titleBlock {
+  min-width: 0;
+  flex: 1;
+}
+
+.headerActions {
+  flex-shrink: 0;
+  padding-left: var(--space-2);
+  border-left: 1px solid var(--border-default);
+}
+
+.canvas {
+  min-height: 0;
+  flex: 1;
+}
+
+.placeholder {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  place-items: center;
+  color: var(--text-muted);
+}

@@ -1,0 +1,78 @@
+[package]
+name = "mixrelay-service"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+homepage.workspace = true
+publish = false
+build = "build.rs"
+
+[lints]
+workspace = true
+
+[features]
+# Explicit normal-user native lab; never enabled by default code checks.
+native-lab = ["mixrelay-macos-engine/native-lab", "mixrelay-linux-engine/native-lab"]
+
+[dependencies]
+mixrelay-engine-runtime = { path = "../../native/common/engine-runtime" }
+mixrelay-engine = { path = "../../crates/engine" }
+mixrelay-time = { path = "../../crates/time" }
+mixrelay-processor-state = { path = "../../crates/processor-state" }
+mixrelay-engine-process = { path = "../../crates/engine-process" }
+mixrelay-audio-recorder = { path = "../../crates/audio-recorder" }
+serde.workspace = true
+thiserror.workspace = true
+# Structured control-thread diagnostics; never emit logs from audio callbacks.
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.20", default-features = false, features = ["env-filter", "fmt"] }
+mixrelay-processor-host = { path = "../../crates/processor-host" }
+serde_json.workspace = true
+# Bind capture preflight to workspace bytes and encode collision-resistant native device IDs.
+sha2 = "0.10.9"
+parking_lot.workspace = true
+tokio.workspace = true
+axum.workspace = true
+mixrelay-audio-engine = { path = "../../crates/audio-engine" }
+mixrelay-audio-graph = { path = "../../crates/audio-graph" }
+mixrelay-audio-io.workspace = true
+mixrelay-control-protocol = { path = "../../crates/control-protocol" }
+mixrelay-control-server = { path = "../../crates/control-server" }
+mixrelay-local-socket = { path = "../../crates/local-socket" }
+mixrelay-driver-control = { path = "../../crates/driver-control" }
+mixrelay-driver-adapters = { path = "../../crates/driver-adapters" }
+
+[target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
+# Native callback queue ownership shared by the existing CoreAudio/PipeWire callers.
+mixrelay-pcm-ring = { path = "../../native/pcm-ring" }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+mixrelay-linux-engine = { path = "../../native/linux/engine" }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+mixrelay-macos-engine = { path = "../../native/macos/engine" }
+# Time-constraint scheduling and the coalescing device-credit wakeup for the graph worker.
+mixrelay-realtime = { path = "../../crates/realtime" }
+mixrelay-macos-transport = { path = "../../native/macos/common" }
+
+[dev-dependencies]
+mixrelay-engine = { path = "../../crates/engine", features = ["test-util"] }
+mixrelay-time = { path = "../../crates/time", features = ["test-util"] }
+allocation-counter = "0.8.1"
+mixrelay-test-support = { path = "../../crates/test-support" }
+# Native recovery qualification scans only its explicitly supplied CLAP fixture.
+truce-rack-clap.workspace = true
+truce-rack-core.workspace = true
+# OS-neutral lifecycle tests exercise local streams without native devices.
+tokio = { workspace = true, features = ["io-util"] }
+
+[target.'cfg(target_os = "macos")'.dev-dependencies]
+mixrelay-macos-engine = { path = "../../native/macos/engine", features = ["test-util"] }
+mixrelay-macos-transport = { path = "../../native/macos/common", features = ["test-observation"] }
+mixrelay-macos-test-support = { path = "../../crates/macos-test-support" }
+# The opt-in installed HAL fixture uses the production native capture owners.
+mixrelay-process-tap = { path = "../../native/macos/process-tap" }
+
+# Native installed-engine fixtures use the bounded HTTP client.
+reqwest = { workspace = true, features = ["blocking"] }

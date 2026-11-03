@@ -1,0 +1,65 @@
+[package]
+name = "mixrelay-macos-installer"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+workspace = "../../.."
+
+[lib]
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+mixrelay-time = { path = "../../../crates/time" }
+mixrelay-driver-control = { path = "../../../crates/driver-control" }
+# Typed transaction and backend failures stay visible to the privileged adapter.
+thiserror.workspace = true
+# Parse bounded launchd plists into an exact, closed configuration schema.
+plist = "1.10.0"
+serde.workspace = true
+# Contextual CLI diagnostics; verification and transactions retain typed errors.
+anyhow = "1.0.102"
+# Structured CLI diagnostics; no logging is added to native audio callbacks.
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.20", default-features = false, features = ["fmt"] }
+
+[[bin]]
+name = "mixrelay-macos-payload-check"
+path = "src/bin/payload_check.rs"
+
+[[bin]]
+name = "mixrelay-macos-installer"
+path = "src/bin/installer.rs"
+
+[[bin]]
+name = "mixrelay-driver-uninstaller"
+path = "src/bin/uninstaller.rs"
+
+[build-dependencies]
+cc = "1.2"
+
+
+[target.'cfg(unix)'.dependencies]
+# Safe descriptor-relative opens prevent following replaced lease-path symlinks.
+rustix = { version = "1.1.4", features = ["fs", "process"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+mixrelay-local-socket = { path = "../../../crates/local-socket" }
+# Resolve the active console user's passwd/group records without shell parsing.
+libc = "0.2.189"
+# Use the workspace-locked safe CoreFoundation ownership and value wrappers for signature metadata.
+core-foundation = "=0.10.1"
+# Reuse the bounded fixed-endpoint Driver snapshot and readiness contract.
+mixrelay-driver-adapters = { path = "../../../crates/driver-adapters" }
+# Acknowledged native Quit in the installed user's session.
+objc2 = "0.6.4"
+objc2-app-kit = { version = "0.3.2", default-features = false, features = ["std", "libc", "block2", "NSWorkspace", "NSRunningApplication", "NSAlert", "NSApplication", "NSButton", "NSButtonCell", "NSCell", "NSGraphics", "NSControl", "NSResponder", "NSView", "NSWindow", "NSProgressIndicator", "NSTextField"] }
+objc2-foundation = { version = "0.3.2", default-features = false, features = ["std", "NSArray", "NSDate", "NSEnumerator", "NSObject", "NSRunLoop", "NSString", "NSURL", "NSBundle", "NSLocale", "NSGeometry"] }
+
+[dev-dependencies]
+mixrelay-time = { path = "../../../crates/time", features = ["test-util"] }
+mixrelay-test-support = { path = "../../../crates/test-support" }
+serde_json.workspace = true

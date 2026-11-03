@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-12",
+  "status": "passed",
+  "svgCount": 14,
+  "approvedPathsMatch": true,
+  "capBaselineGapMatch": true,
+  "themeColorsMatchCore": true,
+  "svgPortableNoTextFontsExternalReferences": true,
+  "trueOutlineSymbolAndLetters": true,
+  "masterAndFontHashesMatch": true,
+  "deterministicRebuild": true,
+  "visualReview": "All 14 SVGs rendered and viewed; filled cap 16/24/32px light/dark samples viewed; outlines viewed at cap >=64px.",
+  "installedAppVerified": false
+}

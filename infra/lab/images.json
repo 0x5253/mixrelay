@@ -1,0 +1,33 @@
+{
+  "checkedAt": "2026-09-06",
+  "images": [
+    {
+      "target": "debian",
+      "architecture": "arm64",
+      "url": "https://cdimage.debian.org/debian-cd/13.6.0/arm64/iso-cd/debian-13.6.0-arm64-netinst.iso",
+      "sha256": "ffa590beb3ae9158c354e00ebc4bf45421f4720bb3a8ddf2db3cbfc0374cf480",
+      "checksumSource": "https://cdimage.debian.org/debian-cd/current/arm64/iso-cd/SHA256SUMS"
+    },
+    {
+      "target": "ubuntu",
+      "architecture": "arm64",
+      "url": "https://cdimage.ubuntu.com/releases/24.04/release/ubuntu-24.04.4-desktop-arm64.iso",
+      "sha256": "c2610520bf582976839a1724c669e1cfed0547427be5a0ad12d457b92b46ffbe",
+      "checksumSource": "https://cdimage.ubuntu.com/releases/24.04/release/SHA256SUMS"
+    },
+    {
+      "target": "kali",
+      "architecture": "arm64",
+      "url": "https://cdimage.kali.org/kali-2026.2/kali-linux-2026.2-installer-arm64.iso",
+      "sha256": "b9a08050ee522fbee7cac703b1bc48178f79eb974c962d4ed9dc1ccfdfa77fb6",
+      "checksumSource": "https://cdimage.kali.org/current/SHA256SUMS"
+    },
+    {
+      "target": "arch",
+      "architecture": "x86_64",
+      "url": "https://geo.mirror.pkgbuild.com/iso/2026.09.01/archlinux-2026.09.01-x86_64.iso",
+      "sha256": "be8458032f8105e60ee2a3067f950b6e3c007ee51b38dac50e8b48e765561c91",
+      "checksumSource": "https://geo.mirror.pkgbuild.com/iso/latest/sha256sums.txt"
+    }
+  ]
+}
