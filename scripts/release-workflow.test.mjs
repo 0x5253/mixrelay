@@ -76,3 +76,20 @@ test('docs, ci and chore pull requests run no build, test or release workflow', 
     }
   }
 });
+
+test('every bundled resource is inside the Linux build container context', () => {
+  const root = new URL('../', import.meta.url);
+  const allowed = readFileSync(new URL('.dockerignore', root), 'utf8').split('\n')
+    .filter(line => line.startsWith('!')).map(line => line.slice(1))
+    .map(pattern => new RegExp(`^${pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*\*/g, '.*').replace(/(?<!\.)\*/g, '[^/]*')}$`));
+  const fromTauri = (file, base) => {
+    const config = JSON.parse(readFileSync(new URL(`apps/desktop/src-tauri/${file}`, root), 'utf8'));
+    const paths = [...Object.keys(config.bundle?.resources ?? {})];
+    for (const format of Object.values(config.bundle?.linux ?? {})) paths.push(...Object.values(format.files ?? {}));
+    return paths.map(path => new URL(path, base).pathname.slice(new URL(root).pathname.length));
+  };
+  const resources = [...fromTauri('tauri.conf.json', new URL('apps/desktop/src-tauri/', root)),
+    ...fromTauri('tauri.linux.conf.json', new URL('apps/desktop/src-tauri/', root))].filter(path => !path.startsWith('target/'));
+  assert.ok(resources.includes('third-party/THIRD-PARTY-NOTICES.txt'));
+  for (const path of resources) assert.ok(allowed.some(pattern => pattern.test(path)), `${path} is excluded by .dockerignore`);
+});

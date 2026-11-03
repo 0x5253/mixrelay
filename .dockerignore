@@ -16,6 +16,7 @@
 !infra/lab/**
 !support/**
 !packaging/**
+!third-party/**
 !docs/**
 !LICENSE*.txt
 !CHANGELOG.md
