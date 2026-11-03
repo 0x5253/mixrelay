@@ -10,7 +10,8 @@
       "draft": true,
       "force-tag-creation": true,
       "pull-request-header": "Merging this release PR tags the merge commit and starts the official build. Signing and notarization wait for owner approval in the release environment; the release is published only after every installer is built and verified.",
-      "pull-request-title-pattern": "chore: release ${version}"
+      "pull-request-title-pattern": "chore: release ${version}",
+      "release-as": "0.1.0"
     }
   }
 }
