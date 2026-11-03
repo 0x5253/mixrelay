@@ -81,6 +81,11 @@ export function validateContract(value) {
   }
   for (const target of value.codeChecks.macos) {
     if (!value.macosArchitectures?.[target.version]?.includes(target.arch)) throw new Error(`Unsupported macOS CI combination: ${target.id}`);
+    if (target.pullRequest !== undefined && target.pullRequest !== true) throw new Error(`Invalid pull request flag: ${target.id}`);
+  }
+  const pullRequestArchitectures = new Set(value.codeChecks.macos.filter(t => t.pullRequest).map(t => t.arch));
+  if (!pullRequestArchitectures.has('arm64') || !pullRequestArchitectures.has('x64')) {
+    throw new Error('Pull request macOS checks must cover arm64 and x64');
   }
   for (const distro of value.codeChecks.linuxDistributions) {
     if (!/^\S+@sha256:[a-f0-9]{64}$/.test(distro.image)) throw new Error(`Unpinned image: ${distro.id}`);
@@ -142,7 +147,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     const command = process.argv[2];
     if (command === 'matrix') {
       const matrices = ciMatrices(contract);
-      for (const name of ['macos', 'linux', 'linuxBuild']) console.log(`${name}=${JSON.stringify(matrices[name])}`);
+      for (const name of ['macos', 'macosPullRequest', 'linux', 'linuxBuild']) console.log(`${name}=${JSON.stringify(matrices[name])}`);
     } else if (command === 'targets') console.log(JSON.stringify({ include: contract.qualificationTargets }));
     else if (command === 'sync' || command === 'check') {
       checkGenerated(contract, undefined, command === 'sync');

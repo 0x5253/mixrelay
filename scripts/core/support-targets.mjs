@@ -1,6 +1,9 @@
 export function ciMatrices(contract) {
   return {
     macos: { include: contract.codeChecks.macos },
+    // Pull requests build the oldest and newest supported macOS on each CPU; the full set
+    // runs on manual dispatch and in installed qualification of release candidates.
+    macosPullRequest: { include: contract.codeChecks.macos.filter(target => target.pullRequest) },
     linux: { include: contract.codeChecks.linuxDistributions.flatMap(distro =>
       distro.architectures.map(arch => ({ id: `${distro.id}-${arch}`, distro: distro.id, arch,
         runner: arch === 'arm64' ? 'ubuntu-24.04-arm' : 'ubuntu-24.04' }))) },
