@@ -51,11 +51,14 @@ type Story = StoryObj<typeof meta>;
 export const Playground: Story = {};
 export const ForcedOpen: Story = { args: { forceOpen: true } };
 export const NonInteractive: Story = {
-  args: { nonInteractive: true, children: (
+  args: {
+    nonInteractive: true,
+    children: (
       <span role="img" aria-label="읽기 전용 설명 대상">
         읽기 전용 설명 대상
       </span>
-    ) },
+    ),
+  },
 };
 export const Right: Story = { args: { position: 'right' } };
 export const Readout: Story = {
