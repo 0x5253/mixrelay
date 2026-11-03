@@ -50,14 +50,7 @@ export function DeviceAppActivity({
       <span hidden id={descriptionId}>
         {summary}
       </span>
-      <Tooltip
-        label={summary}
-        nonInteractive
-        forceOpen={shown}
-        onOpenChange={(open) => {
-          if (!open) setShown(false);
-        }}
-      >
+      <Tooltip label={summary} nonInteractive forceOpen={shown} onClose={() => setShown(false)}>
         <span ref={ref} className={styles.root} role="img" aria-label={summary}>
           <svg aria-hidden="true" className={styles.direction} viewBox="0 0 16 16">
             {direction === 'playing' ? (

@@ -7,6 +7,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import type { ComponentProps } from 'react';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { I18nProvider, i18n } from '../core/i18n';
+import { MidiContext } from '../core/midi/MidiContext';
 import { MixRelayProvider } from '../core/theme/MixRelayProvider';
 import type { DriverSession } from '../features/driver-status/useDriverSession';
 import type { GraphCreateDialog } from '../features/graphs/GraphCreateDialog';
@@ -264,6 +265,21 @@ it('guards catalog writes from public Feature callbacks while a workspace comman
     list.onDelete('graph-1');
   });
   expect(mutation).not.toHaveBeenCalled();
+});
+it('ignores the new-graph shortcut while MIDI mapping owns input', async () => {
+  const port = native();
+  const midi = {
+    active: true,
+    status: null,
+    selected: null,
+    toggle: () => {},
+    assign: () => {},
+    remove: () => {},
+  };
+  render(<MidiContext.Provider value={midi}>{view(port)}</MidiContext.Provider>);
+  await waitFor(() => expect(workspace().graphId).toBe('graph-1'));
+  fireEvent.keyDown(window, { key: 'n', ctrlKey: true, shiftKey: true });
+  expect(screen.queryByRole('dialog', { name: 'New graph' })).toBeNull();
 });
 it('opens another graph from the global new-graph shortcut', async () => {
   const port = native();

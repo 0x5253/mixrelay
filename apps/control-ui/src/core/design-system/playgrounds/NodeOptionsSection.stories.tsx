@@ -15,7 +15,6 @@ const meta = {
     label: '노드 세부 설정',
     opened: false,
     disabled: false,
-    description: '세부 값은 실제 노드 계약을 소비합니다.',
     children: <TextField label="설정 이름" defaultValue="Studio" />,
     onToggle: fn(),
   },

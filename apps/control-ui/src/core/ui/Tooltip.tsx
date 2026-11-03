@@ -12,7 +12,7 @@ export function Tooltip({
   position = 'top',
   delay = motion.tooltipDelay,
   forceOpen = false,
-  onOpenChange,
+  onClose,
   kind = 'label',
   offset = 4,
   nonInteractive = false,
@@ -23,8 +23,8 @@ export function Tooltip({
   delay?: number;
   /** Keeps the tooltip open while true; otherwise hover and focus open it as usual. */
   forceOpen?: boolean;
-  /** Reports open requests, including Escape asking a forced tooltip to close. */
-  onOpenChange?: (open: boolean) => void;
+  /** Called when the tooltip asks to close, including Escape on a forced tooltip. */
+  onClose?: () => void;
   kind?: 'label' | 'readout';
   offset?: number;
   nonInteractive?: boolean;
@@ -40,7 +40,7 @@ export function Tooltip({
       isOpen={forceOpen || requested}
       onOpenChange={(open) => {
         setRequested(open);
-        onOpenChange?.(open);
+        if (!open) onClose?.();
       }}
     >
       {typeof children.type === 'string' || nonInteractive ? (
