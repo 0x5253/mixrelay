@@ -3,14 +3,12 @@ mod endpoint_driver;
 mod latency_publication;
 mod maintenance;
 mod shutdown;
+use crate::{EngineGraphController, EngineGraphControllerConfig, control_service::ControlService};
 use mixrelay_audio_graph::RenderFormat;
 use mixrelay_engine_core::{default_peak_meter_bank, session::AdapterRuntimeStatus};
 use mixrelay_engine_host::{
     ShutdownSignals, crash_guard::CrashGuard, persistence::config_directory,
     session_preferences::SessionPreferences,
-};
-use mixrelay_engine_service::{
-    EngineGraphController, EngineGraphControllerConfig, control_service::ControlService,
 };
 use mixrelay_macos_engine::MacVirtualEndpointBackend;
 use mixrelay_macos_engine::{
@@ -33,7 +31,11 @@ fn prepare_runtime() -> (Arc<AdapterRuntimeStatus>, RenderFormat) {
     let format = status.restore_preferences(store);
     (Arc::new(status), format)
 }
-pub(super) async fn run() -> Result<(), String> {
+/// Runs the macOS engine service while the controller owns the engine lifecycle.
+///
+/// # Errors
+/// Returns lifecycle, native startup, serving or retirement failure.
+pub async fn run() -> Result<(), String> {
     use mixrelay_macos_transport::app_lifecycle::{CONTROLLER_LEASE, ENGINE_LEASE, ProcessLease};
     let Some(engine_lease) =
         ProcessLease::acquire_for_controller(ENGINE_LEASE, CONTROLLER_LEASE)

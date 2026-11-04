@@ -165,7 +165,7 @@ pub(crate) fn monitor(app: &tauri::AppHandle) {
                 Watch::Wake => lifecycle.wake_engine(),
                 Watch::Recovered => {
                     tracing::info!("audio engine is running; restoring app captures");
-                    crate::restore_captures(&app);
+                    crate::setup::restore_captures(&app);
                 }
             }
         }

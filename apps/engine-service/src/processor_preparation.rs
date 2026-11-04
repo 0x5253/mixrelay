@@ -1,8 +1,6 @@
 //! Compiles portable plans and prepares DSP, hosted processors and recorder taps.
 use mixrelay_render::RenderPlanError;
 
-#[cfg(test)]
-use crate::default_peak_meter_bank;
 use crate::{
     Arc, BlockProcessor, CatalogNodeResolver, ExecutionPlan, ExternalProcessorFactory,
     GraphCompiler, NodeConfig, PeakMeterBank, PrepareProcessorError, ProcessorCatalog,
@@ -15,22 +13,6 @@ pub(super) struct BuiltInProcessorFactory {
     pub(super) hosted: ExternalProcessorFactory,
     pub(super) meters: Arc<PeakMeterBank>,
     pub(super) render_prepare: fn(&ExecutionPlan) -> Result<RenderPlan, RenderPlanError>,
-}
-
-#[cfg(test)]
-impl Default for BuiltInProcessorFactory {
-    fn default() -> Self {
-        Self {
-            recorders: mixrelay_audio_recorder::RecorderRegistry::threaded_files(),
-            catalog: ProcessorCatalog::default(),
-            hosted: ExternalProcessorFactory::new(
-                ProcessorCatalog::default(),
-                std::sync::Arc::new(mixrelay_time::ManualClock::default()),
-            ),
-            meters: default_peak_meter_bank(),
-            render_prepare: RenderPlan::prepare,
-        }
-    }
 }
 
 impl ProcessorFactory for BuiltInProcessorFactory {
