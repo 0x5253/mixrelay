@@ -447,7 +447,7 @@ pub(crate) mod tests {
             .process_external_cycle(cycle, &mut Io)
             .unwrap()
             .unwrap();
-        let (device, _) = super::super::tests::synthetic_device(2, 48_000, 48_000, false);
+        let (device, _) = super::super::device_fixture::synthetic_device(2, 48_000, 48_000, false);
         let set = DeviceSet(
             BTreeMap::from([("virtual/render".into(), Arc::clone(&device))]),
             BTreeMap::new(),
@@ -484,7 +484,8 @@ pub(crate) mod tests {
     /// epoch's baseline and the next window's wrapped difference read 1024 frames as ~1.
     #[test]
     fn a_reconfiguration_between_tap_and_context_reads_is_neither_window_nor_baseline() {
-        let (device, _context) = super::super::tests::synthetic_device(2, 48_000, 48_000, true);
+        let (device, _context) =
+            super::super::device_fixture::synthetic_device(2, 48_000, 48_000, true);
         let converter = |frames| ResidenceSnapshot {
             sum: 1_024 * frames,
             weight: frames,

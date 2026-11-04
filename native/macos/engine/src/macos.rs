@@ -14,7 +14,7 @@ use std::sync::Arc;
 pub use worker::{Error as AudioWorkerError, start as start_audio_worker};
 
 #[cfg(test)]
-pub(crate) use runtime_latency::tests::feedback_processor as test_feedback_processor;
+pub(crate) use runtime_latency::fixture::feedback_processor as test_feedback_processor;
 #[cfg(test)]
 mod input_alignment_tests;
 use crate::endpoint_service;

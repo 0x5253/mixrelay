@@ -318,4 +318,34 @@ mod tests {
         );
         assert_eq!(aggregate_members(&selected), ["z-speaker", "a-mic"]);
     }
+    #[test]
+    fn aggregate_members_are_unique_fixed_uids_with_output_clock_first() {
+        let mut desired = BTreeMap::new();
+        for (name, uid, input) in [("a", "mic", true), ("b", "out", false), ("c", "out", true)] {
+            desired.insert(
+                name.to_owned(),
+                Spec {
+                    selector: DeviceSelector::PersistentUid {
+                        uid: uid.to_owned(),
+                    },
+                    input,
+                    channels: 2,
+                },
+            );
+        }
+        desired.insert(
+            "default".into(),
+            Spec {
+                selector: DeviceSelector::DefaultOutput,
+                input: false,
+                channels: 2,
+            },
+        );
+        assert_eq!(aggregate_members(&desired), ["out", "mic"]);
+    }
+    #[test]
+    fn empty_graph_needs_no_native_devices() {
+        let document = GraphDocument::new(1, vec![], vec![]);
+        assert!(specs(&document).is_empty());
+    }
 }

@@ -3,9 +3,9 @@
 use super::{
     DeviceSet, MacDevices,
     device::Device,
+    device_fixture::synthetic_device,
     direct::{Binding, DirectPlan},
     spec::Spec,
-    tests::synthetic_device,
     worker::callback::CallbackBridge,
 };
 use mixrelay_audio_graph::DeviceSelector;

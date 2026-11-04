@@ -1,6 +1,6 @@
 //! The published recording latency of a cross-clock route against the delay audio
 //! actually takes through it, in process: no `CoreAudio` device and no installed build.
-use super::{Measurements, threshold};
+use super::{arithmetic::threshold, measurements::Measurements};
 use crate::macos::{
     MacEngineExternalIo, MacTimeline, NativePacers, RouteClock, WorkerCycle,
     direct::render_directly, next_native_pace, process_native_cycle,

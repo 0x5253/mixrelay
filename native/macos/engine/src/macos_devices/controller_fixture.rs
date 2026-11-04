@@ -9,13 +9,16 @@
 )]
 use super::ffi::{mr_device_io_overflows, mr_device_io_ticks};
 use super::{
-    Arc, AtomicBool, BTreeMap, Device, DeviceSet, Duration, GraphDocument, Instant, MacDevices,
-    Ordering, Spec, Weak, simulated, specs,
+    Arc, AtomicBool, BTreeMap, Device, DeviceSet, Duration, Instant, MacDevices, Ordering, Spec,
+    Weak, simulated, spec::specs,
 };
 #[cfg(test)]
-use super::{RenderFormat, aggregate, direct, ffi, tests, worker_retirement};
+use super::{aggregate, device_fixture, direct, ffi, worker_retirement};
 #[cfg(test)]
 use super::{ffi::mr_device_io_quantum, native::Native};
+use mixrelay_audio_graph::GraphDocument;
+#[cfg(test)]
+use mixrelay_audio_graph::RenderFormat;
 #[cfg(test)]
 use mixrelay_audio_graph::{
     AudioDeviceInputConfig, AudioDeviceOutputConfig, DeviceSelector, NodeConfig, NodeSpec,
@@ -575,7 +578,7 @@ fn repeated_initial_connections_preserve_failure_diagnostics() {
 
 #[test]
 fn recovered_input_reports_its_epoch_once_before_delivering_fresh_pcm() {
-    let (device, context) = tests::synthetic_device(1, 48_000, 48_000, true);
+    let (device, context) = device_fixture::synthetic_device(1, 48_000, 48_000, true);
     let mut pcm = [9.0; 32];
     let initial = device.read(&mut pcm, 0);
     assert_eq!(initial.frames, 0);

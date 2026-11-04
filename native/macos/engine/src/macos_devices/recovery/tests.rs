@@ -3,7 +3,7 @@ use super::*;
 #[test]
 fn adding_graph_input_reopens_output_with_native_duplex_access() {
     use super::super::simulated::SimulatedHost;
-    use crate::macos_devices::wait_until;
+    use crate::macos_devices::device_fixture::wait_until;
     use std::sync::atomic::Ordering;
     let host = SimulatedHost::new();
     host.plug("duplex", 2, 48_000, 0.25);
@@ -151,7 +151,7 @@ fn stopped_observation_and_reclamation_never_start_recovery() {
 #[test]
 fn pending_bridge_is_inactive_without_hiding_a_ready_owner_transfer_failure() {
     use std::sync::atomic::Ordering;
-    let (output, context) = super::super::tests::synthetic_output(2, 48_000, 48_000);
+    let (output, context) = super::super::device_fixture::synthetic_output(2, 48_000, 48_000);
     let devices = DeviceSet(
         BTreeMap::from([("output".into(), output.clone())]),
         BTreeMap::new(),
@@ -278,7 +278,7 @@ fn offline_transfers_silence_and_discard_complete_quanta_without_native_owners()
 
 #[test]
 fn presence_changes_publish_once_and_keep_healthy_owner_identity() {
-    let (mic, context) = super::super::tests::synthetic_output(1, 48_000, 48_000);
+    let (mic, context) = super::super::device_fixture::synthetic_output(1, 48_000, 48_000);
     let desired: BTreeMap<String, Spec> = BTreeMap::from([
         ("input".into(), selected("mic", true)),
         ("output".into(), selected("headphone", false)),
@@ -297,7 +297,8 @@ fn presence_changes_publish_once_and_keep_healthy_owner_identity() {
         })
         .collect();
     assert!(unchanged(&cache, &desired, &devices));
-    let (headphone, output_context) = super::super::tests::synthetic_output(2, 48_000, 48_000);
+    let (headphone, output_context) =
+        super::super::device_fixture::synthetic_output(2, 48_000, 48_000);
     let mut returned = devices.clone();
     returned.insert("output".into(), headphone.clone());
     assert!(!unchanged(&cache, &desired, &returned));
