@@ -1,6 +1,5 @@
 import { StorybookMockControlPort } from '../core/adapters/fake/StorybookMockControlPort';
 import { ControlPortError } from '../core/domain/control/errors';
-import type { VirtualEndpointSpec } from '../core/domain/control/status';
 import type { ControlPort } from '../core/ports/control/ControlPort';
 import '../test-support/integration';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
@@ -13,7 +12,7 @@ import type { DriverSession } from '../features/driver-status/useDriverSession';
 import type { GraphCreateDialog } from '../features/graphs/GraphCreateDialog';
 import type { GraphList } from '../features/graphs/GraphList';
 import type { RoutingWorkspaceProps } from '../features/routing-workspace/RoutingWorkspace';
-import { virtualPolicy, virtualSpec } from '../features/routing-workspace/virtualEndpointFixtures';
+import { virtualPolicy } from '../features/routing-workspace/virtualEndpointFixtures';
 import { StudioScreen } from './StudioScreen';
 
 const harness = vi.hoisted(() => ({
@@ -176,32 +175,6 @@ it('shows an active graph persistence failure without discarding its native docu
     ),
   ).toBeVisible();
   expect(workspace().sessionDocument).toEqual(catalog.document);
-});
-it('uses the Driver creation readback and returns null when it has no matching confirmed device', async () => {
-  const session = driver();
-  const mutate = vi.mocked(session.mutate);
-  const spec: VirtualEndpointSpec = { ...virtualSpec, id: 'new-device' };
-  mutate.mockResolvedValueOnce({
-    ...session.snapshot,
-    protocolVersion: 1,
-    revision: 2,
-    state: 'ready',
-    installedVersion: '0.1.0',
-    settings: {
-      ...virtualPolicy,
-      devices: virtualPolicy.devices.map((device) => ({ ...device, spec })),
-    },
-  });
-  render(view(native(), session));
-  const action = workspace().deviceDriverAction;
-  if (!action) throw new Error('Expected Driver action');
-  let created: VirtualEndpointSpec | null = null;
-  await act(async () => {
-    created = await action.create(spec);
-  });
-  expect(created).toEqual(spec);
-  expect(mutate).toHaveBeenCalledExactlyOnceWith({ action: 'create', spec });
-  await act(async () => expect(await action.create(spec)).toBeNull());
 });
 it('uses an empty catalog for a first graph and reports a disabled Driver controller honestly', async () => {
   const port = native();

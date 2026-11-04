@@ -911,17 +911,21 @@ function rendersScreen(statement) {
   );
 }
 
+function testImports(filename, source) {
+  if (!/\.test\.tsx?$/u.test(filename)) return [];
+  return parse(source, {
+    sourceType: 'module',
+    plugins: ['typescript', 'jsx'],
+  }).program.body.filter((statement) => statement.type === 'ImportDeclaration');
+}
+
 /** A test that renders a whole screen (App, StudioScreen, RoutingWorkspace) imports
  * test-support/integration, which owns the integration-test timeout. Unit tests keep
  * the default, so a screen-level test cannot silently run under the unit budget. */
 export function inspectIntegrationTests(files) {
   const violations = [];
   for (const { filename, source } of files) {
-    if (!/\.test\.tsx?$/u.test(filename)) continue;
-    const imports = parse(source, {
-      sourceType: 'module',
-      plugins: ['typescript', 'jsx'],
-    }).program.body.filter((statement) => statement.type === 'ImportDeclaration');
+    const imports = testImports(filename, source);
     const screen = imports.find(rendersScreen);
     if (!screen) continue;
     const integration = imports.some(
@@ -931,11 +935,64 @@ export function inspectIntegrationTests(files) {
     if (integration) continue;
     violations.push({
       filename,
-      line: screen.loc?.start.line ?? 1,
+      line: screen.loc?.start?.line ?? 1,
       code: 'test',
       message:
         "Screen-level tests add `import '…/test-support/integration'` for the integration timeout.",
     });
   }
+  return violations;
+}
+
+/** The only test files (relative to src) that may render a whole screen. They cover
+ * composition, wiring, focus and keyboard; logic is extracted into a pure module with fast
+ * unit tests instead of joining this list. */
+export const screenRenderTests = new Set([
+  'app/App.midi.a11y.test.tsx',
+  'app/App.midi.test.tsx',
+  'app/App.test.tsx',
+  'app/AppAbout.test.tsx',
+  'app/DriverNodeSettings.test.tsx',
+  'features/routing-workspace/DeviceAppActivity.integration.test.tsx',
+  'features/routing-workspace/ProcessorReport.integration.test.tsx',
+  'features/routing-workspace/RoutingWorkspace.builtinEffects.test.tsx',
+  'features/routing-workspace/RoutingWorkspace.contract.test.tsx',
+  'features/routing-workspace/applicationReselection.test.tsx',
+  'features/routing-workspace/virtualNodeStatus.test.tsx',
+  'screens/RoutingWorkspace.integration.test.tsx',
+  'screens/RoutingWorkspaceProcessorIntent.test.tsx',
+  'screens/StudioDiagnostics.integration.test.tsx',
+  'screens/StudioEngineStatus.test.tsx',
+  'screens/StudioScreen.contract.test.tsx',
+  'screens/StudioScreen.creationBoundary.test.tsx',
+  'screens/StudioScreen.test.tsx',
+]);
+
+/** Whole-screen renders only in allowlisted tests, and no allowlist entry outlives its
+ * screen render. `files` carry src-relative filenames. */
+export function inspectScreenRenderTests(files, allowed = screenRenderTests) {
+  const violations = [];
+  const renderers = new Set();
+  for (const { filename, source } of files) {
+    const screen = testImports(filename, source).find(rendersScreen);
+    if (!screen) continue;
+    renderers.add(filename);
+    if (allowed.has(filename)) continue;
+    violations.push({
+      filename,
+      line: screen.loc?.start?.line ?? 1,
+      code: 'test',
+      message:
+        'Only allowlisted composition tests render a whole screen; test logic through a pure module.',
+    });
+  }
+  for (const filename of allowed)
+    if (!renderers.has(filename))
+      violations.push({
+        filename,
+        line: 1,
+        code: 'test',
+        message: 'This test no longer renders a whole screen; remove it from screenRenderTests.',
+      });
   return violations;
 }

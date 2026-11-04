@@ -3,8 +3,10 @@ import { test } from 'node:test';
 import {
   inspectCss,
   inspectIntegrationTests,
+  inspectScreenRenderTests,
   inspectScript,
   inspectVariableReferences,
+  screenRenderTests,
 } from './ui-boundary-rules.mjs';
 
 const script = (source) => inspectScript('features/example/Example.tsx', source).violations;
@@ -364,6 +366,40 @@ test('screen-level tests side-effect import the integration timeout owner; other
       'screens/J.test.tsx',
     ],
   );
+});
+
+test('only allowlisted tests render a whole screen, and the allowlist has no stale entry', () => {
+  const allowed = new Set(['app/App.test.tsx', 'screens/Removed.test.tsx']);
+  const files = [
+    { filename: 'app/App.test.tsx', source: "import { App } from './App';" },
+    {
+      filename: 'screens/Logic.test.tsx',
+      source: "import { x } from './y';\nimport { StudioScreen } from './StudioScreen';",
+    },
+    {
+      filename: 'features/f/W.test.tsx',
+      source: "import * as Workspace from '../../features/routing-workspace/RoutingWorkspace';",
+    },
+    { filename: 'screens/Rules.test.ts', source: "import { rule } from './studioRules';" },
+    {
+      filename: 'screens/Types.test.tsx',
+      source: "import type { StudioScreen } from './StudioScreen';",
+    },
+    { filename: 'screens/StudioScreen.tsx', source: "import { App } from '../app/App';" },
+  ];
+  assert.deepEqual(
+    inspectScreenRenderTests(files, allowed).map(({ filename, line, code }) => [
+      filename,
+      line,
+      code,
+    ]),
+    [
+      ['screens/Logic.test.tsx', 2, 'test'],
+      ['features/f/W.test.tsx', 1, 'test'],
+      ['screens/Removed.test.tsx', 1, 'test'],
+    ],
+  );
+  assert.ok(screenRenderTests.has('screens/StudioScreen.test.tsx'));
 });
 
 const layer = (filename, source) =>

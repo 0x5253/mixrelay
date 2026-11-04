@@ -4,6 +4,7 @@ import process from 'node:process';
 import {
   inspectCss,
   inspectIntegrationTests,
+  inspectScreenRenderTests,
   inspectScript,
   inspectVariableReferences,
 } from './ui-boundary-rules.mjs';
@@ -48,6 +49,12 @@ for (const [filename, source] of cssFiles) {
 }
 for (const item of inspectVariableReferences(sources)) report(item.filename, [item]);
 for (const item of inspectIntegrationTests(sources)) report(item.filename, [item]);
+const relativeSources = sources.map(({ filename, source }) => ({
+  filename: path.relative(sourceRoot, filename),
+  source,
+}));
+for (const item of inspectScreenRenderTests(relativeSources))
+  report(path.join(sourceRoot, item.filename), [item]);
 if (violations.length) {
   console.error('UI system boundary check failed. Update tokens / theme / Core before consumers:');
   for (const violation of violations) console.error(`- ${violation}`);
