@@ -2,7 +2,7 @@
 //! HAL writes is the field the service reads. Both ship in one package; a report of
 //! another version means a partial install and decodes as `Incompatible` instead of
 //! being ignored.
-use super::{
+use super::xpc::{
     Message, Xpc, dictionary, endpoint_id, field, string, uint, xpc_dictionary_create,
     xpc_dictionary_set_data, xpc_dictionary_set_string, xpc_dictionary_set_uint64,
 };
