@@ -1,3 +1,9 @@
+use std::sync::Mutex;
+
+#[cfg(target_os = "macos")]
+use mixrelay_desktop_core::engine_control::Delivery;
+use mixrelay_desktop_core::engine_control::receipt::ReceiptError;
+use mixrelay_time::{Instant, MonotonicClock};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::{UnixListener, UnixStream},
@@ -5,6 +11,34 @@ use tokio::{
 };
 
 use super::*;
+
+/// Receipt polls proceed at once and record the interval they would have waited.
+#[derive(Default)]
+struct PollTimer(Mutex<Vec<Duration>>);
+
+impl MonotonicClock for PollTimer {
+    fn now(&self) -> Instant {
+        Instant::from_origin(Duration::ZERO)
+    }
+}
+
+impl AsyncDelay for PollTimer {
+    async fn wait_until(&self, deadline: Deadline) {
+        self.0.lock().unwrap().push(deadline.remaining(self.now()));
+    }
+}
+
+async fn request(
+    client: &ControlProxyClient,
+    origin: &str,
+    method: Method,
+    path: &str,
+    body: Option<Value>,
+) -> Result<ControlProxyResponse, String> {
+    Exchange::new(client, origin, &PollTimer::default())
+        .request(method, path, body)
+        .await
+}
 
 /// A one-shot engine on a socket in its own fixture directory, and a client of it.
 fn server(
@@ -120,11 +154,14 @@ async fn polls_once_submitted_work_and_preserves_terminal_accepted_status() {
         (202, None, r#"{"revision":12,"state":"pending"}"#),
         (204, None, ""),
     ]);
-    let result = request(&client, &origin, Method::PUT, "/graph", None)
+    let timer = PollTimer::default();
+    let result = Exchange::new(&client, &origin, &timer)
+        .request(Method::PUT, "/graph", None)
         .await
         .expect("terminal response");
     assert_eq!(result.status, 202);
     assert_eq!(result.body["revision"], 12);
+    assert_eq!(*timer.0.lock().unwrap(), [RECEIPT_POLL_INTERVAL; 2]);
     let requests = server.await.expect("fixture finished");
     assert_eq!(requests.len(), 4);
     assert!(requests[0].starts_with("PUT /graph "));
@@ -167,7 +204,7 @@ async fn lost_poll_is_uncertain_even_when_connect_fails() {
         .expect("structured failure");
     assert_eq!(result.status, 503);
     #[cfg(target_os = "macos")]
-    assert_eq!(result.delivery, RequestDelivery::Uncertain);
+    assert_eq!(result.delivery, Delivery::Uncertain);
     assert!(
         result.body["parameters"]
             .get("nodeControlOutcome")
@@ -185,7 +222,7 @@ async fn initial_connection_refusal_is_distinct_from_a_lost_poll() {
         .expect("structured failure");
     assert_eq!(result.status, 503);
     #[cfg(target_os = "macos")]
-    assert_eq!(result.delivery, RequestDelivery::NotSent);
+    assert_eq!(result.delivery, Delivery::NotSent);
 }
 
 #[tokio::test]
@@ -215,17 +252,6 @@ async fn unknown_receipt_is_not_a_definitive_mutation_rejection() {
             .contains("could not be confirmed")
     );
     assert_eq!(server.await.expect("fixture").len(), 2);
-}
-
-#[test]
-fn receipt_body_must_match_and_id_is_one_path_segment() {
-    assert!(validate_receipt("one", &serde_json::json!({"operationId":"two"})).is_err());
-    assert_eq!(
-        operation_url("http://127.0.0.1", "a/b?c")
-            .expect("url")
-            .path(),
-        "/api/v1/operations/a%2Fb%3Fc"
-    );
 }
 
 fn header<'a>(request: &'a str, name: &str) -> Option<&'a str> {
@@ -313,7 +339,7 @@ async fn lost_send_resolves_completed_or_pending_client_id_without_replay() {
         assert_eq!(result.status, 200);
         assert_eq!(result.body["applied"], true);
         #[cfg(target_os = "macos")]
-        assert_eq!(result.delivery, RequestDelivery::ServerResponse);
+        assert_eq!(result.delivery, Delivery::ServerResponse);
         let requests = server.await.unwrap();
         let id = header(&requests[0], "x-mixrelay-operation-request").unwrap();
         assert!(header(&requests[0], "x-mixrelay-expected-engine").is_none());
@@ -348,57 +374,9 @@ async fn lost_send_missing_and_other_resolution_failures_are_uncertain() {
             "uncertain"
         );
         #[cfg(target_os = "macos")]
-        assert_eq!(result.delivery, RequestDelivery::Uncertain);
+        assert_eq!(result.delivery, Delivery::Uncertain);
         assert_eq!(server.await.unwrap().len(), 2);
     }
-}
-
-#[test]
-fn response_engine_survives_runtime_and_webview_serialization() {
-    let unidentified = serde_json::json!({"status":200,"body":{}});
-    let mut response: ControlProxyResponse = serde_json::from_value(unidentified.clone()).unwrap();
-    assert!(response.engine.is_none());
-    assert_eq!(serde_json::to_value(&response).unwrap(), unidentified);
-    response.engine = Some("engine".into());
-    let wire = serde_json::to_value(response).unwrap();
-    assert_eq!(wire["engine"], "engine");
-    assert_eq!(
-        serde_json::from_value::<ControlProxyResponse>(wire)
-            .unwrap()
-            .engine
-            .as_deref(),
-        Some("engine")
-    );
-}
-
-#[test]
-fn client_operation_scope_matches_engine_dispatcher() {
-    for path in [
-        "/health",
-        "/api/v1/status",
-        "/api/v1/graph/status",
-        "/api/v1/controls/snapshot",
-        "/api/v1/meters",
-        "/api/v1/operations",
-        "/api/v1/operations/id",
-        "/api/v1/processors/n/editor/frame",
-        "/api/v1/processors/n/editor/input",
-    ] {
-        assert!(!needs_operation(&Method::GET, path));
-        assert!(!needs_operation(&Method::POST, path));
-    }
-    for path in [
-        "/api/v1/graph",
-        "/api/v1/graphs",
-        "/api/v1/graphs/g/layout",
-        "/api/v1/processors",
-        "/api/v1/application-capture/manifest",
-    ] {
-        assert!(needs_operation(&Method::GET, path));
-    }
-    assert!(needs_operation(&Method::PUT, "/api/v1/audio/power"));
-    assert!(!needs_operation(&Method::GET, "/api/v1/telemetry/meters"));
-    assert!(!needs_operation(&Method::DELETE, "/graph"));
 }
 
 #[tokio::test]
@@ -425,7 +403,7 @@ async fn lost_send_returns_stored_terminal_404_and_acknowledges_it() {
     assert_eq!(result.status, 404);
     assert_eq!(result.body["code"], "node_not_found");
     #[cfg(target_os = "macos")]
-    assert_eq!(result.delivery, RequestDelivery::ServerResponse);
+    assert_eq!(result.delivery, Delivery::ServerResponse);
     let requests = server.await.unwrap();
     assert_eq!(requests.len(), 3);
     assert!(requests[1].starts_with("GET /api/v1/operations/"));
@@ -450,7 +428,7 @@ async fn missing_receipt_after_restart_retains_uncertainty() {
         assert_eq!(result.engine.as_deref(), replacement);
         assert_eq!(result.body["parameters"]["operationOutcome"], "uncertain");
         #[cfg(target_os = "macos")]
-        assert_eq!(result.delivery, RequestDelivery::Uncertain);
+        assert_eq!(result.delivery, Delivery::Uncertain);
         let requests = server.await.unwrap();
         assert_eq!(requests.len(), 2);
         assert!(requests[1].starts_with("GET /api/v1/operations/"));
@@ -492,7 +470,10 @@ async fn receipt_other_than_the_client_id_is_rejected_without_polling() {
         r#"{"operationId":"server-issued"}"#,
     )]);
     let result = request(&client, &origin, Method::PUT, "/graph", None).await;
-    assert_eq!(result.expect_err("foreign receipt"), IDENTITY_CHANGED);
+    assert_eq!(
+        result.expect_err("foreign receipt"),
+        ReceiptError::IdentityChanged.to_string()
+    );
     assert_eq!(server.await.unwrap().len(), 1);
 }
 
@@ -502,13 +483,19 @@ async fn fast_completion_of_another_operation_is_rejected_without_acknowledgemen
         let body = if status == 204 { "" } else { r#"{"ok":true}"# };
         let (origin, client, server) = server(vec![(status, Some("$foreign"), body)]);
         let result = request(&client, &origin, Method::PUT, "/graph", None).await;
-        assert_eq!(result.expect_err("foreign result"), IDENTITY_CHANGED);
+        assert_eq!(
+            result.expect_err("foreign result"),
+            ReceiptError::IdentityChanged.to_string()
+        );
         // The fixture serves one connection; an acknowledgement would be a second.
         assert_eq!(server.await.unwrap().len(), 1);
     }
     let (origin, client, server) = server(vec![(200, Some("$foreign"), r#"{"ready":true}"#)]);
     let result = request(&client, &origin, Method::GET, "/health", None).await;
-    assert_eq!(result.expect_err("unrequested result"), IDENTITY_CHANGED);
+    assert_eq!(
+        result.expect_err("unrequested result"),
+        ReceiptError::IdentityChanged.to_string()
+    );
     assert_eq!(server.await.unwrap().len(), 1);
 }
 
@@ -527,7 +514,7 @@ async fn recovery_body_failure_is_uncertain_and_does_not_lookup_again() {
                 "receipt_observation"
             );
             #[cfg(target_os = "macos")]
-            assert_eq!(result.delivery, RequestDelivery::Uncertain);
+            assert_eq!(result.delivery, Delivery::Uncertain);
             let requests = server.await.unwrap();
             assert_eq!(requests.len(), 2);
             assert!(requests[1].starts_with("GET /api/v1/operations/"));
@@ -546,29 +533,32 @@ async fn invalid_json_is_not_a_transport_failure() {
 }
 
 #[test]
-fn terminal_404_requires_a_matching_result_header() {
-    for (result_id, valid) in [
-        (None, false),
-        (Some("other-id"), false),
-        (Some("client-id"), true),
-    ] {
-        let mut response = tauri::http::Response::builder().status(404);
-        if let Some(id) = result_id {
-            response = response.header("x-mixrelay-operation-result", id);
-        }
-        let response = Response::from(response.body("{}").unwrap());
-        assert_eq!(
-            validate_terminal(&response, Some("client-id")).is_ok(),
-            valid
-        );
-    }
+fn an_unreadable_receipt_is_invalid_and_an_unreadable_result_is_absent() {
+    let unreadable = reqwest::header::HeaderValue::from_bytes(b"\xff").unwrap();
+    let response = Response::from(
+        tauri::http::Response::builder()
+            .status(202)
+            .header(RECEIPT_HEADER, unreadable.clone())
+            .header(RESULT_HEADER, unreadable)
+            .body("{}")
+            .unwrap(),
+    );
+    let headers = response_headers(&response);
+    assert_eq!(headers.receipt, Some(""));
+    assert_eq!(headers.result, None);
+    assert_eq!(
+        headers.next(Some("ours"), None),
+        Err(ReceiptError::InvalidReceipt)
+    );
 }
 
 #[tokio::test]
 async fn fully_received_invalid_json_is_not_recoverable_transport_failure() {
     let client = ControlProxyClient::with_socket(None);
     let response = Response::from(tauri::http::Response::new("{"));
-    let result = finish(&client, "http://localhost", response, None, None).await;
+    let result = Exchange::new(&client, "http://localhost", &PollTimer::default())
+        .finish(response, None, None)
+        .await;
     assert!(
         matches!(result, Err(ExchangeError::Invalid(reason)) if reason.contains("response was invalid"))
     );

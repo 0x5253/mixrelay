@@ -1,26 +1,84 @@
 //! Destination preferences belong to the background controller, outside the audio plan.
 //! UI edits and hardware starts share the same serialized store and take preparation.
 use std::path::PathBuf;
+use std::sync::{Arc, RwLock};
 
-use mixrelay_desktop_core::recording::{
-    self, RecordingDirectories, RecordingError, TakeIdentities, TakeIdentity,
+use mixrelay_desktop_core::recording::{RecordingSettings, RecordingStore};
+use mixrelay_desktop_core::{
+    engine_control::routes,
+    recording::{self, RecordingDirectories, RecordingError, TakeIdentities, TakeIdentity},
 };
-pub(crate) use mixrelay_desktop_core::recording::{RecordingSettings, RecordingStore};
 use tauri::Manager as _;
+use tokio::sync::{Mutex, MutexGuard, OwnedMutexGuard};
 
-use super::{ControlProxyClient, Method, recorder};
+use super::{ControlProxyClient, Method};
+
+/// Next-take preferences and the gate that serializes their commits with recorder starts.
+#[derive(Debug, Default)]
+pub(super) struct Recordings {
+    /// Readers keep the previous snapshot while a save is written.
+    store: RwLock<RecordingStore>,
+    /// Held across a preference commit or a recorder submission; shutdown waits for it.
+    gate: Arc<Mutex<()>>,
+    take_identities: NativeTakeIdentities,
+}
+
+impl Recordings {
+    pub(super) async fn lock_commits(&self) -> MutexGuard<'_, ()> {
+        self.gate.lock().await
+    }
+
+    async fn lock_commits_owned(&self) -> OwnedMutexGuard<()> {
+        Arc::clone(&self.gate).lock_owned().await
+    }
+
+    pub(super) fn preferences(&self, graph: &str, node: &str) -> Result<RecordingSettings, String> {
+        Ok(self
+            .store
+            .read()
+            .map_err(|_| "recording settings lock poisoned")?
+            .get(graph, node))
+    }
+
+    pub(super) fn take_identities(&self) -> &impl TakeIdentities {
+        &self.take_identities
+    }
+
+    fn replace(&self, store: RecordingStore) -> Result<(), String> {
+        *self
+            .store
+            .write()
+            .map_err(|_| "recording settings lock poisoned")? = store;
+        Ok(())
+    }
+
+    /// Persists, then publishes. Once persistence starts, cancellation cannot separate the
+    /// disk commit from publication: the owned `gate` guard moves into the blocking commit.
+    fn commit(
+        &self,
+        gate: OwnedMutexGuard<()>,
+        (graph, node): (String, String),
+        settings: RecordingSettings,
+    ) -> Result<(), String> {
+        let _gate = gate;
+        let mut store = self
+            .store
+            .read()
+            .map_err(|_| "recording settings lock poisoned")?
+            .clone();
+        store
+            .save(graph, node, settings)
+            .map_err(|error| error.to_string())?;
+        self.replace(store)
+    }
+}
 
 /// Resolve user-owned defaults once during controller setup, before admitting controllers.
 pub(crate) fn initialize(app: &tauri::App) -> Result<(), String> {
     let path = crate::background::data_directory(app.handle())?.join("recording-settings.json");
     let desktop = crate::recording_dialog::default_recording_folder(app)?;
     let store = load_store(path, desktop).map_err(|error| error.to_string())?;
-    let client = app.state::<ControlProxyClient>();
-    *client
-        .recordings
-        .write()
-        .map_err(|_| "recording settings lock poisoned")? = store;
-    Ok(())
+    app.state::<ControlProxyClient>().recordings.replace(store)
 }
 
 #[derive(Debug)]
@@ -32,25 +90,18 @@ impl RecordingDirectories for NativeFolders {
 }
 fn load_store(path: PathBuf, folder: PathBuf) -> Result<RecordingStore, RecordingError> {
     RecordingStore::load(
-        std::sync::Arc::new(crate::preferences_file::AtomicPreferences::new(
+        Arc::new(crate::preferences_file::AtomicPreferences::new(
             path,
             recording::FILE_LIMIT,
         )),
-        std::sync::Arc::new(NativeFolders),
+        Arc::new(NativeFolders),
         folder,
     )
 }
 
-#[derive(Debug)]
-pub(super) struct NativeTakeIdentities {
+#[derive(Debug, Default)]
+struct NativeTakeIdentities {
     sequence: std::sync::atomic::AtomicU64,
-}
-impl NativeTakeIdentities {
-    pub(super) fn new() -> Self {
-        Self {
-            sequence: std::sync::atomic::AtomicU64::new(0),
-        }
-    }
 }
 impl TakeIdentities for NativeTakeIdentities {
     fn next(&self) -> Result<TakeIdentity, RecordingError> {
@@ -74,6 +125,7 @@ impl TakeIdentities for NativeTakeIdentities {
         })
     }
 }
+
 /// Read the same next-take settings used by local hardware commands.
 #[tauri::command]
 pub(crate) async fn recording_settings(
@@ -81,7 +133,7 @@ pub(crate) async fn recording_settings(
     graph_id: String,
     node_id: String,
 ) -> Result<RecordingSettings, String> {
-    client.recording_preferences(&graph_id, &node_id)
+    client.recordings.preferences(&graph_id, &node_id)
 }
 
 /// Commit a stopped recorder's preferences without modifying its audio graph.
@@ -93,47 +145,23 @@ pub(crate) async fn save_recording_settings(
     settings: RecordingSettings,
     expected_revision: u64,
 ) -> Result<RecordingSettings, String> {
-    let guard = std::sync::Arc::clone(&client.recording_gate)
-        .lock_owned()
-        .await;
+    let gate = client.recordings.lock_commits_owned().await;
     let snapshot = client
-        .request(Method::GET, "/api/v1/controls/snapshot", None)
+        .request(Method::GET, routes::CONTROLS_SNAPSHOT, None)
         .await?;
     if !snapshot.is_success() {
         return Err("recorder settings unavailable".into());
     }
     recording::validate_target(&snapshot.body, &graph_id, &node_id, expected_revision)
         .map_err(|error| error.to_string())?;
-    let owner = std::sync::Arc::clone(&client.recordings);
+    let recordings = Arc::clone(&client.recordings);
     let next = settings.clone();
     tauri::async_runtime::spawn_blocking(move || {
-        commit_preferences(&owner, guard, (graph_id, node_id), next)
+        recordings.commit(gate, (graph_id, node_id), next)
     })
     .await
     .map_err(|error| error.to_string())??;
     Ok(settings)
-}
-
-fn commit_preferences(
-    owner: &std::sync::RwLock<RecordingStore>,
-    guard: tokio::sync::OwnedMutexGuard<()>,
-    target: (String, String),
-    settings: RecordingSettings,
-) -> Result<(), String> {
-    // Once persistence starts, cancellation cannot separate disk commit from publication.
-    // Readers retain the previous snapshot throughout IO; shutdown waits for this guard.
-    let _guard = guard;
-    let mut store = owner
-        .read()
-        .map_err(|_| "recording settings lock poisoned")?
-        .clone();
-    store
-        .save(target.0, target.1, settings)
-        .map_err(|error| error.to_string())?;
-    *owner
-        .write()
-        .map_err(|_| "recording settings lock poisoned")? = store;
-    Ok(())
 }
 
 impl ControlProxyClient {
@@ -142,19 +170,16 @@ impl ControlProxyClient {
         graph: &str,
         node: &str,
     ) -> Result<RecordingSettings, String> {
-        Ok(self
-            .recordings
-            .read()
-            .map_err(|_| "recording settings lock poisoned")?
-            .get(graph, node))
+        self.recordings.preferences(graph, node)
     }
+
     pub(super) async fn recording_status(
         &self,
         graph: &str,
         node: &str,
     ) -> Result<serde_json::Value, String> {
         let response = self
-            .request(Method::GET, &recorder::route(graph, node), None)
+            .request(Method::GET, &routes::recorder(graph, node), None)
             .await?;
         if !response.is_success() {
             return Err(format!("recorder unavailable: {}", response.body));
@@ -184,21 +209,19 @@ mod tests {
     async fn cancellation_keeps_commit_owned_and_reads_available_until_shutdown_can_drain() {
         let (directory, store) = fixture();
         let client = ControlProxyClient::with_socket(None);
-        *client.recordings.write().unwrap() = store;
+        client.recordings.replace(store).unwrap();
         let mut settings = client.recording_preferences("g", "n").unwrap();
         settings.encoding = RecordingEncoding::Pcm24;
         let next = settings.clone();
-        let owner = std::sync::Arc::clone(&client.recordings);
-        let guard = std::sync::Arc::clone(&client.recording_gate)
-            .lock_owned()
-            .await;
+        let recordings = Arc::clone(&client.recordings);
+        let gate = client.recordings.lock_commits_owned().await;
         let (ready, started) = tokio::sync::oneshot::channel();
         let (release, proceed) = std::sync::mpsc::channel();
         let caller = tokio::spawn(async move {
             tauri::async_runtime::spawn_blocking(move || {
                 ready.send(()).unwrap();
                 proceed.recv().unwrap();
-                commit_preferences(&owner, guard, ("g".into(), "n".into()), next)
+                recordings.commit(gate, ("g".into(), "n".into()), next)
             })
             .await
             .unwrap()
@@ -210,7 +233,7 @@ mod tests {
             client.recording_preferences("g", "n").unwrap().encoding,
             RecordingEncoding::Pcm16
         );
-        assert!(client.recording_gate.try_lock().is_err());
+        assert!(client.recordings.gate.try_lock().is_err());
         client.close_admission();
         release.send(()).unwrap();
         client.drain().await.unwrap();
@@ -221,18 +244,6 @@ mod tests {
         )
         .unwrap();
         assert_eq!(loaded.get("g", "n"), settings);
-    }
-
-    #[test]
-    fn settings_require_the_observed_existing_stopped_target() {
-        let mut snapshot = serde_json::json!({"revision":9,"graphs":[{"id":"g","nodes":[{"nodeId":"n","capabilities":{"recorder":true},"recorder":{"state":"stopped"}}]}]});
-        assert!(recording::validate_target(&snapshot, "g", "n", 9).is_ok());
-        assert!(recording::validate_target(&snapshot, "g", "n", 8).is_err());
-        assert!(recording::validate_target(&snapshot, "g", "removed", 9).is_err());
-        for state in ["recording", "paused"] {
-            snapshot["graphs"][0]["nodes"][0]["recorder"]["state"] = serde_json::json!(state);
-            assert!(recording::validate_target(&snapshot, "g", "n", 9).is_err());
-        }
     }
 
     #[test]
@@ -294,7 +305,7 @@ mod tests {
     fn new_take_names_are_unique_uncreated_and_use_canonical_format() {
         let (_directory, store) = fixture();
         let settings = store.get("g", "n");
-        let names = NativeTakeIdentities::new();
+        let names = NativeTakeIdentities::default();
         let first = settings.start_request(names.next().unwrap()).unwrap();
         let second = settings.start_request(names.next().unwrap()).unwrap();
         assert_ne!(first["path"], second["path"]);

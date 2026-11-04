@@ -147,22 +147,24 @@ fn installed_version_text(value: &str) -> Option<String> {
 }
 
 pub(crate) async fn stop_driver() -> Result<DriverSnapshot, String> {
-    let result = mixrelay_driver_adapters::DriverClient::session()
+    let result = DriverClient::session()
         .map_err(|error| error.to_string())?
         .set_active(false)
         .await;
-    if matches!(
-        &result,
-        Err(mixrelay_driver_core::DriverError::NotReachable(_))
-    ) && let Ok(snapshot) = crate::driver_control::driver_status().await
-        && snapshot.state == mixrelay_driver_core::DriverState::NotInstalled
-        && snapshot.settings.devices.is_empty()
+    if matches!(&result, Err(DriverError::NotReachable(_)))
+        && let Ok(snapshot) = driver_status().await
+        && nothing_to_stop(&snapshot)
     {
-        // An uninstalled Driver has nothing to stop. A merely unloaded or
-        // unreachable installed backend is not proof that native audio stopped.
         return Ok(snapshot);
     }
     result.map_err(|error| error.to_string())
+}
+
+/// An uninstalled Driver without devices has nothing to stop. A merely unloaded or
+/// unreachable installed backend is not proof that native audio stopped.
+fn nothing_to_stop(snapshot: &DriverSnapshot) -> bool {
+    snapshot.state == mixrelay_driver_core::DriverState::NotInstalled
+        && snapshot.settings.devices.is_empty()
 }
 
 #[cfg(test)]
@@ -188,6 +190,14 @@ mod tests {
         let snapshot = absent_owner_snapshot(true, Some("0.2.3".into()));
         assert_eq!(snapshot.state, DriverState::InstalledNotLoaded);
         assert_eq!(snapshot.installed_version.as_deref(), Some("0.2.3"));
+    }
+
+    #[test]
+    fn only_an_uninstalled_driver_without_devices_counts_as_stopped_when_unreachable() {
+        assert!(nothing_to_stop(&absent_owner_snapshot(false, None)));
+        // Installed but not answering: native audio may still be running.
+        let installed = absent_owner_snapshot(true, Some("0.2.3".into()));
+        assert!(!nothing_to_stop(&installed));
     }
 
     #[test]

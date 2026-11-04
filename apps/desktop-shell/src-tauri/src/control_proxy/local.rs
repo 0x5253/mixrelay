@@ -9,7 +9,9 @@ use mixrelay_control_protocol::{
 use serde::Deserialize;
 use serde_json::{Value, json};
 
-use super::{ControlProxyClient, ControlProxyResponse, Method, rejected};
+use mixrelay_desktop_core::{engine_control::routes, recording::RecordingSettings};
+
+use super::{ControlProxyClient, ControlProxyResponse, Method};
 #[cfg(target_os = "macos")]
 use crate::macos_audio::ApplicationCaptureState;
 
@@ -153,12 +155,11 @@ impl LocalControl {
         };
         #[cfg(target_os = "macos")]
         {
-            let response = ControlProxyResponse {
-                engine: Some(window.engine_incarnation.clone()),
-                status: 200,
-                body: serde_json::to_value(&state.status).map_err(|error| error.to_string())?,
-                delivery: super::RequestDelivery::ServerResponse,
-            };
+            let response = ControlProxyResponse::answered(
+                Some(window.engine_incarnation.clone()),
+                200,
+                serde_json::to_value(&state.status).map_err(|error| error.to_string())?,
+            );
             let response =
                 super::application_capture::power_status(&self.client, &self.captures, response)
                     .await?;
@@ -181,13 +182,7 @@ impl LocalControl {
         let response = self
             .execute(request.command)
             .await
-            .unwrap_or_else(|reason| ControlProxyResponse {
-                engine: None,
-                status: 503,
-                body: json!({"code":"control_unavailable", "parameters":{"reason":reason}}),
-                #[cfg(target_os = "macos")]
-                delivery: super::RequestDelivery::Uncertain,
-            });
+            .unwrap_or_else(|reason| ControlProxyResponse::unavailable(&reason));
         // A response that cannot become JSON fails only its own request.
         let mut value = serde_json::to_value(response).unwrap_or_else(|error| {
             json!({
@@ -210,16 +205,11 @@ impl LocalControl {
                     .as_ref()
                     .ok_or("background controller unavailable")?;
                 let result = crate::background::dispatch(app, &name, arguments).await;
-                Ok(ControlProxyResponse {
-                    engine: None,
-                    status: 200,
-                    body: match result {
-                        Ok(value) => json!({"ok":value}),
-                        Err(error) => json!({"error":error}),
-                    },
-                    #[cfg(target_os = "macos")]
-                    delivery: super::RequestDelivery::ServerResponse,
-                })
+                let body = match result {
+                    Ok(value) => json!({"ok":value}),
+                    Err(error) => json!({"error":error}),
+                };
+                Ok(ControlProxyResponse::answered(None, 200, body))
             }
             Command::Snapshot {} => self.snapshot().await,
             // The socket streams subscriptions on their own connection before dispatch.
@@ -232,14 +222,14 @@ impl LocalControl {
                 request,
             } => {
                 if session != self.session {
-                    return Ok(rejected("graph_revision_stale"));
+                    return Ok(ControlProxyResponse::rejected("graph_revision_stale"));
                 }
                 #[cfg(target_os = "linux")]
                 return self
                     .client
                     .request(
                         Method::PUT,
-                        &super::node_control::route(&target.graph_id, Some(&target.node_id))?,
+                        &routes::node_control(&target.graph_id, &target.node_id),
                         Some(serde_json::to_value(request).map_err(|error| error.to_string())?),
                     )
                     .await;
@@ -259,7 +249,7 @@ impl LocalControl {
                 request,
             } => {
                 if session != self.session || request.expected_recording.is_none() {
-                    return Ok(rejected("graph_revision_stale"));
+                    return Ok(ControlProxyResponse::rejected("graph_revision_stale"));
                 }
                 self.client
                     .submit_recorder(
@@ -275,27 +265,38 @@ impl LocalControl {
     async fn snapshot(&self) -> Result<ControlProxyResponse, String> {
         let response = self
             .client
-            .request(Method::GET, "/api/v1/controls/snapshot", None)
+            .request(Method::GET, routes::CONTROLS_SNAPSHOT, None)
             .await?;
         let mut response = stamp_snapshot(response, &self.session)?;
-        if response.is_success()
-            && let Some(graphs) = response.body["graphs"].as_array_mut()
-        {
-            for graph in graphs {
-                let graph_id = graph["id"].as_str().unwrap_or_default().to_owned();
-                if let Some(nodes) = graph["nodes"].as_array_mut() {
-                    for node in nodes.iter_mut().filter(|node| !node["recorder"].is_null()) {
-                        let node_id = node["nodeId"].as_str().unwrap_or_default();
-                        node["recordingSettings"] = serde_json::to_value(
-                            self.client.recording_preferences(&graph_id, node_id)?,
-                        )
-                        .map_err(|error| error.to_string())?;
-                    }
-                }
-            }
+        if response.is_success() {
+            attach_recording_settings(&mut response.body, |graph, node| {
+                self.client.recording_preferences(graph, node)
+            })?;
         }
         Ok(response)
     }
+}
+
+/// Gives every recorder node in a snapshot the next-take settings a start would use.
+fn attach_recording_settings(
+    snapshot: &mut Value,
+    settings: impl Fn(&str, &str) -> Result<RecordingSettings, String>,
+) -> Result<(), String> {
+    let Some(graphs) = snapshot["graphs"].as_array_mut() else {
+        return Ok(());
+    };
+    for graph in graphs {
+        let graph_id = graph["id"].as_str().unwrap_or_default().to_owned();
+        let Some(nodes) = graph["nodes"].as_array_mut() else {
+            continue;
+        };
+        for node in nodes.iter_mut().filter(|node| !node["recorder"].is_null()) {
+            let node_id = node["nodeId"].as_str().unwrap_or_default();
+            node["recordingSettings"] = serde_json::to_value(settings(&graph_id, node_id)?)
+                .map_err(|error| error.to_string())?;
+        }
+    }
+    Ok(())
 }
 
 /// The engine owns consistency; the desktop adds only its connection-lifetime fence.
@@ -323,13 +324,7 @@ mod tests {
         let mut body = json!({"revision":8,"activeRevision":7,"structureGeneration":3,
             "enginePower":{"enabled":true,"transitioning":false},"graphs":[]});
         let result = stamp_snapshot(
-            ControlProxyResponse {
-                engine: None,
-                status: 200,
-                body: body.clone(),
-                #[cfg(target_os = "macos")]
-                delivery: super::super::RequestDelivery::ServerResponse,
-            },
+            ControlProxyResponse::answered(None, 200, body.clone()),
             "session",
         )
         .expect("snapshot");
@@ -340,16 +335,37 @@ mod tests {
     }
 
     #[test]
+    fn only_recorder_nodes_carry_their_own_next_take_settings() {
+        let mut snapshot = json!({"graphs":[
+            {"id":"g","nodes":[
+                {"nodeId":"rec","recorder":{"state":"stopped"}},
+                {"nodeId":"gain","recorder":null},
+                {"nodeId":"plain"},
+            ]},
+            {"id":"h"},
+        ]});
+        attach_recording_settings(&mut snapshot, |graph, node| {
+            Ok(RecordingSettings {
+                folder: format!("/{graph}/{node}"),
+                sample_rate: None,
+                encoding: mixrelay_desktop_core::recording::RecordingEncoding::Pcm16,
+            })
+        })
+        .unwrap();
+        let nodes = &snapshot["graphs"][0]["nodes"];
+        assert_eq!(nodes[0]["recordingSettings"]["folder"], "/g/rec");
+        assert!(nodes[1].get("recordingSettings").is_none());
+        assert!(nodes[2].get("recordingSettings").is_none());
+
+        let failing = attach_recording_settings(&mut snapshot, |_, _| Err("poisoned".into()));
+        assert_eq!(failing, Err("poisoned".to_owned()));
+    }
+
+    #[test]
     fn snapshot_failure_preserves_the_engine_error_without_turning_it_into_disconnect() {
         let body = json!({"code":"control_unavailable", "parameters":{"reason":"device fault"}});
         let result = stamp_snapshot(
-            ControlProxyResponse {
-                engine: None,
-                status: 503,
-                body: body.clone(),
-                #[cfg(target_os = "macos")]
-                delivery: super::super::RequestDelivery::ServerResponse,
-            },
+            ControlProxyResponse::answered(None, 503, body.clone()),
             "session",
         )
         .expect("engine response");
