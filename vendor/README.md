@@ -26,6 +26,10 @@ Run their regression tests explicitly:
 cargo test --locked -p truce-rack-vst3 -p truce-rack-clap --lib
 ```
 
+The VST3 `concurrent_callback_overlaps_service_without_losing_accepted_edits` test drains
+until its primed edit is observed instead of for a fixed pass count: a pass skips a bank
+while the callback thread holds its writer slot, so a preempted callback made it flaky.
+
 Replace the patch with a released upstream fix only after both signed-c_char (macOS/x64) and
 unsigned-c_char (Linux ARM64) builds and these tests pass. This is not a plugin runtime certification.
 
