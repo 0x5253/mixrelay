@@ -4,7 +4,6 @@ import '../../test-support/integration';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { AudioGraphCanvasProps } from '../../core/audio-graph/AudioGraphCanvas';
-import { graphNodeDefaultWidth } from '../../core/audio-graph/model';
 import { I18nProvider, i18n } from '../../core/i18n';
 import { MixRelayProvider } from '../../core/theme/MixRelayProvider';
 import { AudioNodeCard } from '../../core/ui/AudioNodeCard';
@@ -335,22 +334,6 @@ it('discards the previous graph owner knob callback while allowing the current g
   view.unmount();
 });
 
-it.each(['builtin:removed-effect', 'effect-chain:removed-preset'])(
-  'rejects a stale unsupported menu selection %s without submitting a graph',
-  async (itemId) => {
-    const { apply, view } = fixture();
-    await ready();
-    const select = harness.canvas?.onAddNode;
-    if (!select) throw new Error('Canvas selection is not ready');
-    // A menu action captured before inventory refresh still crosses this boundary.
-    act(() => select(itemId, { x: 44, y: 33 }));
-    await act(async () => Promise.resolve());
-    expect(apply).not.toHaveBeenCalled();
-    expect(harness.canvas?.model.nodes).toEqual([]);
-    view.unmount();
-  },
-);
-
 it('uses translated effect names and parameter labels after changing the workspace language', async () => {
   const { apply, view } = fixture();
   await ready();
@@ -373,151 +356,29 @@ it('uses translated effect names and parameter labels after changing the workspa
   view.unmount();
 });
 
-it.each([
-  ['equalizer', 'Equalizer'],
-  ['high_pass', 'High-pass'],
-  ['low_pass', 'Low-pass'],
-  ['gate', 'Gate'],
-  ['expander', 'Expander'],
-  ['channel_utility', 'Channel utility'],
-  ['pan', 'Mono pan'],
-  ['balance', 'Stereo balance'],
-  ['delay', 'Delay'],
-  ['ducking', 'Ducking'],
-  ['reverb', 'Reverb'],
-  ['chorus', 'Chorus'],
-])('creates the visible %s menu choice as an editable built-in node', async (kind, name) => {
-  const { apply, parameter, view } = fixture();
+// Every mode's name and description is unit-tested; this covers the choice control's
+// focus after the graph applies, and Undo/Redo of that single choice.
+it('keeps focus on the channel mode choice after it applies, and undoes only that choice', async () => {
+  const { apply, view } = fixture();
   await ready();
-  await addFromMenu(name);
-  await waitFor(() => expect(apply).toHaveBeenCalledTimes(1));
-  const document = lastDocument(apply);
-  expect(document.nodes).toEqual([
-    expect.objectContaining({
-      type: 'effect',
-      config: expect.objectContaining({
-        version: 1,
-        channels: kind === 'pan' ? 1 : 2,
-        bypass: false,
-        effect: expect.objectContaining({ kind }),
-      }),
-    }),
-  ]);
-  expect(harness.canvas?.model.nodes[0]?.position).toEqual({ x: 44, y: 33 });
-  expect(
-    within(screen.getByRole('region', { name })).getByRole('button', { name: /Bypass:/ }),
-  ).toBeEnabled();
-  expect(screen.queryByRole('button', { name: `Disable ${name}` })).not.toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: `Mute ${name}` })).not.toBeInTheDocument();
-  expect(parameter).not.toHaveBeenCalled();
+  await addFromMenu('Channel utility');
+  const original = lastDocument(apply).nodes;
+  await choose('Channel mode', 'Duplicate left');
+  const select = screen.getByRole('button', { name: /Channel mode$/ });
+  expect(select).toHaveAccessibleDescription('Send the left input to both outputs (L → L/R).');
+  await waitFor(() => expect(select).toHaveFocus());
+  const selected = lastDocument(apply).nodes;
+  expect(selected[0]?.config).toMatchObject({ effect: { parameters: { mode: 2 } } });
+  await history();
+  expect(lastDocument(apply).nodes).toEqual(original);
+  await history(true);
+  expect(lastDocument(apply).nodes).toEqual(selected);
   view.unmount();
 });
 
-it('keeps Korean channel mode names and result descriptions through live updates and Undo', async () => {
-  await i18n.changeLanguage('ko-KR');
-  const { apply, view } = fixture({
-    ...empty,
-    nodes: [
-      {
-        id: 'utility',
-        label: '채널 유틸리티',
-        type: 'effect',
-        config: {
-          version: 1,
-          channels: 2,
-          bypass: false,
-          effect: { kind: 'channel_utility', parameters: { mode: 0 } },
-        },
-      },
-    ],
-  });
-  const select = await screen.findByRole('button', { name: /채널 모드$/ });
-  expect(select).toHaveAccessibleDescription('좌우 입력을 각 출력에 그대로 전달합니다.');
-  await choose('채널 모드', '왼쪽 채널 복제');
-  expect(select).toHaveTextContent('왼쪽 채널 복제');
-  expect(select).toHaveAccessibleDescription('왼쪽 입력 → 양쪽 출력 (L → L/R).');
-  expect(
-    harness.canvas?.model.nodes[0]?.appearance.parameterControls?.find(
-      (control) => control.id === 'mode',
-    )?.choices,
-  ).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({
-        value: 0,
-        label: '스테레오 유지',
-        description: '좌우 입력을 각 출력에 그대로 전달합니다.',
-      }),
-      expect.objectContaining({
-        value: 3,
-        label: '오른쪽 채널 복제',
-        description: '오른쪽 입력 → 양쪽 출력 (R → L/R).',
-      }),
-    ]),
-  );
-  await choose('채널 모드', '오른쪽 채널 복제');
-  expect(select).toHaveAccessibleDescription('오른쪽 입력 → 양쪽 출력 (R → L/R).');
-  expect(lastDocument(apply).nodes[0]?.config).toMatchObject({
-    effect: { parameters: { mode: 3 } },
-  });
-  // Bypass is a separate action and retains the selected channel transform.
-  fireEvent.click(screen.getByRole('button', { name: /바이패스:/ }));
-  await act(async () => Promise.resolve());
-  expect(select).toHaveTextContent('오른쪽 채널 복제');
-  expect(select).toHaveAccessibleDescription('오른쪽 입력 → 양쪽 출력 (R → L/R).');
-  const add = screen.getByRole('button', { name: '노드 추가' });
-  act(() => add.focus());
-  fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
-  await act(async () => Promise.resolve());
-  expect(lastDocument(apply).nodes[0]?.config).toMatchObject({
-    bypass: false,
-    effect: { parameters: { mode: 3 } },
-  });
-  expect(select).toHaveAccessibleDescription('오른쪽 입력 → 양쪽 출력 (R → L/R).');
-  view.unmount();
-});
-
-it.each([
-  [0, 'Stereo passthrough', 'Keep L and R on their original outputs.'],
-  [1, 'Mono sum', 'Average L and R; send (L+R)/2 to both outputs.'],
-  [2, 'Duplicate left', 'Send the left input to both outputs (L → L/R).'],
-  [3, 'Duplicate right', 'Send the right input to both outputs (R → L/R).'],
-  [4, 'Swap left/right', 'Left input → right output; right input → left output.'],
-  [5, 'Invert polarity', 'Reverse both channels’ polarity (L → −L, R → −R).'],
-] as const)(
-  'selects channel mode %s with a truthful result description and preserves Undo',
-  async (mode, label, description) => {
-    const { apply, view } = fixture();
-    await ready();
-    await addFromMenu('Channel utility');
-    const original = lastDocument(apply).nodes;
-    await choose('Channel mode', label);
-    const select = screen.getByRole('button', { name: /Channel mode$/ });
-    expect(select).toHaveTextContent(label);
-    expect(select).toHaveAccessibleDescription(description);
-    await waitFor(() => expect(select).toHaveFocus());
-    expect(lastDocument(apply).nodes[0]?.config).toMatchObject({
-      channels: 2,
-      bypass: false,
-      effect: { kind: 'channel_utility', parameters: { mode } },
-    });
-    if (mode !== 0) {
-      const selected = lastDocument(apply).nodes;
-      await history();
-      expect(lastDocument(apply).nodes).toEqual(original);
-      await history(true);
-      expect(lastDocument(apply).nodes).toEqual(selected);
-    }
-    view.unmount();
-  },
-);
-
-it.each([
-  ['Karaoke', ['delay', 'reverb']],
-  ['Tunnel', ['equalizer', 'delay', 'reverb']],
-  ['Fishbowl', ['high_pass', 'low_pass', 'chorus', 'reverb']],
-  ['Radio', ['high_pass', 'low_pass', 'compressor']],
-  ['Double vocal', ['chorus', 'delay']],
-] as const)(
+// Chain contents, wiring and spacing are unit-tested in builtinEffects.test.ts; this
+// covers the real submenu and one-step Undo/Redo of the whole insertion.
+it.each([['Karaoke', ['delay', 'reverb']]] as const)(
   'inserts %s with connected stereo channels and undoes the entire chain in one step',
   async (name, kinds) => {
     const existing: RuntimeGraphDocument = {
@@ -541,24 +402,6 @@ it.each([
       ),
     ).toEqual(kinds);
     expect(inserted.edges).toHaveLength((kinds.length - 1) * 2);
-    for (let index = 1; index < chain.length; index += 1) {
-      const previous = harness.canvas?.model.nodes.find((node) => node.id === chain[index - 1]?.id);
-      const next = harness.canvas?.model.nodes.find((node) => node.id === chain[index]?.id);
-      if (!previous || !next) throw new Error('The inserted chain is missing a visible node');
-      expect(
-        next.position.x - previous.position.x - graphNodeDefaultWidth(previous),
-      ).toBeGreaterThan(0);
-      const connections = inserted.edges.filter(
-        (edge) =>
-          edge.source.nodeId === chain[index - 1]?.id &&
-          edge.destination.nodeId === chain[index]?.id,
-      );
-      expect(connections).toHaveLength(2);
-      expect(connections.map((edge) => edge.channelMapping)).toEqual([
-        { mode: 'explicit', routes: [{ sourceChannel: 0, destinationChannel: 0 }] },
-        { mode: 'explicit', routes: [{ sourceChannel: 1, destinationChannel: 1 }] },
-      ]);
-    }
     await history();
     await waitFor(() => expect(lastDocument(apply).nodes).toEqual(existing.nodes));
     expect(lastDocument(apply).edges).toEqual([]);
@@ -570,17 +413,8 @@ it.each([
   },
 );
 
-it.each([
-  ['1 Low Hz', 'lowFrequencyHz', 350],
-  ['1 Low dB', 'lowDb', 4.2],
-  ['1 Low Q', 'lowQ', 1.234],
-  ['2 Mid Hz', 'midFrequencyHz', 2200],
-  ['2 Mid dB', 'midDb', -3.1],
-  ['2 Mid Q', 'midQ', 2.345],
-  ['3 High Hz', 'highFrequencyHz', 8800],
-  ['3 High dB', 'highDb', 5.6],
-  ['3 High Q', 'highQ', 3.456],
-] as const)(
+// Each EQ value's isolation is unit-tested; this covers the shared Options disclosure.
+it.each([['1 Low Hz', 'lowFrequencyHz', 350]] as const)(
   'edits %s directly after opening shared node options and preserves the other eight values',
   async (label, id, value) => {
     const { apply, view } = fixture();

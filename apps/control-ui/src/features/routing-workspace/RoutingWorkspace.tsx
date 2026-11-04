@@ -46,8 +46,7 @@ import { hasPlatformModifier, isNativeTextEntryTarget } from '../../core/ui/plat
 import { TitleField } from '../../core/ui/TitleField';
 import { useSustainedProblem } from '../../core/ui/useSustainedProblem';
 import { WorkspaceHeader } from '../../core/ui/WorkspaceHeader';
-import { applicationInventorySelection } from './applicationIdentity';
-import { defaultEffectLabels, isChainKind, isEffectKind } from './builtinEffects';
+import { defaultEffectLabels } from './builtinEffects';
 import { presentEqualizerSampleRate } from './equalizerPresentation';
 import { graphHistoryGroup } from './graphHistoryGroup';
 import { presentHardwareNodeStatus } from './hardwareNodeStatus';
@@ -57,7 +56,6 @@ import {
   changedProcessorParameters,
   type GraphPresentation,
   presentRoutingApplicationIcons,
-  type RoutingNodeRequest,
   runtimeGraphToAudioGraph,
   updateRecorderChannels,
   updateRoutingNodeGain,
@@ -65,23 +63,21 @@ import {
   updateRoutingNodeParameters,
   type VirtualEndpointUpdate,
 } from './model';
+import { routingNodeRequest } from './nodeRequests';
 import { ProcessorEditorAlert } from './ProcessorControlAlerts';
 import { ProcessorRecoveryControl } from './ProcessorRecoveryControl';
 import { useProcessorScanReport } from './ProcessorScanReport';
-import { processorCatalogPlaceholder, processorSelectionForMenuItem } from './processorCatalogMenu';
+import { processorCatalogPlaceholder } from './processorCatalogMenu';
 import { presentProcessorFailures } from './processorFailures';
 import { presentProcessorLayouts, useProcessorLayoutChange } from './processorLayouts';
 import { presentProcessorTimings } from './processorTiming';
 import styles from './RoutingWorkspace.module.css';
 import {
   ADD_PROCESSOR_DIRECTORY_ITEM_ID,
-  audioInputItemId,
-  audioOutputItemId,
   createNodeMenuItems,
   RESCAN_PROCESSORS_ITEM_ID,
-  SYSTEM_AUDIO_EXCLUDED_BUNDLE_IDS,
-  SYSTEM_AUDIO_ITEM_ID,
 } from './routingNodeMenus';
+import { signalControlVisibility, usesRecoveryControls } from './signalControls';
 import { useGraphApplication } from './useGraphApplication';
 import { useGraphLayout } from './useGraphLayout';
 import { useNodeControls } from './useNodeControls';
@@ -230,19 +226,15 @@ function useRoutingNodeCreation(options: RoutingNodeCreationOptions) {
         refreshProcessors(false);
         return;
       }
-      const request: RoutingNodeRequest | null =
-        itemId === SYSTEM_AUDIO_ITEM_ID
-          ? audioSession?.capabilities.backend === 'core_audio'
-            ? {
-                kind: 'application',
-                title: t('studioGraph.nodes.systemAudio.name'),
-                selector: {
-                  match: 'all_except',
-                  bundle_ids: [...SYSTEM_AUDIO_EXCLUDED_BUNDLE_IDS],
-                },
-              }
-            : null
-          : routingNodeRequest(itemId, applications, audioDevices, processors);
+      const request = routingNodeRequest(itemId, {
+        applications,
+        audioDevices,
+        processors,
+        systemAudioTitle:
+          audioSession?.capabilities.backend === 'core_audio'
+            ? t('studioGraph.nodes.systemAudio.name')
+            : undefined,
+      });
       if (!model || !request) return;
       const next = addRoutingNode(
         model,
@@ -266,58 +258,6 @@ function useRoutingNodeCreation(options: RoutingNodeCreationOptions) {
       t,
     ],
   );
-}
-
-function routingNodeRequest(
-  itemId: string,
-  applications: readonly CapturableApplication[],
-  audioDevices: readonly AudioDeviceDescriptor[],
-  processors: readonly ExternalProcessorDescriptor[],
-): RoutingNodeRequest | null {
-  for (const application of applications) {
-    const selection = applicationInventorySelection(application);
-    if (selection?.id !== itemId) continue;
-    return {
-      kind: 'application',
-      selector: selection.selector,
-      title: application.displayName,
-    };
-  }
-  const input = audioDevices.find((device) => audioInputItemId(device) === itemId);
-  if (input) {
-    return {
-      channels: supportedChannelCount(input.inputChannels),
-      kind: 'audio_input',
-      title: input.displayName,
-      uid: input.uid,
-    };
-  }
-  const output = audioDevices.find((device) => audioOutputItemId(device) === itemId);
-  if (output) {
-    return {
-      channels: supportedChannelCount(output.outputChannels),
-      kind: 'audio_output',
-      title: output.displayName,
-      uid: output.uid,
-    };
-  }
-  if (itemId === 'compressor') return { kind: 'compressor' };
-  if (itemId.startsWith('builtin:') && isEffectKind(itemId.slice(8)))
-    return { kind: 'effect', effect: itemId.slice(8) as import('./builtinEffects').EffectKind };
-  if (itemId.startsWith('effect-chain:') && isChainKind(itemId.slice(13)))
-    return {
-      kind: 'effect_chain',
-      preset: itemId.slice(13) as import('./builtinEffects').ChainKind,
-    };
-  if (itemId === 'recorder') return { kind: 'recorder' };
-  if (itemId === 'limiter') return { kind: 'limiter' };
-  const processor = processorSelectionForMenuItem(itemId, processors);
-  if (processor) return { kind: 'provider', ...processor };
-  return null;
-}
-
-function supportedChannelCount(channels: number): number {
-  return Math.max(1, Math.min(64, Math.trunc(channels)));
 }
 
 function useRoutingNodeGain(model: AudioGraphModel | null, updateModel: UpdateModel) {
@@ -1588,18 +1528,6 @@ function nodeRecoveryControl(
   ) : null;
 }
 
-/** Built-ins expose only recovery for externally authored Off/Mute, alongside their bypass. */
-function signalControlCapabilities(
-  capabilities: { power: boolean; mute: boolean } | undefined,
-  control: { enabled: boolean; muted: boolean },
-  recoveryOnly: boolean,
-) {
-  return {
-    power: capabilities?.power && (!recoveryOnly || !control.enabled),
-    mute: capabilities?.mute && (!recoveryOnly || control.muted),
-  };
-}
-
 function nodeSignalControls(
   props: NodeRenderInputs,
   node: AudioGraphNode,
@@ -1607,11 +1535,14 @@ function nodeSignalControls(
   snapshot: import('../../core/domain/control/graph').GraphNodeControls | null,
 ) {
   const control = node.runtime?.control ?? { enabled: true, muted: false };
-  const recoveryOnly = usesRecoveryControls(node, props.mapping);
-  if (recoveryOnly && control.enabled && !control.muted) return null;
   const nodeId = node.runtime?.binding?.nodeId ?? node.id;
   const entry = snapshot?.nodes.find((candidate) => candidate.nodeId === nodeId);
-  const capabilities = signalControlCapabilities(entry?.capabilities, control, recoveryOnly);
+  const capabilities = signalControlVisibility(
+    entry?.capabilities,
+    control,
+    usesRecoveryControls(node.runtime?.type, props.mapping),
+  );
+  if (!capabilities) return null;
   const disabled = !props.idle;
   const retry = nodeRecoveryControl(props, node, control.enabled, disabled);
   const retryAvailable = retry !== null;
@@ -1649,10 +1580,4 @@ function nodeSignalControls(
       />
     ) : null,
   };
-}
-
-function usesRecoveryControls(node: AudioGraphNode, mapping: boolean) {
-  return (
-    !mapping && ['effect', 'compressor', 'limiter'].some((kind) => kind === node.runtime?.type)
-  );
 }
