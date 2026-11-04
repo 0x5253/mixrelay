@@ -17,7 +17,7 @@ workspace = true
 
 [build-dependencies]
 cc = "1.2.57"
-tauri-build = { version = "=2.6.3", features = [] }
+tauri-build = { version = "=2.7.4", features = [] }
 
 [dependencies]
 mixrelay-desktop-core = { path = "../../../crates/desktop-core" }
@@ -34,8 +34,8 @@ mixrelay-local-socket = { path = "../../../crates/local-socket" }
 thiserror.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-tauri = { version = "=2.11.5", features = ["tray-icon"] }
-tauri-plugin-single-instance = "=2.4.0"
+tauri = { version = "=2.12.5", features = ["tray-icon"] }
+tauri-plugin-single-instance = "=2.5.5"
 tokio = { workspace = true, features = ["io-util", "process", "sync", "time"] }
 tracing = "0.1.41"
 # Linux: O_PATH keeps socket inode identity during listener cleanup. All: live-PID checks.
@@ -48,7 +48,7 @@ rfd = { version = "0.17.2", default-features = false, features = ["xdg-portal"] 
 
 [target.'cfg(target_os = "linux")'.dependencies]
 mixrelay-linux-audio-io = { path = "../../../native/linux/audio-io" }
-alsa = "=0.11.0"
+alsa = "=0.12.1"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 mixrelay-macos-audio-io = { path = "../../../native/macos/audio-io" }

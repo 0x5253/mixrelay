@@ -19,19 +19,19 @@ body {
   overscroll-behavior: none;
 }
 
+body {
+  min-width: 320px;
+  min-height: 100dvh;
+  margin: 0;
+  background: var(--background);
+}
+
 html[data-app="mixrelay"],
 html[data-app="mixrelay"] body,
 #root {
   width: 100%;
   height: 100%;
   overflow: hidden;
-}
-
-body {
-  min-width: 320px;
-  min-height: 100dvh;
-  margin: 0;
-  background: var(--background);
 }
 
 button,

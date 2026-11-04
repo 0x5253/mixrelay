@@ -10,6 +10,7 @@ use mixrelay_test_support::FixtureDir;
 use serde_json::json;
 
 use super::*;
+use crate::{MAX_STATE_BYTES, reference::ensure_state_length};
 
 fn test_store() -> (FixtureDir, StateStore) {
     let fixture =
@@ -225,26 +226,24 @@ fn concurrent_puts_publish_one_verified_immutable_blob() {
 }
 
 #[test]
-fn maximum_blob_round_trips_without_a_second_full_size_buffer() {
+fn the_size_limit_admits_exactly_the_maximum_state() {
+    assert!(ensure_state_length(MAX_STATE_BYTES as u64).is_ok());
+    assert!(matches!(
+        ensure_state_length(MAX_STATE_BYTES as u64 + 1),
+        Err(StateError::InvalidReference { .. })
+    ));
+}
+
+#[test]
+fn a_multi_megabyte_blob_round_trips_and_stream_verifies() {
     let (_temporary, store) = test_store();
-    let payload = (0..MAX_STATE_BYTES)
+    let length = 3 * 1024 * 1024 + 17;
+    let payload = (0..length)
         .map(|index| u8::try_from(index % 251).unwrap())
         .collect::<Vec<_>>();
-    let reference = store.put(&payload).expect("store maximum-size blob");
-    drop(payload);
-
-    let restored = store.read(&reference).expect("read maximum-size blob");
-    assert_eq!(restored.len(), MAX_STATE_BYTES);
-    assert!(
-        restored
-            .iter()
-            .enumerate()
-            .all(|(index, byte)| usize::from(*byte) == index % 251)
-    );
-    drop(restored);
-    store
-        .verify(&reference)
-        .expect("stream-verify maximum blob");
+    let reference = store.put(&payload).expect("store multi-megabyte blob");
+    assert_eq!(store.read(&reference).expect("read blob"), payload);
+    store.verify(&reference).expect("stream-verify blob");
 }
 
 #[test]

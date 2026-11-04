@@ -232,7 +232,7 @@ fn svg_without_a_base_uri_does_not_load_external_files_or_network_images() {
             .decode(url.strip_prefix("data:image/png;base64,").unwrap())
             .unwrap();
         let mut reader = png::Decoder::new(Cursor::new(bytes)).read_info().unwrap();
-        let mut pixels = vec![0; reader.output_buffer_size()];
+        let mut pixels = vec![0; reader.output_buffer_size().unwrap()];
         let frame = reader.next_frame(&mut pixels).unwrap();
         assert_eq!(frame.color_type, png::ColorType::Rgba);
         assert!(

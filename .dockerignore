@@ -17,10 +17,9 @@
 !support/**
 !packaging/**
 !third-party/**
-!docs/**
 !LICENSE*.txt
-!CHANGELOG.md
 !rust-toolchain.toml
+!.cargo/config.toml
 !clippy.toml
 !rustfmt.toml
 **/node_modules

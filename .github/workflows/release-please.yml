@@ -30,7 +30,7 @@ jobs:
     steps:
       # A non-default token lets the release PR run its required checks like any PR.
       - id: release
-        uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4.4.1
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
 
@@ -47,13 +47,14 @@ jobs:
     steps:
       - name: Accept only the release-please branch
         run: '[[ "$RELEASE_BRANCH" =~ ^release-please--[A-Za-z0-9._/-]+$ ]]'
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ env.RELEASE_BRANCH }}
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.19.0
+          package-manager-cache: false
       # release-please writes only its manifest; the project tool sets every versioned file.
       - name: Set the release version in every product manifest
         run: |

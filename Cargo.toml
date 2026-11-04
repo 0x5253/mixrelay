@@ -62,7 +62,7 @@ reqwest = { version = "0.13.4", default-features = false, features = ["json"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
 thiserror = "2.0.20"
-base64 = "0.22.1"
+base64 = "0.23.1"
 memmap2 = "0.9.9"
 truce-rack-core = "1.1.5"
 truce-rack-clap = "1.1.5"
@@ -111,6 +111,15 @@ opt-level = 3
 # Recorder-side generic SRC is instantiated here, not solely inside rubato.
 # Keep debug-app recording throughput under the same measured DSP policy.
 [profile.dev.package.mixrelay-audio-recorder]
+opt-level = 3
+
+# The realtime transport owns callback queues and frame-time rings sized for the release
+# FIFO; filling and draining them unoptimized costs tens of milliseconds per owner.
+[profile.dev.package.mixrelay-macos-transport]
+opt-level = 3
+
+# Built-in effects are realtime DSP; their contract tests run seconds of audio per effect.
+[profile.dev.package.mixrelay-render]
 opt-level = 3
 
 [profile.dev.package.rubato]

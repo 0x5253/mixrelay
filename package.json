@@ -59,7 +59,7 @@
     "lab:midi": "cargo run -p mixrelay-desktop-shell --example midi_lab"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.11"
+    "@biomejs/biome": "2.6.4"
   },
   "author": "rawsector <support@rawsector.com>",
   "homepage": "https://rawsector.com/products/mixrelay"

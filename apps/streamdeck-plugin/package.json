@@ -16,7 +16,7 @@
     "@elgato/cli": "1.10.4",
     "@resvg/resvg-js": "2.6.2",
     "esbuild": "0.28.2",
-    "ws": "8.21.3"
+    "ws": "8.22.1"
   },
   "author": "rawsector <support@rawsector.com>",
   "homepage": "https://rawsector.com/products/mixrelay"
