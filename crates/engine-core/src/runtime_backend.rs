@@ -58,15 +58,29 @@ pub trait SessionFormatBackend: Send + Sync {
         })
     }
 
-    /// Accepts a new session format while processing is suspended. A rollback is another
-    /// call with the previous format. The caller publishes DSP before resuming.
+    /// Stages a new session format and suspends processing for it. Nothing is saved until
+    /// [`PreparedSessionFormat::commit`]; dropping the result abandons the change. The caller
+    /// applies the native graph format between the two, and publishes DSP before resuming.
     /// # Errors
-    /// Returns an unsupported format or a failed suspension.
-    fn reconfigure(&self, _requested: RenderFormat) -> Result<(), HostAudioBackendError> {
+    /// Returns an unsupported format, a preference that cannot be staged, or a failed suspension.
+    #[must_use = "commit the prepared format, or drop it to cancel the change"]
+    fn prepare_format(
+        &self,
+        _requested: RenderFormat,
+    ) -> Result<Box<dyn PreparedSessionFormat + '_>, HostAudioBackendError> {
         Err(HostAudioBackendError::CapabilityUnavailable {
             capability: "live format reconfiguration".into(),
         })
     }
+}
+
+/// A session format change staged while processing is suspended.
+pub trait PreparedSessionFormat: Send {
+    /// Publishes the staged preference and accepts the format. A preference that cannot be
+    /// published is also reported as a session issue; it never reverts audio.
+    /// # Errors
+    /// Returns the publication failure, for callers whose only effect was the save.
+    fn commit(self: Box<Self>) -> Result<(), HostAudioBackendError>;
 }
 
 /// One native owner implements all three contracts so a format transaction cannot combine

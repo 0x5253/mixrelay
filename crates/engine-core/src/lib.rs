@@ -40,7 +40,8 @@ mod default_graph;
 pub use default_graph::{default_duplex_document, default_session_document};
 mod runtime_backend;
 pub use runtime_backend::{
-    ProcessingControlBackend, RuntimeBackend, RuntimeStatusBackend, SessionFormatBackend,
+    PreparedSessionFormat, ProcessingControlBackend, RuntimeBackend, RuntimeStatusBackend,
+    SessionFormatBackend,
 };
 pub mod catalog_execution;
 mod control_api;

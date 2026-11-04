@@ -37,9 +37,21 @@ impl RuntimeStatusBackend for NativeNegotiationFixture {
 impl ProcessingControlBackend for NativeNegotiationFixture {}
 
 impl SessionFormatBackend for NativeNegotiationFixture {
-    fn reconfigure(&self, requested: RenderFormat) -> Result<(), HostAudioBackendError> {
+    fn prepare_format(
+        &self,
+        requested: RenderFormat,
+    ) -> Result<Box<dyn mixrelay_engine_core::PreparedSessionFormat + '_>, HostAudioBackendError>
+    {
         self.accepted.lock().unwrap().push(requested.sample_rate);
         self.profile.activate_format(requested);
+        Ok(Box::new(Accepted))
+    }
+}
+
+/// The fixture accepts every format immediately; there is no preference to save.
+struct Accepted;
+impl mixrelay_engine_core::PreparedSessionFormat for Accepted {
+    fn commit(self: Box<Self>) -> Result<(), HostAudioBackendError> {
         Ok(())
     }
 }

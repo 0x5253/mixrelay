@@ -60,7 +60,7 @@ fn external_adoption_saves_the_shared_format() {
         sample_rate: 48_000,
         ..old
     };
-    status.reconfigure(requested).unwrap();
+    status.prepare_format(requested).unwrap().commit().unwrap();
     status.activate_format(requested);
     status.resume();
     let saved = std::fs::read(&path).unwrap();
@@ -200,7 +200,7 @@ fn graph_only_control_does_not_invent_a_native_rate_change() {
         sample_rate: 96_000,
         block_frames: 128,
     };
-    status.reconfigure(next).unwrap();
+    status.prepare_format(next).unwrap().commit().unwrap();
     status.activate_format(next);
     status.resume();
     let session = status.status(next).audio_session.unwrap();
@@ -210,7 +210,7 @@ fn graph_only_control_does_not_invent_a_native_rate_change() {
 }
 
 #[test]
-fn a_failed_preference_save_rejects_the_change_and_keeps_the_stored_destination() {
+fn a_preference_that_fails_to_save_after_the_change_is_reported_without_reverting_audio() {
     let rate = endpoint(48_000);
     let directory = mixrelay_test_support::FixtureDir::new("rate-commit-failure").unwrap();
     let path = directory.join("session.json");
@@ -227,10 +227,51 @@ fn a_failed_preference_save_rejects_the_change_and_keeps_the_stored_destination(
         sample_rate: 48_000,
         block_frames: 256,
     };
-    assert!(status.reconfigure(next).is_err());
+    // Staging succeeds; publishing onto the directory fails once the format is accepted.
+    assert!(status.prepare_format(next).unwrap().commit().is_err());
     status.resume();
     assert!(path.is_dir());
     let session = status.status(next).audio_session.unwrap();
     assert_eq!(session.issue, Some(SessionIssue::PreferencesUnavailable));
     assert_eq!(session.preferred_format, None);
+}
+
+#[test]
+fn a_dropped_preparation_leaves_the_saved_preference_and_status_untouched() {
+    let rate = endpoint(48_000);
+    let directory = mixrelay_test_support::FixtureDir::new("rate-cancelled-change").unwrap();
+    let path = directory.join("session.json");
+    let mut status = status(&rate);
+    status.test_set_preferences(Ok(std::sync::Arc::new(SessionPreferences::at(
+        path.clone(),
+        AudioBackendKind::CoreAudio,
+    ))));
+    let status = Arc::new(status);
+    let _worker = worker(&status, &rate, None);
+    let saved = RenderFormat {
+        sample_rate: 48_000,
+        block_frames: 128,
+    };
+    status.prepare_format(saved).unwrap().commit().unwrap();
+    status.resume();
+    let before = std::fs::read(&path).unwrap();
+    // A native step that fails after preparation drops the staged change.
+    drop(
+        status
+            .prepare_format(RenderFormat {
+                sample_rate: 96_000,
+                ..saved
+            })
+            .unwrap(),
+    );
+    status.resume();
+    assert_eq!(std::fs::read(&path).unwrap(), before);
+    let leftovers = std::fs::read_dir(directory.path())
+        .unwrap()
+        .filter(|entry| entry.as_ref().unwrap().path() != path)
+        .count();
+    assert_eq!(leftovers, 0, "a cancelled change left a staged file");
+    let session = status.status(saved).audio_session.unwrap();
+    assert_eq!(session.preferred_format.unwrap().sample_rate, 48_000);
+    assert_eq!(session.issue, None);
 }

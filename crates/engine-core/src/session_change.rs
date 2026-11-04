@@ -1,10 +1,10 @@
-//! Serializes format adoption, native rollback and the matching DSP publication.
+//! Serializes format adoption, the staged native change and the matching DSP publication.
 
 use crate::{
     CompileContext, EngineGraphController, ErrorCode, GraphApplyResponse, GraphApplyState,
-    HostAudioBackendError, PROTOCOL_VERSION, PlaybackBindings, PreparedGraphFormat, ProtocolError,
-    RenderFormat, SessionReconfigureRequest, document_files as persistence, execution_control,
-    graph_catalog,
+    HostAudioBackendError, PROTOCOL_VERSION, PlaybackBindings, PreparedGraphFormat,
+    PreparedSessionFormat, ProtocolError, RenderFormat, SessionReconfigureRequest,
+    document_files as persistence, execution_control, graph_catalog,
 };
 
 impl EngineGraphController {
@@ -135,7 +135,7 @@ impl EngineGraphController {
         let bindings = processor.plan().meter_bindings().to_vec();
         let revision = document.revision;
         let result = self.exchange.submit_configured(processor, || {
-            self.configure_session_native(current.format, next.format, origin, resources.as_mut())?;
+            self.configure_session_native(next.format, origin, resources.as_mut())?;
             resources.commit();
             self.finish_catalog_write(staged_catalog);
             self.publish_execution_metadata(revision, bindings, view);
@@ -180,9 +180,11 @@ impl EngineGraphController {
         Ok(revisions)
     }
 
+    /// Stages the session preference, applies the native graph format, and saves the
+    /// preference only once the native side accepted it. A native failure rolls back its own
+    /// changes and drops the staged preference, so the saved format never disagrees with audio.
     pub(super) fn configure_session_native(
         &self,
-        current: RenderFormat,
         next: RenderFormat,
         origin: SessionChangeOrigin,
         resources: &mut dyn PreparedGraphFormat,
@@ -190,15 +192,11 @@ impl EngineGraphController {
         if matches!(origin, SessionChangeOrigin::Observed) {
             return self.runtime_status.adopt_external_format(next);
         }
-        self.runtime_status.reconfigure(next)?;
-        if let Err(error) = resources.configure_native() {
-            self.runtime_status
-                .reconfigure(current)
-                .map_err(|rollback| HostAudioBackendError::BackendFailure {
-                    message: format!("{error}; session rollback failed: {rollback}"),
-                })?;
-            return Err(error);
-        }
+        let prepared = self.runtime_status.prepare_format(next)?;
+        resources.configure_native()?;
+        // Audio already runs at `next`; an unpublished preference is reported as
+        // PreferencesUnavailable rather than reverting the accepted native change.
+        let _ = prepared.commit();
         Ok(())
     }
 
@@ -211,7 +209,11 @@ impl EngineGraphController {
     ) -> Result<GraphApplyResponse, ProtocolError> {
         // Saving/recovering the same format must not recreate plug-ins or invalidate history.
         if origin == SessionChangeOrigin::User {
-            let result = self.runtime_status.reconfigure(format);
+            // Saving is this request's only effect, so a failed save is its error.
+            let result = self
+                .runtime_status
+                .prepare_format(format)
+                .and_then(PreparedSessionFormat::commit);
             self.resume_session(pause_owner);
             result.map_err(|error| session_error(&error.to_string()))?;
         }
