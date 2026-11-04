@@ -52,6 +52,45 @@ export function openContextMenuFromKeyboard(event: KeyboardEvent<HTMLElement>): 
   return true;
 }
 
+/** The node a key press on a focused node targets; null for anything inside it. */
+function focusedNodeId(target: EventTarget) {
+  return target instanceof HTMLElement && target.matches('.react-flow__node')
+    ? target.dataset.id
+    : undefined;
+}
+
+/** The canvas's own keys, ahead of React Flow: the context menu keys, F2 to rename the
+ * focused node, port-selection keys and an Escape that clears without losing focus. */
+export function handleGraphKeyDown(
+  event: KeyboardEvent<HTMLElement>,
+  actions: {
+    capturePortKeys: (event: KeyboardEvent<HTMLElement>) => void;
+    clearSelection: () => void;
+    renameNode?: (nodeId: string) => void;
+  },
+) {
+  if (openContextMenuFromKeyboard(event)) return;
+  const { renameNode } = actions;
+  const renamed = event.key === 'F2' && renameNode ? focusedNodeId(event.target) : undefined;
+  if (renameNode && renamed) {
+    event.preventDefault();
+    event.stopPropagation();
+    renameNode(renamed);
+    return;
+  }
+  actions.capturePortKeys(event);
+  if (
+    event.key === 'Escape' &&
+    event.target instanceof Element &&
+    event.target.matches('.react-flow__node, .react-flow__edge')
+  ) {
+    // React Flow blurs on Escape. Clear selection while keeping the user's place.
+    event.preventDefault();
+    event.stopPropagation();
+    actions.clearSelection();
+  }
+}
+
 export interface ChannelConnectionRequestState {
   nodeId: string;
   portIds?: readonly string[];

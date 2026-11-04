@@ -1,5 +1,5 @@
-import type { Edge, Node } from '@xyflow/react';
-import type { GraphEdge } from '../domain/graph/topology';
+import type { Connection, Edge, Node, NodeChange } from '@xyflow/react';
+import type { GraphConnection, GraphEdge } from '../domain/graph/topology';
 import { canvasLayers } from '../theme/tokens';
 
 import {
@@ -106,4 +106,64 @@ export function reconcileAudioFlowEdges(
   return next.length === current.length && next.every((edge, index) => edge === current[index])
     ? current
     : next;
+}
+
+export function toGraphConnection(connection: Connection | Edge): GraphConnection {
+  return {
+    sourceNodeId: connection.source,
+    sourcePortId: connection.sourceHandle ?? '',
+    targetNodeId: connection.target,
+    targetPortId: connection.targetHandle ?? '',
+  };
+}
+
+interface MeasuredHandle {
+  id?: string | null;
+  y: number;
+  height: number;
+}
+
+/** The measured handle centers React Flow keeps for a node, in node coordinates. */
+export interface MeasuredHandleNode {
+  internals: {
+    handleBounds?: {
+      source: readonly MeasuredHandle[] | null;
+      target: readonly MeasuredHandle[] | null;
+    };
+  };
+}
+
+/** Vertical distance from the dragged anchor handle to another port on the same side. */
+export function portVerticalOffset(
+  node: MeasuredHandleNode,
+  side: 'input' | 'output',
+  portId: string,
+  anchorPortId: string,
+) {
+  const handles = node.internals.handleBounds?.[side === 'input' ? 'target' : 'source'];
+  const port = handles?.find((handle) => handle.id === portId);
+  const anchor = handles?.find((handle) => handle.id === anchorPortId);
+  if (!port || !anchor) return 0;
+  // React Flow applies viewport zoom to the whole connection layer. Use measured
+  // handle centers in node coordinates, including the node's current resize.
+  return port.y + port.height / 2 - anchor.y - anchor.height / 2;
+}
+
+/** Adds edges to the selection, keeping the identity of edges that do not change. */
+export function selectFlowEdges(edges: AudioFlowEdge[], edgeIds: ReadonlySet<string>) {
+  return edges.map((edge) =>
+    edgeIds.has(edge.id) && !edge.selected ? { ...edge, selected: true } : edge,
+  );
+}
+
+/** Preserves React Flow's live measurements without pinning the outer height: the card
+ * includes temporary Options content in its rendered bounds. */
+export function pinMeasuredWidthOnly(
+  changes: NodeChange<AudioFlowNode>[],
+): NodeChange<AudioFlowNode>[] {
+  return changes.map((change) =>
+    change.type === 'dimensions' && change.setAttributes
+      ? { ...change, setAttributes: 'width' }
+      : change,
+  );
 }
