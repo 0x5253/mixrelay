@@ -122,6 +122,11 @@ opt-level = 3
 [profile.dev.package.mixrelay-render]
 opt-level = 3
 
+# Processor state and graph catalogs hash multi-MiB documents; unoptimized SHA-256 dominates
+# their tests.
+[profile.dev.package.sha2]
+opt-level = 3
+
 [profile.dev.package.rubato]
 opt-level = 3
 
