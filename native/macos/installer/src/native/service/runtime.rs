@@ -54,7 +54,7 @@ impl crate::activation::DriverReadiness for NativeReadiness {
             .snapshot_blocking()
             .map_err(|error| NativeError::Activation(format!("Driver snapshot: {error}")))?;
         // Observe launchd after the response so a stale owner cannot satisfy readiness.
-        let registration = launchctl::inspect_registration()?;
+        let registration = launchctl::inspect(&launchctl::DRIVER)?;
         let registered_pid = match registration {
             RegistrationState::Loaded { pid } => pid,
             RegistrationState::Absent => None,

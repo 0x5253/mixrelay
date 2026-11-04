@@ -16,7 +16,11 @@ use super::{
     audio_probe::{check_coreaudio_response, wait_for_hal_absence, wait_for_hal_presence},
     hal_reload,
     launchctl::{self, RegistrationState},
-    trust::{require_lifecycle_storage, require_root, validate_destination_ancestors},
+    privilege::require_root,
+    trust::{
+        destination::{validate_destination_ancestors, validate_engine_directory},
+        lifecycle::require_lifecycle_storage,
+    },
 };
 
 mod engine;
@@ -102,11 +106,11 @@ impl NativeServiceLifecycle {
         // Even a failed reload command may have killed the old server. Recovery must
         // reload the restored HAL in that case, not only after command success.
         self.coreaudio_reload_attempted = true;
-        launchctl::reload_coreaudio()
+        hal_reload::reload_coreaudio()
     }
 
     fn current_registration() -> Result<RegistrationState, NativeError> {
-        launchctl::inspect_registration()
+        launchctl::inspect(&launchctl::DRIVER)
     }
 
     fn ensure_idle(state: &RegistrationState) -> Result<(), NativeError> {
@@ -146,7 +150,7 @@ impl NativeServiceLifecycle {
         let version = installed_hal_version()?;
         activate_restored_driver(
             &mut self.coreaudio_reload_attempted,
-            launchctl::bootstrap,
+            || launchctl::bootstrap(&launchctl::DRIVER),
             || {
                 hal_reload::reload_and_wait(
                     self.hal_hosts.as_ref(),
@@ -258,7 +262,7 @@ impl ServiceLifecycle for NativeServiceLifecycle {
         }
         if matches!(current, RegistrationState::Loaded { .. }) {
             let process = capture_service_process(&current)?;
-            launchctl::bootout()?;
+            launchctl::bootout(&launchctl::DRIVER)?;
             wait_for_service_exit(process)?;
             if Self::current_registration()? != RegistrationState::Absent {
                 return Err(NativeError::LaunchdState(
@@ -285,7 +289,7 @@ impl ServiceLifecycle for NativeServiceLifecycle {
         validate_destination_ancestors(layout.root())?;
         require_lifecycle_storage(&self.account)?;
         if matches!(request, TransactionRequest::Install(_)) {
-            super::trust::validate_engine_directory(layout.root(), true)?;
+            validate_engine_directory(layout.root(), true)?;
             self.verifier
                 .verify_installed(&layout, &OwnedTarget::all())?;
         }
@@ -330,7 +334,7 @@ impl ServiceLifecycle for NativeServiceLifecycle {
                 let version = installed_hal_version()?;
                 activate_driver(
                     &mut self.coreaudio_reload_attempted,
-                    launchctl::bootstrap,
+                    || launchctl::bootstrap(&launchctl::DRIVER),
                     || {
                         hal_reload::reload_and_wait(
                             self.hal_hosts.as_ref(),
@@ -389,7 +393,7 @@ impl ServiceLifecycle for NativeServiceLifecycle {
                 ));
             }
             let process = capture_service_process(&current)?;
-            launchctl::bootout()?;
+            launchctl::bootout(&launchctl::DRIVER)?;
             wait_for_service_exit(process)?;
         }
         if Self::current_registration()? != RegistrationState::Absent {
@@ -459,7 +463,7 @@ impl ServiceLifecycle for NativeServiceLifecycle {
                             wait_for_hal_presence,
                         )?;
                     } else {
-                        launchctl::reload_coreaudio()?;
+                        hal_reload::reload_coreaudio()?;
                         wait_for_hal_absence()?;
                     }
                 }

@@ -1,6 +1,6 @@
 //! Validates installed payload identity and writes the account-bound launchd plist.
 
-use super::{super::trust::validate_owned_target, NativeServiceLifecycle};
+use super::{super::trust::destination::validate_owned_target, NativeServiceLifecycle};
 use crate::{
     FilesystemLayout, FilesystemStaged, HAL_PATH, LaunchdConfiguration, NativeError, OperationKind,
     OwnedTarget,
