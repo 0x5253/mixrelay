@@ -168,17 +168,13 @@ export const ja = {
       'エンジンが何度も予期せず終了したため、MixRelay はオーディオを一時停止しました。最近の変更を確認してから再開してください。',
     pauseNotSaved:
       '適用しましたが保存できませんでした。MixRelay を再起動すると維持されない場合があります。',
-    diagnostics: 'オーディオの詳細',
-    processingRate: '処理サンプルレート',
     processingBuffer: '処理バッファー',
     bufferLatency: 'バッファー遅延',
     bufferLatencyHint:
       '処理バッファー 1 個分の遅延（サンプル数 ÷ サンプルレート）です。入出力全体の遅延ではありません。',
     frames: 'フレーム',
     sampleRate: 'サンプルレート',
-    blockSize: 'バッファーサイズ',
     apply: '適用',
-    applying: '適用中…',
     changeNotice: '設定の変更中はオーディオが一時的に途切れます。',
     captureUnavailable: '現在のオーディオセッションではアプリのオーディオをキャプチャできません。',
     changeFailed: 'オーディオセッションを変更できませんでした。エンジンの状態を確認してください。',
@@ -192,29 +188,14 @@ export const ja = {
         'グラフが変更されたか、適用中です。適用が完了してから、もう一度お試しください。',
     },
     unavailable: 'オーディオセッションを利用できません',
-    attention: '確認が必要',
     backend: 'バックエンド',
-    clock: 'クロック',
-    deviceRate: 'デバイスのサンプルレート',
-    unknown: '未確認',
-    conversion: 'サンプルレート変換',
-    drift: 'ドリフト補正',
-    supported: '対応',
     unsupported: '未実装',
     locked:
       'このアダプターは現在、固定のサンプルレートとバッファーサイズで動作します。動作中の設定変更はまだ実装されていません。',
-    syncNotice:
-      '複数のデバイスを使用する場合、サンプルレート変換とデバイス間のクロック同期が必要になることがあります。',
     backends: {
       core_audio: 'Core Audio',
       pipe_wire: 'PipeWire FIFO',
       contract_only: 'インターフェース定義のみ',
-    },
-    clocks: {
-      engine_timer: 'エンジンタイマー',
-      device: 'オーディオデバイス',
-      audio_server: 'オーディオサーバー',
-      host: 'プラグインホスト',
     },
     issues: {
       processing_failed:
@@ -239,8 +220,6 @@ export const ja = {
   },
   common: {
     close: '閉じる',
-    appName: 'MixRelay',
-    beta: '限定プレビュー',
     cancel: 'キャンセル',
     actions: '操作',
     create: '作成',
@@ -271,15 +250,7 @@ export const ja = {
     untitledGraph: '名称未設定のグラフ',
     untitledGraphNumbered: '名称未設定のグラフ {{count}}',
     audioEngine: 'オーディオエンジン',
-    engineShort: 'エンジン',
     workspace: 'ルーティングワークスペース',
-    signalPathLabel: 'MixRelay の信号経路',
-    capture: 'キャプチャ',
-    captureDescription: 'アプリやシステムのオーディオはここに入力されます。',
-    stream: '配信',
-    streamDescription: 'OBS はこのデバイスから最終ミックスを受け取ります。',
-    remote: 'リモート操作',
-    remoteDescription: 'この Mac で明示的にペアリングを有効にするまで、LAN 経由の操作は無効です。',
   },
   routing: {
     deviceApps: {
@@ -409,9 +380,6 @@ export const ja = {
       busDescription: '{{kind}} {{name}} {{channels}}',
       directions: '入力: {{inputs}} · 出力: {{outputs}}',
     },
-    title: '仮想入出力ルーティング',
-    description:
-      'macOS アプリが MixRelay に送るオーディオを、OBS や DAW が使用するデバイス入力に戻します。',
     canvasLabel: 'MixRelay の仮想入出力ルーティンググラフ',
     ports: {
       application: 'アプリのオーディオ',
@@ -441,28 +409,22 @@ export const ja = {
       edgeLabel: '{{source}} CH {{sourceChannel}} → {{target}} CH {{targetChannel}}',
       meterChannel: '{{name}} チャンネル {{channel}}',
     },
-    toggleGain: 'ゲイン −6 dB',
-    apply: '適用',
     nodes: {
       application: 'アプリ',
       attack: 'アタック',
       audioInput: '既定の入力',
       audioOutput: '既定の出力',
-      captureChannels: '出力',
       ceiling: '上限',
       compressor: 'コンプレッサー',
-      compressorDescription: 'チャンネルを連動させたダイナミクス制御',
       deviceName: 'デバイス名',
       virtualOutput: 'グラフ → デバイス',
       virtualInput: 'デバイス → グラフ',
       virtualDevice: 'MixRelay Virtual I/O',
       newVirtualDevice: '新規仮想デバイス',
-      virtualAvailable: '接続',
       virtualAttached: '接続済み',
       virtualSourcePort: 'デバイスからのオーディオ',
       gain: 'ゲイン',
       limiter: 'リミッター',
-      limiterDescription: '出力ピークが上限を超えないように制御',
       makeupGain: 'メイクアップゲイン',
       mixer: 'ミキサー',
       options: 'オプション',
@@ -470,7 +432,6 @@ export const ja = {
       processor: 'プロセッサー',
       processorLayoutUnavailable: 'プロセッサーの入出力構成を利用できません',
       outputGain: '出力ゲイン',
-      renderChannels: '入力',
       ratio: 'レシオ',
       release: 'リリース',
       sourceGain: 'ソースゲイン',
@@ -528,8 +489,6 @@ export const ja = {
     layout: {
       failed:
         'ノード配置と表示状態を保存または読み込めませんでした。現在の編集内容は保持されています。',
-      retry: '現在の配置を保存',
-      reload: '保存済みの配置を読み込み',
     },
     processorControl: {
       reportTitle: 'エフェクト検索レポート',
@@ -557,10 +516,6 @@ export const ja = {
     },
     processorEditor: {
       open: '開く',
-      states: {
-        failed: '利用不可',
-        opening: '開いています',
-      },
       failures: {
         displayUnavailable:
           'この Linux セッションでネイティブエディターを使うには、X11 または XWayland が必要です。',
@@ -573,147 +528,10 @@ export const ja = {
     },
   },
   studioGraph: {
-    editorLabel: 'MixRelay のオーディオグラフエディター',
-    canvasLabel: '配信用ミックスの信号グラフ',
-    sessionName: '配信用ミックス / メイン',
-    saved: 'たった今保存しました',
-    running: 'エンジン動作中',
-    remote: 'モバイル操作',
-    addNode: 'ノードを追加',
-    search: 'ノードを検索',
-    library: 'ノードライブラリ',
-    dragHint: 'キャンバスにドラッグして追加',
-    inspector: '選択したノード',
-    groups: {
-      source: 'ソース',
-      processor: 'プロセッサー',
-      analysis: '解析',
-      output: '出力',
-    },
-    states: {
-      foundation: '基盤',
-      planned: '計画中',
-      provider: 'プロバイダー',
-    },
-    flow: {
-      capture: '01 · キャプチャ',
-      shape: '02 · 音を調整',
-      deliver: '03 · 出力',
-    },
-    status: {
-      nodes: '{{count}} ノード',
-      channels: '2 チャンネルのグラフ · 32 ビット浮動小数点',
-      healthy: '音切れ 0 回 · 正常',
-    },
-    details: {
-      chrome: 'Chrome · タブのオーディオ',
-      microphone: 'Scarlett 2i2 · 入力 1',
-      twoSources: 'Chrome + マイク',
-      streamControl: 'スレッショルド −12 dB',
-      voiceContour: '4 バンド · 声の明瞭度',
-      stereo48k: 'MixRelay Stream · 48 kHz',
-      headphones: 'MacBook Pro のスピーカー',
-    },
-    controls: {
-      bypass: 'バイパス',
-      output: '出力ゲイン',
-      mix: 'ドライ / ウェット',
-      routing: 'チャンネルルーティング',
-    },
-    inventory: {
-      eyebrow: '製品機能の基準',
-      title: 'ノード一覧',
-      description:
-        'MixRelay では、ルーティング、処理、録音、配信用出力を 1 つのオーディオグラフで構成できます。',
-    },
     nodes: {
-      application: {
-        name: 'アプリ',
-        description: 'Chrome、Firefox、ゲームなどのプロセスのオーディオを個別にキャプチャ',
-      },
       systemAudio: {
         name: 'システムオーディオ',
         description: 'macOS の出力全体と効果音をキャプチャ',
-      },
-      inputDevice: {
-        name: '入力デバイス',
-        description: 'マイクとオーディオインターフェースの入力',
-      },
-      passThru: {
-        name: 'パススルー',
-        description: '別のグラフやホストから信号を受信',
-      },
-      audioFile: {
-        name: 'オーディオファイル',
-        description: 'ファイルやプレイリストをオーディオソースとして再生',
-      },
-      browserRemote: {
-        name: 'リモート入力',
-        description: 'ペアリング済みの LAN クライアントからのオーディオ',
-      },
-      mixer: {
-        name: 'ミキサー',
-        description: 'パン、ミュート、ソロを操作してチャンネルをミックス',
-      },
-      gain: {
-        name: 'ゲイン',
-        description: '精密なレベル調整と極性反転',
-      },
-      compressor: {
-        name: 'コンプレッサー',
-        description: 'ダイナミックレンジとピークを制御',
-      },
-      parametricEq: {
-        name: 'パラメトリック EQ',
-        description: '複数バンドによる音質調整とフィルター',
-      },
-      ducking: {
-        name: '自動ダッキング',
-        description: 'サイドチェイン信号を使って声を優先',
-      },
-      speechDenoise: {
-        name: '音声ノイズ除去',
-        description: '交換可能なプロバイダーによるリアルタイムのノイズ除去',
-      },
-      delaySync: {
-        name: '遅延 / 同期',
-        description: '映像と入力のタイミングをミリ秒単位で調整',
-      },
-      audioUnit: {
-        name: 'Audio Unit',
-        description: '処理チェーン内で AU プラグインをホスト',
-      },
-      levelMeter: {
-        name: 'レベルメーター',
-        description: 'ピークと RMS レベルを確認',
-      },
-      spectrum: {
-        name: 'スペクトラム',
-        description: '周波数分布をリアルタイムで解析',
-      },
-      loudness: {
-        name: 'ラウドネス',
-        description: 'LUFS、トゥルーピーク、放送向け目標値を測定',
-      },
-      virtualDevice: {
-        name: '仮想デバイス',
-        description: 'OBS や DAW で選択できる CoreAudio 出力',
-      },
-      monitor: {
-        name: 'モニター',
-        description: 'ヘッドフォンやスピーカーで低遅延のモニタリング',
-      },
-      recorder: {
-        name: 'レコーダー',
-        description: 'ミックスや分離したステムをファイルに録音',
-      },
-      rtmp: {
-        name: 'RTMP 配信',
-        description: '配信プラットフォームへ直接送信',
-      },
-      icecast: {
-        name: 'Icecast / SHOUTcast',
-        description: 'インターネットラジオを継続配信',
       },
     },
   },

@@ -164,17 +164,13 @@ export const ru = {
       'MixRelay приостановил аудио, потому что движок несколько раз неожиданно завершил работу. Проверьте последние изменения, затем возобновите.',
     pauseNotSaved:
       'Применено, но не сохранено. После перезапуска MixRelay это может не сохраниться.',
-    diagnostics: 'Сведения об аудио',
-    processingRate: 'Частота дискретизации обработки',
     processingBuffer: 'Буфер обработки',
     bufferLatency: 'Задержка буфера',
     bufferLatencyHint:
       'Один буфер обработки (отсчёты ÷ частота дискретизации), а не полная задержка ввода/вывода.',
     frames: 'кадров',
     sampleRate: 'Частота дискретизации',
-    blockSize: 'Размер буфера',
     apply: 'Применить',
-    applying: 'Применение…',
     changeNotice: 'Изменение этой настройки ненадолго прерывает звук.',
     captureUnavailable: 'Захват аудио приложений недоступен в текущей аудиосессии.',
     changeFailed: 'Не удалось изменить аудиосессию. Проверьте состояние движка.',
@@ -188,29 +184,14 @@ export const ru = {
         'Граф изменился или ещё применяется. Повторите попытку после его применения.',
     },
     unavailable: 'Аудиосессия недоступна',
-    attention: 'Требует внимания',
     backend: 'Бэкенд',
-    clock: 'Часы',
-    deviceRate: 'Частота дискретизации устройства',
-    unknown: 'Не определено',
-    conversion: 'Преобразование частоты дискретизации',
-    drift: 'Коррекция дрейфа',
-    supported: 'Поддерживается',
     unsupported: 'Не реализовано',
     locked:
       'Этот адаптер сейчас использует фиксированные частоту дискретизации и размер буфера. Перенастройка во время работы не реализована.',
-    syncNotice:
-      'При использовании нескольких устройств может потребоваться преобразование частоты дискретизации и синхронизация часов устройств.',
     backends: {
       core_audio: 'Core Audio',
       pipe_wire: 'PipeWire FIFO',
       contract_only: 'Только контракт',
-    },
-    clocks: {
-      engine_timer: 'Таймер движка',
-      device: 'Аудиоустройство',
-      audio_server: 'Аудиосервер',
-      host: 'Хост плагинов',
     },
     issues: {
       processing_failed: 'Ошибка обработки аудио. Движок доступен, но аудио остановлено.',
@@ -234,8 +215,6 @@ export const ru = {
   },
   common: {
     close: 'Закрыть',
-    appName: 'MixRelay',
-    beta: 'Закрытая предварительная версия',
     cancel: 'Отмена',
     actions: 'Действия',
     create: 'Создать',
@@ -266,15 +245,7 @@ export const ru = {
     untitledGraph: 'Безымянный граф',
     untitledGraphNumbered: 'Безымянный граф {{count}}',
     audioEngine: 'Аудиодвижок',
-    engineShort: 'Движок',
     workspace: 'Рабочее пространство маршрутизации',
-    signalPathLabel: 'Тракт сигнала MixRelay',
-    capture: 'Захват',
-    captureDescription: 'Здесь поступает аудио приложений и системы.',
-    stream: 'Поток',
-    streamDescription: 'OBS получает итоговый микс от этого устройства.',
-    remote: 'Удалённое управление',
-    remoteDescription: 'Управление по LAN выключено, пока на этом Mac явно не включено сопряжение.',
   },
   routing: {
     deviceApps: {
@@ -404,9 +375,6 @@ export const ru = {
       busDescription: '{{kind}} {{name}} {{channels}}',
       directions: 'Вход: {{inputs}} · Выход: {{outputs}}',
     },
-    title: 'Маршрутизация виртуального ввода/вывода',
-    description:
-      'Направьте аудио, передаваемое приложениями macOS в MixRelay, на вход устройства, используемого OBS и DAW.',
     canvasLabel: 'Граф маршрутизации виртуального ввода/вывода MixRelay',
     ports: {
       application: 'Звук приложения',
@@ -436,28 +404,22 @@ export const ru = {
       edgeLabel: '{{source}} CH {{sourceChannel}} → {{target}} CH {{targetChannel}}',
       meterChannel: '{{name}} канал {{channel}}',
     },
-    toggleGain: 'Усиление −6 дБ',
-    apply: 'Применить',
     nodes: {
       application: 'Приложение',
       attack: 'Атака',
       audioInput: 'Вход по умолчанию',
       audioOutput: 'Выход по умолчанию',
-      captureChannels: 'Выходы',
       ceiling: 'Потолок',
       compressor: 'Компрессор',
-      compressorDescription: 'Управление динамикой связанных каналов',
       deviceName: 'Имя устройства',
       virtualOutput: 'Граф → устройство',
       virtualInput: 'Устройство → граф',
       virtualDevice: 'MixRelay Virtual I/O',
       newVirtualDevice: 'Новое виртуальное устройство',
-      virtualAvailable: 'Подключить',
       virtualAttached: 'Подключено',
       virtualSourcePort: 'Аудио от устройства',
       gain: 'Усиление',
       limiter: 'Лимитер',
-      limiterDescription: 'Ограничивать выходные пики заданным потолком',
       makeupGain: 'Компенсация',
       mixer: 'Микшер',
       options: 'Параметры',
@@ -465,7 +427,6 @@ export const ru = {
       processor: 'Процессор',
       processorLayoutUnavailable: 'Схема портов процессора недоступна',
       outputGain: 'Выходное усиление',
-      renderChannels: 'Входы',
       ratio: 'Соотношение',
       release: 'Восстановление',
       sourceGain: 'Усиление источника',
@@ -526,8 +487,6 @@ export const ru = {
     layout: {
       failed:
         'Не удалось сохранить или загрузить расположение узлов и вид. Текущие изменения сохранены.',
-      retry: 'Сохранить текущее расположение',
-      reload: 'Загрузить сохранённое расположение',
     },
     processorControl: {
       reportTitle: 'Отчёт о поиске эффектов',
@@ -553,10 +512,6 @@ export const ru = {
     },
     processorEditor: {
       open: 'Открыть',
-      states: {
-        failed: 'Недоступно',
-        opening: 'Открытие',
-      },
       failures: {
         displayUnavailable:
           'Для собственных редакторов плагинов в этой сессии Linux требуется X11 или XWayland.',
@@ -568,147 +523,10 @@ export const ru = {
     },
   },
   studioGraph: {
-    editorLabel: 'Редактор аудиографа MixRelay',
-    canvasLabel: 'Граф сигнала трансляционного микса',
-    sessionName: 'Трансляционный микс / Основной',
-    saved: 'Только что сохранено',
-    running: 'Движок работает',
-    remote: 'Мобильное управление',
-    addNode: 'Добавить узел',
-    search: 'Поиск узлов',
-    library: 'Библиотека узлов',
-    dragHint: 'Перетащите на холст, чтобы добавить',
-    inspector: 'Выбранный узел',
-    groups: {
-      source: 'Источник',
-      processor: 'Процессор',
-      analysis: 'Анализ',
-      output: 'Выход',
-    },
-    states: {
-      foundation: 'Основа',
-      planned: 'Запланировано',
-      provider: 'Поставщик',
-    },
-    flow: {
-      capture: '01 · Захват',
-      shape: '02 · Обработка',
-      deliver: '03 · Передача',
-    },
-    status: {
-      nodes: 'Узлов: {{count}}',
-      channels: 'Граф с 2 каналами · 32-битный float',
-      healthy: '0 пропусков · Исправно',
-    },
-    details: {
-      chrome: 'Chrome · Аудио вкладки',
-      microphone: 'Scarlett 2i2 · Вход 1',
-      twoSources: 'Chrome + микрофон',
-      streamControl: 'Порог −12 дБ',
-      voiceContour: '4 полосы · Чёткость голоса',
-      stereo48k: 'MixRelay Stream · 48 кГц',
-      headphones: 'Динамики MacBook Pro',
-    },
-    controls: {
-      bypass: 'Обход',
-      output: 'Выходное усиление',
-      mix: 'Исходный / обработанный',
-      routing: 'Маршрутизация каналов',
-    },
-    inventory: {
-      eyebrow: 'Базовые возможности продукта',
-      title: 'Каталог узлов',
-      description:
-        'Настраивайте маршрутизацию, обработку, запись и трансляцию в едином аудиографе MixRelay.',
-    },
     nodes: {
-      application: {
-        name: 'Приложение',
-        description: 'Захватывать Chrome, Firefox, игры и другие процессы независимо',
-      },
       systemAudio: {
         name: 'Системное аудио',
         description: 'Захватывать весь вывод macOS и звуковые эффекты',
-      },
-      inputDevice: {
-        name: 'Входное устройство',
-        description: 'Микрофоны и входы аудиоинтерфейсов',
-      },
-      passThru: {
-        name: 'Сквозной тракт',
-        description: 'Получать сигнал от другого графа или хоста',
-      },
-      audioFile: {
-        name: 'Аудиофайл',
-        description: 'Воспроизводить файлы и плейлисты в качестве источника',
-      },
-      browserRemote: {
-        name: 'Удалённый вход',
-        description: 'Аудио от сопряжённого клиента LAN',
-      },
-      mixer: {
-        name: 'Микшер',
-        description: 'Объединять каналы с управлением панорамой, отключением звука и соло',
-      },
-      gain: {
-        name: 'Усиление',
-        description: 'Точная регулировка уровня и инверсия полярности',
-      },
-      compressor: {
-        name: 'Компрессор',
-        description: 'Управлять динамическим диапазоном и пиками',
-      },
-      parametricEq: {
-        name: 'Параметрический EQ',
-        description: 'Многополосная коррекция тембра и фильтры',
-      },
-      ducking: {
-        name: 'Автоматический дакинг',
-        description: 'Отдавать приоритет речи по сигналу сайдчейна',
-      },
-      speechDenoise: {
-        name: 'Подавление шума речи',
-        description: 'Очистка в реальном времени со сменным поставщиком',
-      },
-      delaySync: {
-        name: 'Задержка / синхронизация',
-        description: 'Выравнивание видео и входов с точностью до миллисекунды',
-      },
-      audioUnit: {
-        name: 'Audio Unit',
-        description: 'Размещать плагины AU в цепочке обработки',
-      },
-      levelMeter: {
-        name: 'Измеритель уровня',
-        description: 'Отслеживать пиковый уровень и RMS',
-      },
-      spectrum: {
-        name: 'Спектр',
-        description: 'Анализировать распределение частот в реальном времени',
-      },
-      loudness: {
-        name: 'Громкость',
-        description: 'Измерять LUFS, истинный пик и целевые уровни трансляции',
-      },
-      virtualDevice: {
-        name: 'Виртуальное устройство',
-        description: 'Выход CoreAudio, доступный OBS и DAW',
-      },
-      monitor: {
-        name: 'Мониторинг',
-        description: 'Прослушивание через наушники или динамики с малой задержкой',
-      },
-      recorder: {
-        name: 'Рекордер',
-        description: 'Записывать микс или отдельные дорожки в файлы',
-      },
-      rtmp: {
-        name: 'Прямая трансляция RTMP',
-        description: 'Передавать напрямую на платформы трансляции',
-      },
-      icecast: {
-        name: 'Icecast / SHOUTcast',
-        description: 'Непрерывное вещание интернет-радио',
       },
     },
   },

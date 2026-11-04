@@ -127,7 +127,7 @@ function CatalogCommands({ model }: { model: CatalogModel }) {
               { id: 'save', label: t('workspaceFile.save'), disabled },
               {
                 id: 'outputs',
-                label: t('studio.stream'),
+                label: 'Stream',
                 children: [{ id: 'io', label: 'MixRelay IO', description: '2 CH · 48 kHz' }],
               },
             ]}
@@ -138,7 +138,7 @@ function CatalogCommands({ model }: { model: CatalogModel }) {
               {t('workspaceFile.save')}
             </ActionButton>
           </ShortcutTooltip>
-          <InfoPopover label={t('audioSession.diagnostics')}>
+          <InfoPopover label="Diagnostics">
             <p className={styles.note}>48 kHz · 128 frames · 2.67 ms</p>
           </InfoPopover>
         </div>
@@ -210,12 +210,7 @@ function CatalogInputs({ model }: { model: CatalogModel }) {
           disabled={disabled}
           onChange={setRate}
         />
-        <ToggleField
-          label={t('studio.capture')}
-          checked={enabled}
-          disabled={disabled}
-          onChange={setEnabled}
-        />
+        <ToggleField label="Capture" checked={enabled} disabled={disabled} onChange={setEnabled} />
         <LevelControl
           label={t('routing.nodes.gain')}
           value={gain}

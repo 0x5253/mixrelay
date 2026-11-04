@@ -708,10 +708,10 @@ export const SequentialInsertions: Story = {
       await body.findByRole('menuitem', { name: i18n.t('routing.groups.processor') }),
     );
     await userEvent.click(
-      await body.findByRole('menuitem', { name: i18n.t('studioGraph.nodes.compressor.name') }),
+      await body.findByRole('menuitem', { name: i18n.t('routing.nodes.compressor') }),
     );
     const compressor = await canvas.findByRole('group', {
-      name: i18n.t('studioGraph.nodes.compressor.name'),
+      name: i18n.t('routing.nodes.compressor'),
     });
     await addRecorder(canvasElement);
     const recorder = await canvas.findByRole('group', { name: i18n.t('recorder.title') });
