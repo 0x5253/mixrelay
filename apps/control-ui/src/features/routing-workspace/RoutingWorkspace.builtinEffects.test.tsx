@@ -185,12 +185,10 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+// GraphEditSession unit tests cover every owner transition; these check the workspace
+// hands each canvas callback the owner it was created for.
 it.each([
   ['parameter', 'loading'],
-  ['preset', 'loading'],
-  ['add', 'loading'],
-  ['parameter', 'active'],
-  ['preset', 'active'],
   ['add', 'active'],
 ] as const)(
   'discards a previous canvas %s callback when the replacement engine is %s',
@@ -210,8 +208,8 @@ it.each([
     await ready();
     const stale = harness.canvas;
     if (!stale) throw new Error('Original canvas is not ready');
-    const parameterId = action === 'preset' ? 'preset' : 'decaySeconds';
-    const value = action === 'preset' ? 3 : 2.3;
+    const parameterId = 'decaySeconds';
+    const value = 2.3;
     if (action !== 'add') {
       // The stale callback must target a live, editable control for its discard to matter.
       const control = stale.model.nodes[0]?.appearance.parameterControls?.find(
@@ -256,33 +254,22 @@ it.each([
   },
 );
 
-it.each(['parameter', 'preset', 'add'] as const)(
-  'discards a late %s callback after the workspace unmounts',
-  async (action) => {
-    const { apply, parameter, view } = fixture();
-    await ready();
-    await addFromMenu('Reverb');
-    await waitFor(() => expect(apply).toHaveBeenCalledTimes(1));
-    const stale = harness.canvas;
-    const nodeId = stale?.model.nodes[0]?.id;
-    if (!stale || !nodeId) throw new Error('Original reverb is not ready');
-    apply.mockClear();
-    view.unmount();
-    act(() => {
-      if (action === 'add') stale.onAddNode?.('builtin:equalizer', { x: 44, y: 33 });
-      else
-        stale.onNodeParameterChange?.(
-          nodeId,
-          action === 'preset' ? 'preset' : 'decaySeconds',
-          action === 'preset' ? 3 : 2.3,
-        );
-    });
-    await act(async () => Promise.resolve());
-    expect(apply).not.toHaveBeenCalled();
-    expect(parameter).not.toHaveBeenCalled();
-    expect(screen.queryByRole('region', { name: 'Reverb' })).toBeNull();
-  },
-);
+it('discards a late canvas callback after the workspace unmounts', async () => {
+  const { apply, parameter, view } = fixture();
+  await ready();
+  await addFromMenu('Reverb');
+  await waitFor(() => expect(apply).toHaveBeenCalledTimes(1));
+  const stale = harness.canvas;
+  const nodeId = stale?.model.nodes[0]?.id;
+  if (!stale || !nodeId) throw new Error('Original reverb is not ready');
+  apply.mockClear();
+  view.unmount();
+  act(() => stale.onNodeParameterChange?.(nodeId, 'decaySeconds', 2.3));
+  await act(async () => Promise.resolve());
+  expect(apply).not.toHaveBeenCalled();
+  expect(parameter).not.toHaveBeenCalled();
+  expect(screen.queryByRole('region', { name: 'Reverb' })).toBeNull();
+});
 
 it('discards the previous graph owner knob callback while allowing the current graph to edit', async () => {
   const { port, apply, view } = fixture(empty, 'graph-1');
