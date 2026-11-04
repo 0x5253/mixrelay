@@ -62,13 +62,21 @@ impl StateRef {
                 reason: "digest must be 64 lowercase hexadecimal characters",
             });
         }
-        if self.byte_length > MAX_STATE_BYTES as u64 {
-            return Err(StateError::InvalidReference {
-                reason: "state exceeds the maximum byte length",
-            });
-        }
-        Ok(())
+        ensure_state_length(self.byte_length)
     }
+}
+
+/// The one size rule for a state blob, applied before any payload is hashed or written.
+///
+/// # Errors
+/// Returns [`StateError::InvalidReference`] for a length above [`MAX_STATE_BYTES`].
+pub(crate) fn ensure_state_length(byte_length: u64) -> Result<(), StateError> {
+    if byte_length > MAX_STATE_BYTES as u64 {
+        return Err(StateError::InvalidReference {
+            reason: "state exceeds the maximum byte length",
+        });
+    }
+    Ok(())
 }
 
 impl<'de> Deserialize<'de> for StateRef {

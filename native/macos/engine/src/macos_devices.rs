@@ -803,12 +803,12 @@ mod tests {
     fn native_owner_allocation_retirement_stress() {
         // Lazily registered diagnostics callsites allocate once, outside the measurement.
         drop(synthetic_output(1, 48_000, 48_000));
-        // All 512 owners exceed the 256-owner admission bound: every create below succeeds
+        // All 260 owners exceed the 256-owner admission bound: every create below succeeds
         // only because each retirement returned its slot. Allocation is counted on this one
         // thread, which creates and destroys every owner, so concurrent tests cannot perturb it.
         let allocation = allocation_counter::measure(|| {
             for channels in [1, 2, 8, 64] {
-                for _ in 0..128 {
+                for _ in 0..65 {
                     let (device, context) = synthetic_output(channels, 48_000, 48_000);
                     let native = Arc::downgrade(&device.native);
                     drop(device);

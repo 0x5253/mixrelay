@@ -8,8 +8,9 @@ use std::{
 use sha2::{Digest, Sha256};
 
 use crate::{
-    MAX_STATE_BYTES, StateBlobSink, StateBlobSource, StateError, StateRef,
+    StateBlobSink, StateBlobSource, StateError, StateRef,
     payload::{hash_exact, hex_digest},
+    reference::ensure_state_length,
 };
 
 #[cfg(unix)]
@@ -67,14 +68,10 @@ impl StateStore {
     /// Returns [`StateError`] when the value exceeds [`MAX_STATE_BYTES`], its private store
     /// directory is unsafe, or filesystem operations fail.
     pub fn put(&self, bytes: &[u8]) -> Result<StateRef, StateError> {
-        if bytes.len() > MAX_STATE_BYTES {
-            return Err(StateError::InvalidReference {
-                reason: "state exceeds the maximum byte length",
-            });
-        }
         let byte_length = u64::try_from(bytes.len()).map_err(|_| StateError::InvalidReference {
             reason: "state length does not fit the supported size range",
         })?;
+        ensure_state_length(byte_length)?;
         let reference = StateRef::new(hex_digest(&Sha256::digest(bytes)), byte_length)?;
         match self.verify(&reference) {
             Ok(()) => return Ok(reference),
@@ -134,11 +131,7 @@ impl StateStore {
         byte_length: u64,
         expected: Option<&StateRef>,
     ) -> Result<StateRef, StateError> {
-        if byte_length > MAX_STATE_BYTES as u64 {
-            return Err(StateError::InvalidReference {
-                reason: "state exceeds the maximum byte length",
-            });
-        }
+        ensure_state_length(byte_length)?;
         if let Some(reference) = expected {
             reference.validate()?;
             if reference.byte_length() != byte_length {
