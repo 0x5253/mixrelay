@@ -14,6 +14,7 @@ pub mod macos;
 mod shutdown;
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 mod startup;
+
 // Clippy recognizes test modules only by a plain `#[cfg(test)]`, so platform and lab
 // conditions stay in separate attributes.
 #[cfg(test)]

@@ -7,23 +7,32 @@ use mixrelay_driver_adapters::{FileSettingsStore, SystemLatencyGenerations};
 use mixrelay_driver_core::{DriverManager, DriverProcessId, DriverRuntime};
 
 pub(crate) fn open_manager(path: PathBuf) -> Result<DriverManager> {
+    let mut manager = DriverManager::open(
+        open_backend()?,
+        FileSettingsStore::new(path),
+        driver_runtime()?,
+    )
+    .context("restore Driver settings")?;
     #[cfg(target_os = "macos")]
-    let backend = {
-        let policy = transport_compatibility(std::env::var("MIXRELAY_TRANSPORT_COMPATIBILITY"))?;
-        let policy = mixrelay_macos_transport::control_inventory::ProducerPolicy::new(&policy)
-            .context("invalid transport compatibility policy")?;
-        mixrelay_macos_driver::MacDriver::open(policy).context("open macOS Driver")?
-    };
-    #[cfg(target_os = "linux")]
-    let backend = mixrelay_linux_driver::LinuxDriver::open().context("open PipeWire Driver")?;
-    let mut manager = DriverManager::open(backend, FileSettingsStore::new(path), driver_runtime()?)
-        .context("restore Driver settings")?;
-    #[cfg(target_os = "macos")]
-    manager.set_installed_version(installed_driver_version());
-    #[cfg(target_os = "linux")]
+    let installed_version = installed_driver_version();
     // The running service binary carries the Driver release, independently of the graph app.
-    manager.set_installed_version(Some(env!("CARGO_PKG_VERSION").into()));
+    #[cfg(target_os = "linux")]
+    let installed_version = Some(env!("CARGO_PKG_VERSION").into());
+    manager.set_installed_version(installed_version);
     Ok(manager)
+}
+
+#[cfg(target_os = "macos")]
+fn open_backend() -> Result<mixrelay_macos_driver::MacDriver> {
+    let policy = transport_compatibility(std::env::var("MIXRELAY_TRANSPORT_COMPATIBILITY"))?;
+    let policy = mixrelay_macos_transport::control_inventory::ProducerPolicy::new(&policy)
+        .context("invalid transport compatibility policy")?;
+    mixrelay_macos_driver::MacDriver::open(policy).context("open macOS Driver")
+}
+
+#[cfg(target_os = "linux")]
+fn open_backend() -> Result<mixrelay_linux_driver::LinuxDriver> {
+    mixrelay_linux_driver::LinuxDriver::open().context("open PipeWire Driver")
 }
 
 fn driver_runtime() -> Result<DriverRuntime> {

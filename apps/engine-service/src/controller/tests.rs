@@ -1,6 +1,7 @@
 //! The controller composed over real recorder sessions, processor state files and
 //! document files, observed through its control API.
 mod catalog_recording;
+mod control_api;
 mod endpoint_fixture;
 mod execution_power;
 mod fixture;
