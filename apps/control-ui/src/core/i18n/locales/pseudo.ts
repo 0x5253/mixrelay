@@ -155,8 +155,6 @@ const overrides = {
       device_unavailable: '[Audio device or stream unavailable; engine reachable.]',
       sample_rate_mismatch:
         '[Virtual device sample rate change could not be followed. Reapply a supported sample rate.]',
-      block_size_mismatch:
-        '[Virtual device buffer size change could not be followed. Reapply a supported buffer size.]',
       clock_not_synchronized: '[Clocks not synchronized]',
       invalid_format: '[Invalid audio format]',
     },
@@ -214,7 +212,6 @@ const overrides = {
         application_ambiguous: '[Session: application selection ambiguous]',
         device_unavailable: '[Session: device unavailable]',
         sample_rate_mismatch: '[Session: sample rates differ]',
-        block_size_mismatch: '[Session: buffer sizes differ]',
         clock_not_synchronized: '[Session: clocks not synchronized]',
         invalid_format: '[Session: invalid format]',
         reconfiguration_failed: '[Session: reconfiguration failed]',

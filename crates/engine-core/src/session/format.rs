@@ -1,4 +1,4 @@
-//! Stages saved preferences and serializes native session format transactions.
+//! Stages saved preferences and serializes session format changes.
 
 use super::{
     AdapterRuntimeStatus, Ordering, RenderFormat, SessionFormat, SessionFormatBackend,
@@ -6,8 +6,8 @@ use super::{
 };
 
 impl AdapterRuntimeStatus {
-    /// Startup/control thread only, before creating the DSP worker. Bad preferences or
-    /// failed native negotiation never prevent the local control service from starting.
+    /// Startup/control thread only, before creating the DSP worker. Bad or unsupported
+    /// preferences never prevent the local control service from starting.
     pub fn restore_preferences(
         &mut self,
         store: Result<std::sync::Arc<dyn SessionPreferences>, String>,
@@ -263,8 +263,8 @@ impl SessionFormatBackend for AdapterRuntimeStatus {
             self.preferred_format
                 .store(pack_format(requested), Ordering::Release);
         }
-        // Never call the native setter here. The caller publishes the prepared DSP plan
-        // before resuming; the saved last-accepted format prevents restart undoing the DAW.
+        // The caller publishes the prepared DSP plan before resuming; the saved
+        // last-accepted format prevents a restart from undoing the DAW's change.
         self.failed.store(false, Ordering::Release);
         Ok(())
     }

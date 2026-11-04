@@ -70,7 +70,6 @@ pub enum SessionIssue {
     ApplicationUnavailable,
     ApplicationAmbiguous,
     SampleRateMismatch,
-    BlockSizeMismatch,
     ClockNotSynchronized,
     InvalidFormat,
     ReconfigurationFailed,
@@ -97,9 +96,6 @@ pub struct AudioSessionStatus {
     pub clock_authority: ClockAuthority,
     /// None means unobserved, not that the device runs at the engine rate.
     pub observed_device_sample_rate: Option<u32>,
-    /// Actual native buffer size, independently observed; absent for rate-only adapters.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub observed_device_buffer_frames: Option<u32>,
     pub issue: Option<SessionIssue>,
     /// Known transport delay only. Never label this as measured round-trip latency.
     pub transport_latency_frames: Option<u32>,

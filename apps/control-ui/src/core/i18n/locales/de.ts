@@ -237,8 +237,6 @@ export const de = {
         'Ein Audiogerät ist nicht verfügbar oder sein Stream wurde gestoppt. Die Engine bleibt erreichbar.',
       sample_rate_mismatch:
         'Die Abtastratenänderung des virtuellen Geräts konnte nicht übernommen werden. Wenden Sie eine unterstützte Abtastrate erneut an.',
-      block_size_mismatch:
-        'Die Puffergrößenänderung des virtuellen Geräts konnte nicht übernommen werden. Wenden Sie eine unterstützte Puffergröße erneut an.',
       clock_not_synchronized: 'Die Audiotakte sind nicht synchronisiert.',
       invalid_format: 'Ungültiges Audioformat.',
     },
@@ -326,7 +324,6 @@ export const de = {
         application_ambiguous: 'Sitzung: Anwendungsauswahl nicht eindeutig',
         device_unavailable: 'Sitzung: Gerät nicht verfügbar',
         sample_rate_mismatch: 'Sitzung: Abtastraten unterschiedlich',
-        block_size_mismatch: 'Sitzung: Puffergrößen unterschiedlich',
         clock_not_synchronized: 'Sitzung: Takte nicht synchronisiert',
         invalid_format: 'Sitzung: ungültiges Format',
         reconfiguration_failed: 'Sitzung: Änderung fehlgeschlagen',

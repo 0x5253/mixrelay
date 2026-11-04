@@ -62,7 +62,7 @@ pub struct AdapterRuntimeStatus {
     // engine. Never read/write this lock from the real-time processing path.
     discovered_sample_rates: RwLock<Option<Vec<u32>>>,
     endpoint_observation: AtomicU32,
-    observed_device_format: AtomicU64,
+    observed_device_rate: AtomicU32,
     // Independent hardware routing authority must not overwrite the own virtual
     // endpoint observation. Bit 63 records selection even while unavailable.
     routing_clock_observation: AtomicU64,
@@ -91,7 +91,7 @@ impl AdapterRuntimeStatus {
             profile,
             discovered_sample_rates: RwLock::new(None),
             endpoint_observation: AtomicU32::new(0),
-            observed_device_format: AtomicU64::new(0),
+            observed_device_rate: AtomicU32::new(0),
             routing_clock_observation: AtomicU64::new(0),
             active_format: AtomicU64::new(pack_format(RenderFormat {
                 sample_rate: initial_format.sample_rate,
@@ -132,18 +132,10 @@ impl AdapterRuntimeStatus {
     }
 
     /// Called by control/monitor threads, never through an OS API in the audio callback.
+    /// The own endpoint publishes only its nominal rate; its buffer is the DSP's own.
     pub fn observe_device_rate(&self, rate: Option<u32>) {
-        self.observe_device_format(rate.map(|sample_rate| RenderFormat {
-            sample_rate,
-            block_frames: 0,
-        }));
-    }
-
-    /// Publishes a coherent observed native pair. Zero block frames means a rate-only
-    /// adapter; never infer the native buffer size from the DSP processing capacity.
-    pub fn observe_device_format(&self, format: Option<RenderFormat>) {
-        self.observed_device_format
-            .store(format.map_or(0, pack_format), Ordering::Release);
+        self.observed_device_rate
+            .store(rate.unwrap_or(0), Ordering::Release);
     }
 
     /// Selects an independent routing clock without relabeling the own HAL rate.
@@ -167,7 +159,7 @@ impl AdapterRuntimeStatus {
     /// The own endpoint's last observed nominal rate. Reading it does not query the
     /// platform and never substitutes the hardware routing rate.
     fn observed_endpoint_rate(&self) -> Option<u32> {
-        let rate = unpack_format(self.observed_device_format.load(Ordering::Acquire)).sample_rate;
+        let rate = self.observed_device_rate.load(Ordering::Acquire);
         (rate != 0).then_some(rate)
     }
 
@@ -258,8 +250,7 @@ impl AdapterRuntimeStatus {
 
     #[must_use]
     pub fn device_matches(&self, sample_rate: u32) -> bool {
-        unpack_format(self.observed_device_format.load(Ordering::Acquire)).sample_rate
-            == sample_rate
+        self.observed_device_rate.load(Ordering::Acquire) == sample_rate
     }
 
     /// Explicit engine-format control for adapters whose native streams negotiate their
@@ -450,10 +441,6 @@ impl AdapterRuntimeStatus {
     #[must_use]
     pub fn test_active_format(&self) -> RenderFormat {
         unpack_format(self.active_format.load(Ordering::Acquire))
-    }
-    #[must_use]
-    pub fn test_failed(&self) -> bool {
-        self.failed.load(Ordering::Acquire)
     }
 }
 

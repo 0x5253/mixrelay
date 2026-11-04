@@ -132,7 +132,6 @@ fn runtime_summary(response: Option<&Value>) -> Value {
     for key in [
         "discontinuities",
         "observedDeviceSampleRate",
-        "observedDeviceBufferFrames",
         "transportLatencyFrames",
     ] {
         if let Some(value) = session[key].as_u64() {

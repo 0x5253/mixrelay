@@ -233,8 +233,6 @@ export const ja = {
         'オーディオデバイスを利用できないか、そのストリームが停止しました。エンジンには引き続き接続できます。',
       sample_rate_mismatch:
         '仮想デバイスのサンプルレート変更に追従できませんでした。対応するサンプルレートを再適用してください。',
-      block_size_mismatch:
-        '仮想デバイスのバッファーサイズ変更に追従できませんでした。対応するバッファーサイズを再適用してください。',
       clock_not_synchronized: 'オーディオクロックが同期していません。',
       invalid_format: '無効なオーディオ形式です。',
     },
@@ -319,7 +317,6 @@ export const ja = {
         application_ambiguous: 'セッション: アプリを特定できません',
         device_unavailable: 'セッション: デバイスを利用できません',
         sample_rate_mismatch: 'セッション: サンプルレートが一致していません',
-        block_size_mismatch: 'セッション: バッファーサイズが一致していません',
         clock_not_synchronized: 'セッション: クロックが同期していません',
         invalid_format: 'セッション: 無効な形式',
         reconfiguration_failed: 'セッション: 設定変更に失敗',

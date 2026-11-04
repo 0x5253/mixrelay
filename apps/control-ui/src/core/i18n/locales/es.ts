@@ -231,8 +231,6 @@ export const es = {
         'Un dispositivo de audio no está disponible o su flujo se detuvo. Todavía se puede conectar con el motor.',
       sample_rate_mismatch:
         'No se pudo seguir el cambio de frecuencia de muestreo del dispositivo virtual. Vuelva a aplicar una frecuencia compatible.',
-      block_size_mismatch:
-        'No se pudo seguir el cambio de tamaño del búfer del dispositivo virtual. Vuelva a aplicar un tamaño de búfer compatible.',
       clock_not_synchronized: 'Los relojes de audio no están sincronizados.',
       invalid_format: 'Formato de audio no válido.',
     },
@@ -320,7 +318,6 @@ export const es = {
         application_ambiguous: 'Sesión: selección de aplicación ambigua',
         device_unavailable: 'Sesión: dispositivo no disponible',
         sample_rate_mismatch: 'Sesión: frecuencias de muestreo distintas',
-        block_size_mismatch: 'Sesión: tamaños de búfer distintos',
         clock_not_synchronized: 'Sesión: relojes no sincronizados',
         invalid_format: 'Sesión: formato no válido',
         reconfiguration_failed: 'Sesión: error de reconfiguración',

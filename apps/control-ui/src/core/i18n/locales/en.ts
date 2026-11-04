@@ -223,8 +223,6 @@ export const en = {
         'An audio device is unavailable or its stream stopped. The engine is still reachable.',
       sample_rate_mismatch:
         'The virtual device sample rate change could not be followed. Reapply a supported sample rate.',
-      block_size_mismatch:
-        'The virtual device buffer size change could not be followed. Reapply a supported buffer size.',
       clock_not_synchronized: 'Audio clocks are not synchronized.',
       invalid_format: 'Invalid audio format.',
     },
@@ -309,7 +307,6 @@ export const en = {
         application_ambiguous: 'Session: application selection ambiguous',
         device_unavailable: 'Session: device unavailable',
         sample_rate_mismatch: 'Session: sample rates differ',
-        block_size_mismatch: 'Session: buffer sizes differ',
         clock_not_synchronized: 'Session: clocks not synchronized',
         invalid_format: 'Session: invalid format',
         reconfiguration_failed: 'Session: reconfiguration failed',

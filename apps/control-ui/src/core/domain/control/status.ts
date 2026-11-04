@@ -65,14 +65,12 @@ export interface AudioSessionStatus {
   preferredFormat?: { sampleRate: number; blockFrames: number } | null;
   clockAuthority: 'engine_timer' | 'device' | 'audio_server' | 'host';
   observedDeviceSampleRate: number | null;
-  observedDeviceBufferFrames?: number | null;
   issue:
     | 'processing_failed'
     | 'application_unavailable'
     | 'application_ambiguous'
     | 'device_unavailable'
     | 'sample_rate_mismatch'
-    | 'block_size_mismatch'
     | 'clock_not_synchronized'
     | 'invalid_format'
     | 'reconfiguration_failed'

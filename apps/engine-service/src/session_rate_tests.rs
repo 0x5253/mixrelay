@@ -64,8 +64,6 @@ fn external_adoption_saves_the_shared_format() {
     status.activate_format(requested);
     status.resume();
     let saved = std::fs::read(&path).unwrap();
-    // A graph format change leaves the endpoint's own nominal rate alone.
-    assert_eq!(rate.load(Ordering::Acquire), 44_100);
     rate.store(96_000, Ordering::Release);
     let external = RenderFormat {
         sample_rate: 96_000,
@@ -87,7 +85,6 @@ fn external_adoption_saves_the_shared_format() {
     let session = status.status(external).audio_session.unwrap();
     assert_eq!(session.format.sample_rate, 96_000);
     assert_eq!(session.preferred_format.unwrap().sample_rate, 96_000);
-    assert_eq!(rate.load(Ordering::Acquire), 96_000);
     assert_ne!(std::fs::read(&path).unwrap(), saved);
     let restored = SessionPreferences::at(path.clone(), AudioBackendKind::CoreAudio)
         .load()
@@ -210,4 +207,30 @@ fn graph_only_control_does_not_invent_a_native_rate_change() {
     assert_eq!(session.format.sample_rate, 96_000);
     assert_eq!(session.observed_device_sample_rate, Some(48_000));
     assert!(session.capabilities.can_reconfigure_live);
+}
+
+#[test]
+fn a_failed_preference_save_rejects_the_change_and_keeps_the_stored_destination() {
+    let rate = endpoint(48_000);
+    let directory = mixrelay_test_support::FixtureDir::new("rate-commit-failure").unwrap();
+    let path = directory.join("session.json");
+    // A directory where the document belongs makes the save fail without touching it.
+    std::fs::create_dir(&path).unwrap();
+    let mut status = status(&rate);
+    status.test_set_preferences(Ok(std::sync::Arc::new(SessionPreferences::at(
+        path.clone(),
+        AudioBackendKind::CoreAudio,
+    ))));
+    let status = Arc::new(status);
+    let _worker = worker(&status, &rate, None);
+    let next = RenderFormat {
+        sample_rate: 48_000,
+        block_frames: 256,
+    };
+    assert!(status.reconfigure(next).is_err());
+    status.resume();
+    assert!(path.is_dir());
+    let session = status.status(next).audio_session.unwrap();
+    assert_eq!(session.issue, Some(SessionIssue::PreferencesUnavailable));
+    assert_eq!(session.preferred_format, None);
 }

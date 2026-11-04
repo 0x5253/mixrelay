@@ -222,8 +222,6 @@ export const koKR = {
         '오디오 장치를 사용할 수 없거나 스트림이 중단됐습니다. 엔진 연결은 유지되어 있습니다.',
       sample_rate_mismatch:
         '가상 장치의 샘플레이트 변경을 반영하지 못했습니다. 지원하는 샘플레이트를 다시 적용해 주세요.',
-      block_size_mismatch:
-        '가상 장치의 버퍼 크기 변경을 반영하지 못했습니다. 지원하는 버퍼 크기를 다시 적용해 주세요.',
       clock_not_synchronized: '오디오 클록이 동기화되지 않았습니다.',
       invalid_format: '유효하지 않은 오디오 포맷입니다.',
     },
@@ -308,7 +306,6 @@ export const koKR = {
         application_ambiguous: '세션: 앱 선택 모호함',
         device_unavailable: '세션: 장치 사용 불가',
         sample_rate_mismatch: '세션: 샘플레이트 불일치',
-        block_size_mismatch: '세션: 버퍼 크기 불일치',
         clock_not_synchronized: '세션: 클록 동기화 안 됨',
         invalid_format: '세션: 잘못된 포맷',
         reconfiguration_failed: '세션: 재설정 실패',

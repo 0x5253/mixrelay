@@ -234,8 +234,6 @@ export const fr = {
         'Un périphérique audio est indisponible ou son flux s’est arrêté. Le moteur reste joignable.',
       sample_rate_mismatch:
         'Le changement de fréquence d’échantillonnage du périphérique virtuel n’a pas pu être suivi. Réappliquez une fréquence prise en charge.',
-      block_size_mismatch:
-        'Le changement de taille du tampon du périphérique virtuel n’a pas pu être suivi. Réappliquez une taille prise en charge.',
       clock_not_synchronized: 'Les horloges audio ne sont pas synchronisées.',
       invalid_format: 'Format audio invalide.',
     },
@@ -322,7 +320,6 @@ export const fr = {
         application_ambiguous: 'Session : sélection de l’application ambiguë',
         device_unavailable: 'Session : périphérique indisponible',
         sample_rate_mismatch: 'Session : fréquences différentes',
-        block_size_mismatch: 'Session : tailles de tampon différentes',
         clock_not_synchronized: 'Session : horloges non synchronisées',
         invalid_format: 'Session : format invalide',
         reconfiguration_failed: 'Session : échec de la reconfiguration',

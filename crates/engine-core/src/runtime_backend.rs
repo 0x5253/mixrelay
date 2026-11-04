@@ -35,7 +35,7 @@ pub trait ProcessingControlBackend: Send + Sync {
     fn resume(&self) {}
 }
 
-/// Observes and negotiates native format on the control plane.
+/// Follows an external endpoint rate and changes the session format on the control plane.
 pub trait SessionFormatBackend: Send + Sync {
     /// Reads an explicitly selected external clock without writing its rate.
     fn external_sample_rate(&self) -> Option<u32> {

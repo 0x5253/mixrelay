@@ -16,7 +16,6 @@
     "application_unavailable",
     "application_ambiguous",
     "sample_rate_mismatch",
-    "block_size_mismatch",
     "clock_not_synchronized",
     "invalid_format",
     "reconfiguration_failed",

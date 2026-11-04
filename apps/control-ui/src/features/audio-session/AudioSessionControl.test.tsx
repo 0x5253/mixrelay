@@ -228,7 +228,7 @@ it.each(
 
 it.each(
   ['en', 'ko-KR', 'pseudo'].flatMap((language) =>
-    ([null, 'clock_not_synchronized', 'block_size_mismatch'] as const).map((issue) => ({
+    ([null, 'clock_not_synchronized', 'sample_rate_mismatch'] as const).map((issue) => ({
       language,
       issue,
     })),
@@ -241,8 +241,7 @@ it.each(
       endpointPreferencesUnavailable: true,
       format: { sampleRate: 48000, blockFrames: 128 },
       clockAuthority: 'engine_timer',
-      observedDeviceSampleRate: null,
-      observedDeviceBufferFrames: issue === 'block_size_mismatch' ? 512 : null,
+      observedDeviceSampleRate: issue === 'sample_rate_mismatch' ? 44100 : null,
       issue,
       transportLatencyFrames: null,
       capabilities: {

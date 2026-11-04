@@ -139,7 +139,6 @@
       },
       "clockAuthority": "device",
       "observedDeviceSampleRate": 48000,
-      "observedDeviceBufferFrames": 128,
       "issue": null,
       "transportLatencyFrames": 256,
       "capabilities": {

@@ -232,8 +232,6 @@ export const pt = {
         'Um dispositivo de áudio não está disponível ou o seu fluxo parou. Ainda é possível acessar o motor.',
       sample_rate_mismatch:
         'Não foi possível acompanhar a alteração da taxa de amostragem do dispositivo virtual. Aplique novamente uma taxa de amostragem compatível.',
-      block_size_mismatch:
-        'Não foi possível acompanhar a alteração do tamanho do buffer do dispositivo virtual. Aplique novamente um tamanho de buffer compatível.',
       clock_not_synchronized: 'Os relógios de áudio não estão sincronizados.',
       invalid_format: 'Formato de áudio inválido.',
     },
@@ -321,7 +319,6 @@ export const pt = {
         application_ambiguous: 'Sessão: seleção de aplicativo ambígua',
         device_unavailable: 'Sessão: dispositivo indisponível',
         sample_rate_mismatch: 'Sessão: taxas de amostragem diferentes',
-        block_size_mismatch: 'Sessão: tamanhos de buffer diferentes',
         clock_not_synchronized: 'Sessão: relógios não sincronizados',
         invalid_format: 'Sessão: formato inválido',
         reconfiguration_failed: 'Sessão: falha na reconfiguração',
