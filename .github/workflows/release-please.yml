@@ -16,7 +16,10 @@ jobs:
   release-please:
     if: github.repository == '0x5253/mixrelay'
     # RELEASE_PLEASE_TOKEN exists only in this environment, which opens on main alone.
-    environment: release-please
+    # Secrets only: the environment scopes the token, nothing is deployed.
+    environment:
+      name: release-please
+      deployment: false
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -37,7 +40,10 @@ jobs:
   product-version:
     needs: release-please
     if: needs.release-please.outputs.pr != ''
-    environment: release-please
+    # Secrets only: the environment scopes the token, nothing is deployed.
+    environment:
+      name: release-please
+      deployment: false
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:

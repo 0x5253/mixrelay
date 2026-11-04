@@ -66,8 +66,11 @@ jobs:
 
   macos:
     needs: source
-    # Signing secrets live only in this environment: v* tags, approval required.
-    environment: release
+    # Signing secrets live only in this environment, which opens on main and v* tags.
+    # Secrets only: the release is published as GitHub Release assets, not deployed.
+    environment:
+      name: release
+      deployment: false
     # Icon Composer assets compile only on a macOS 26 host with Xcode 26.
     runs-on: macos-26
     timeout-minutes: 180

@@ -41,8 +41,8 @@ test('signing assets are scoped to the macOS build and cleaned before uploading 
   const source = workflow('release');
   const macos = source.slice(source.indexOf('\n  macos:'), source.indexOf('\n  publish:'));
   assert.match(macos, /prepare-ci-macos-signing\.mjs --output candidate/);
-  assert.match(macos, /\n    environment: release\n/);
-  assert.equal(source.match(/environment: release\n/g).length, 1);
+  assert.match(macos, /\n    environment:\n      name: release\n      deployment: false\n/);
+  assert.equal(source.match(/environment:/g).length, 1);
   assert.doesNotMatch(source, /pull_request/);
   assert.match(macos, /if: always\(\)\n\s*run: node scripts\/prepare-ci-macos-signing\.mjs --cleanup/);
   assert.ok(macos.indexOf('--cleanup') < macos.indexOf('actions/upload-artifact@'));
@@ -112,7 +112,7 @@ test('pull requests build every product unsigned and never reach signing or nota
   // Only release.yml may reach the signing environment.
   for (const name of readdirSync(new URL('../.github/workflows/', import.meta.url)).filter(name => name.endsWith('.yml') && name !== 'release.yml')) {
     const other = readFileSync(new URL(`../.github/workflows/${name}`, import.meta.url), 'utf8');
-    assert.doesNotMatch(other, /environment: release\n/, name);
+    assert.doesNotMatch(other, /environment:\s*(?:\n\s+name:\s*)?release\n/, name);
     const secrets = [...other.matchAll(/secrets\.([A-Z0-9_]+)/g)].map(match => match[1]);
     assert.deepEqual([...new Set(secrets)], name === 'release-please.yml' ? ['RELEASE_PLEASE_TOKEN'] : [], name);
   }
@@ -143,7 +143,9 @@ test('only a merged release PR tags a version and starts the official build', ()
   assert.doesNotMatch(source.slice(0, source.indexOf('\n  release:\n')), /pnpm (install|check|build|test)|cargo |build-macos|build-linux|uses: \.\//);
   // The broad bot token is readable only by jobs inside the main-only release-please environment.
   const jobs = source.slice(source.indexOf('\njobs:\n')).split(/\n  (?=[a-z][a-z0-9_-]*:\n)/).slice(1);
-  for (const job of jobs.filter(job => job.includes('RELEASE_PLEASE_TOKEN'))) assert.match(job, /\n    environment: release-please\n/);
+  for (const job of jobs.filter(job => job.includes('RELEASE_PLEASE_TOKEN'))) {
+    assert.match(job, /\n    environment:\n      name: release-please\n      deployment: false\n/);
+  }
   assert.doesNotMatch(source, /github\.token/);
   const config = JSON.parse(readFileSync(new URL('../release-please-config.json', import.meta.url), 'utf8')).packages['.'];
   assert.equal(config['pull-request-title-pattern'], 'chore: release ${version}');
