@@ -9,14 +9,14 @@ const compare = (source, suite, truncated = false) => compareSuiteSource({ sourc
   suiteTree: suite.map(({ path, mode, sha, type }) => `${mode} ${type} ${sha}\t${path}\0`).join(''),
 });
 
-test('frozen installers can be exercised by changed suite code and documentation', () => {
+test('frozen installers can be exercised by changed suite code', () => {
   const runtime = entry('apps/engine-service/src/main.rs');
   const result = compare([runtime, entry('scripts/e2e/installed.mjs')],
-    [runtime, entry('scripts/e2e/installed.mjs', 'b'.repeat(40)), entry('docs/validation/current.md'),
-      entry('.github/workflows/installed-evidence.yml')]);
+    [runtime, entry('scripts/e2e/installed.mjs', 'b'.repeat(40)),
+      entry('.github/workflows/candidate-e2e.yml')]);
   assert.equal(result.productSourceMatches, true);
-  assert.deepEqual(result.changedSuiteFiles, ['.github/workflows/installed-evidence.yml',
-    'docs/validation/current.md', 'scripts/e2e/installed.mjs']);
+  assert.deepEqual(result.changedSuiteFiles, ['.github/workflows/candidate-e2e.yml',
+    'scripts/e2e/installed.mjs']);
 });
 
 test('runtime, package recipes and build tools require installers from the changed product source', () => {

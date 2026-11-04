@@ -222,8 +222,6 @@ export const zhHant = {
   },
   common: {
     close: '關閉',
-    showPassword: '顯示密碼',
-    hidePassword: '隱藏密碼',
     appName: 'MixRelay',
     beta: '非公開預覽',
     cancel: '取消',

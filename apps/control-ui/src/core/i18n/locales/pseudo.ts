@@ -165,8 +165,6 @@ const overrides = {
   },
   common: {
     close: '[!! Close report !!]',
-    showPassword: '⟦ Show password with a longer translated label ⟧',
-    hidePassword: '⟦ Hide password with a longer translated label ⟧',
     appName: '[!! MixRelay !!]',
     beta: '[!! Prïvåté préviéw—expanded !!]',
     cancel: '[!! Cåñcél !!]',

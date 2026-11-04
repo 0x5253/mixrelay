@@ -238,8 +238,6 @@ export const ru = {
   },
   common: {
     close: 'Закрыть',
-    showPassword: 'Показать пароль',
-    hidePassword: 'Скрыть пароль',
     appName: 'MixRelay',
     beta: 'Закрытая предварительная версия',
     cancel: 'Отмена',
