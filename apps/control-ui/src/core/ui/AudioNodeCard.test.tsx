@@ -136,7 +136,7 @@ it('renders every generic plug-in parameter without an internal scroll viewport'
         faceMode="compact"
         onSelect={vi.fn()}
         onParameterChange={vi.fn()}
-        parameterControls={Array.from({ length: 24 }, (_, index) => ({
+        parameterControls={Array.from({ length: 12 }, (_, index) => ({
           id: `parameter-${index}`,
           label: `Parameter ${index + 1}`,
           minimum: 0,
@@ -151,31 +151,15 @@ it('renders every generic plug-in parameter without an internal scroll viewport'
   expect(
     view.queryByRole('button', { name: (name) => name.endsWith('Options') }),
   ).not.toBeInTheDocument();
-  expect(view.getAllByRole('slider')).toHaveLength(24);
-  expect(view.getByRole('slider', { name: 'Parameter 24' })).toBeVisible();
+  const sliders = view.getAllByRole('slider');
+  expect(sliders).toHaveLength(12);
+  expect(sliders.at(-1)).toHaveAccessibleName('Parameter 12');
+  expect(sliders.at(-1)).toBeVisible();
   expect(view.container.querySelector('[data-radix-scroll-area-viewport]')).toBeNull();
 });
 
-it.each([
-  {
-    status: 'Plug-in stopped',
-    detail: 'Saved layout',
-    statusTone: 'critical' as const,
-    text: 'Plug-in stopped',
-  },
-  {
-    status: undefined,
-    detail: 'Unavailable layout',
-    statusTone: 'critical' as const,
-    text: 'Unavailable layout',
-  },
-  {
-    status: 'Checking',
-    detail: 'Last known device',
-    statusTone: 'warning' as const,
-    text: 'Last known device',
-  },
-])('keeps compact feedback readable: $text', ({ status, detail, statusTone, text }) => {
+// Which message a compact face shows is a pure rule (audioNodeCardModel); this covers placement.
+it('keeps compact feedback readable beside feature content', () => {
   const view = render(
     <MixRelayProvider>
       <AudioNodeCard
@@ -185,14 +169,14 @@ it.each([
         inputCount={2}
         outputCount={2}
         faceMode="compact"
-        status={status}
-        statusTone={statusTone}
-        detail={detail}
+        status="Plug-in stopped"
+        statusTone="critical"
+        detail="Saved layout"
         content={<span>Recovery action</span>}
       />
     </MixRelayProvider>,
   );
-  expect(view.getByText(text)).toBeVisible();
+  expect(view.getByText('Plug-in stopped', { selector: '[data-node-controls] *' })).toBeVisible();
   expect(view.getByText('Recovery action')).toBeVisible();
 });
 

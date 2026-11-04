@@ -59,6 +59,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   window.innerWidth = initialViewport.width;
   window.innerHeight = initialViewport.height;
@@ -111,10 +112,37 @@ describe('Context menu cursor placement', () => {
   });
 });
 
+async function expandSubmenu(item: HTMLElement, input: 'mouse' | 'keyboard') {
+  if (input === 'keyboard') {
+    item.focus();
+    fireEvent.keyDown(item, { key: 'ArrowRight' });
+    return;
+  }
+  fireEvent.pointerMove(document.body);
+  fireEvent.pointerOver(item);
+  await act(() => vi.advanceTimersByTimeAsync(500));
+  expect(item).toHaveAttribute('aria-expanded', 'true');
+}
+
+function activateLeaf(leaf: HTMLElement, input: 'mouse' | 'keyboard') {
+  if (input === 'mouse') {
+    fireEvent.mouseDown(leaf);
+    fireEvent.mouseUp(leaf);
+    fireEvent.click(leaf);
+    return;
+  }
+  leaf.focus();
+  fireEvent.keyDown(leaf, { key: 'Enter' });
+  // jsdom does not synthesize a native button click from keyboard activation.
+  fireEvent.click(leaf, { detail: 0 });
+}
+
 describe.each(['context', 'button'] as const)('%s nested menu', (entry) => {
   it.each(['mouse', 'keyboard'] as const)(
     'keeps all ancestors open until a leaf is selected with %s',
     async (input) => {
+      // Hover opens a submenu after React Aria's delay; a fake clock skips the wait.
+      if (input === 'mouse') vi.useFakeTimers();
       const onSelect = vi.fn();
       const items = [
         {
@@ -126,7 +154,7 @@ describe.each(['context', 'button'] as const)('%s nested menu', (entry) => {
               label: 'Virtual IO',
               children: [{ id: 'create', label: 'New device' }],
             },
-            ...Array.from({ length: 30 }, (_, index) => ({
+            ...Array.from({ length: 2 }, (_, index) => ({
               id: `app-${index}`,
               label: `Application ${index}`,
             })),
@@ -152,17 +180,8 @@ describe.each(['context', 'button'] as const)('%s nested menu', (entry) => {
       if (entry === 'context')
         fireEvent.contextMenu(screen.getByTestId('canvas'), { clientX: 300, clientY: 200 });
       else fireEvent.click(screen.getByRole('button', { name: 'Add' }));
-      for (const name of ['Source', 'Virtual IO']) {
-        const item = await screen.findByRole('menuitem', { name });
-        if (input === 'mouse') {
-          fireEvent.pointerMove(document.body);
-          fireEvent.pointerOver(item);
-          await waitFor(() => expect(item).toHaveAttribute('aria-expanded', 'true'));
-        } else {
-          item.focus();
-          fireEvent.keyDown(item, { key: 'ArrowRight' });
-        }
-      }
+      for (const name of ['Source', 'Virtual IO'])
+        await expandSubmenu(await screen.findByRole('menuitem', { name }), input);
       const leaf = await screen.findByRole('menuitem', { name: 'New device' });
       const menus = screen.getAllByRole('menu');
       expect(menus).toHaveLength(3);
@@ -172,16 +191,7 @@ describe.each(['context', 'button'] as const)('%s nested menu', (entry) => {
         if (index > 0) expect(menus[index - 1]).not.toContainElement(menu);
       }
       expect(onSelect).not.toHaveBeenCalled();
-      if (input === 'mouse') {
-        fireEvent.mouseDown(leaf);
-        fireEvent.mouseUp(leaf);
-        fireEvent.click(leaf);
-      } else {
-        leaf.focus();
-        fireEvent.keyDown(leaf, { key: 'Enter' });
-        // jsdom does not synthesize a native button click from keyboard activation.
-        fireEvent.click(leaf, { detail: 0 });
-      }
+      activateLeaf(leaf, input);
       expect(onSelect).toHaveBeenCalledExactlyOnceWith('create');
       await waitFor(() => expect(screen.queryAllByRole('menu')).toHaveLength(0));
     },

@@ -9,8 +9,12 @@ import {
 import { audioGraphEdgeEndpoints, namedAudioPorts } from './portNames';
 import {
   applyAudioNodeLayers,
+  pinMeasuredWidthOnly,
+  portVerticalOffset,
   reconcileAudioFlowEdges,
   reconcileAudioFlowNodes,
+  selectFlowEdges,
+  toGraphConnection,
 } from './reactFlowAdapter';
 
 function largeGraph(size: number): AudioGraphModel {
@@ -311,4 +315,64 @@ it('keeps generated port ordinals unique and stable when ports reorder', () => {
     Object.fromEntries(namedAudioPorts(list).map(({ port, name }) => [port.id, name]));
   expect(names(ports)).toEqual({ a: 'Main (1)', b: 'Main (3)', c: 'Main (2)' });
   expect(names([...ports].reverse())).toEqual(names(ports));
+});
+
+it('reads a React Flow connection as a graph connection, with absent handles as empty ids', () => {
+  expect(
+    toGraphConnection({ source: 'a', sourceHandle: 'out', target: 'b', targetHandle: 'in' }),
+  ).toEqual({ sourceNodeId: 'a', sourcePortId: 'out', targetNodeId: 'b', targetPortId: 'in' });
+  expect(
+    toGraphConnection({
+      id: 'e',
+      source: 'a',
+      sourceHandle: null,
+      target: 'b',
+      targetHandle: null,
+    }),
+  ).toEqual({ sourceNodeId: 'a', sourcePortId: '', targetNodeId: 'b', targetPortId: '' });
+});
+
+it('offsets a preview port from the dragged anchor by their measured centers on that side', () => {
+  const node = {
+    internals: {
+      handleBounds: {
+        source: [
+          { id: 'out-1', y: 10, height: 10 },
+          { id: 'out-2', y: 40, height: 20 },
+        ],
+        target: [{ id: 'in-1', y: 5, height: 10 }],
+      },
+    },
+  };
+  expect(portVerticalOffset(node, 'output', 'out-2', 'out-1')).toBe(35);
+  expect(portVerticalOffset(node, 'output', 'out-1', 'out-2')).toBe(-35);
+  expect(portVerticalOffset(node, 'input', 'out-2', 'in-1')).toBe(0);
+  expect(portVerticalOffset(node, 'output', 'out-2', 'missing')).toBe(0);
+  expect(portVerticalOffset({ internals: {} }, 'output', 'out-2', 'out-1')).toBe(0);
+});
+
+it('adds edges to the selection while keeping unchanged edges', () => {
+  const edges = reconcileAudioFlowEdges([], largeGraph(3));
+  const [first, second] = edges;
+  assert(first && second);
+  const already = [{ ...first, selected: true }, second];
+  const selected = selectFlowEdges(already, new Set(['edge-0', 'edge-1']));
+  expect(selected.map((edge) => edge.selected)).toEqual([true, true]);
+  expect(selected[0]).toBe(already[0]);
+  expect(selectFlowEdges(edges, new Set())[1]).toBe(second);
+});
+
+it('pins only the measured width of a user resize so the height follows Options', () => {
+  const resize = {
+    type: 'dimensions' as const,
+    id: 'a',
+    dimensions: { width: 300, height: 400 },
+    setAttributes: true,
+  };
+  const measured = { type: 'dimensions' as const, id: 'a', dimensions: { width: 1, height: 2 } };
+  const select = { type: 'select' as const, id: 'a', selected: true };
+  const [pinned, kept, other] = pinMeasuredWidthOnly([resize, measured, select]);
+  expect(pinned).toEqual({ ...resize, setAttributes: 'width' });
+  expect(kept).toBe(measured);
+  expect(other).toBe(select);
 });

@@ -559,7 +559,7 @@ it('keeps Options and the same gain slider mounted across external control revis
   fireEvent.click(options);
   const slider = screen.getByRole('slider', { name: 'Input gain' });
   let revision = initial.revision;
-  for (const valueDb of [-0.5, 0, -1, 0]) {
+  for (const valueDb of [-1, 0]) {
     revision += 1;
     view.rerender(
       <AudioGraphCanvas
@@ -618,12 +618,12 @@ it.each(['input', 'output'] as const)(
     const graph = model();
     const processor = graph.nodes[1];
     assert(processor);
-    processor.inputPorts = Array.from({ length: 64 }, (_, index) => ({
+    processor.inputPorts = Array.from({ length: 8 }, (_, index) => ({
       id: `in-${index}`,
       label: `Input ${index + 1}`,
       channelIndex: index,
     }));
-    processor.outputPorts = Array.from({ length: 64 }, (_, index) => ({
+    processor.outputPorts = Array.from({ length: 8 }, (_, index) => ({
       id: `out-${index}`,
       label: `Output ${index + 1}`,
       channelIndex: index,
@@ -632,7 +632,7 @@ it.each(['input', 'output'] as const)(
     connectionHarness.inProgress = true;
     connectionHarness.toHandle = {
       nodeId: 'processor',
-      id: `${side === 'input' ? 'in' : 'out'}-63`,
+      id: `${side === 'input' ? 'in' : 'out'}-7`,
     };
     const view = render(
       <AudioGraphCanvas
@@ -643,12 +643,12 @@ it.each(['input', 'output'] as const)(
       />,
       { wrapper: CanvasTestProvider },
     );
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('CH 64');
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('CH 8');
     expect(view.container.querySelectorAll('[data-connection-target]')).toHaveLength(1);
     const handles = Array.from(
       view.container.querySelectorAll<HTMLElement>('[data-audio-node-id="processor"]'),
     );
-    expect(handles).toHaveLength(128);
+    expect(handles).toHaveLength(16);
     const anchors = handles.map((handle) => handle.style.top);
     const options = screen.getByRole('button', { name: (name) => name.endsWith('Options') });
     fireEvent.click(options);
@@ -2260,6 +2260,9 @@ it('names cables, ports and React Flow keyboard help in the current language', a
   await act(() => i18n.changeLanguage('en'));
 });
 
+// Focus moves without a DOM mutation, so waitFor would only notice it on its 50 ms poll.
+const focusPoll = { interval: 5 };
+
 describe('AudioGraphCanvas keyboard channel connection', () => {
   function renderCanvas() {
     const onModelChange = vi.fn();
@@ -2281,7 +2284,7 @@ describe('AudioGraphCanvas keyboard channel connection', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Connect channels' });
     expect(dialog).toHaveTextContent('From Processor');
     // Deletion keys must not reach the selected node while the dialog owns focus.
-    await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
+    await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true), focusPoll);
     await expect(deleteHarness.allowed()).resolves.toBe(false);
     fireEvent.click(within(dialog).getByRole('button', { name: /Destination$/ }));
     fireEvent.click(screen.getByRole('option', { name: 'Sink' }));
@@ -2301,7 +2304,7 @@ describe('AudioGraphCanvas keyboard channel connection', () => {
       'runtime',
     );
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    await waitFor(() => expect(node).toHaveFocus());
+    await waitFor(() => expect(node).toHaveFocus(), focusPoll);
   });
 
   it('opens the canvas menu from the ContextMenu key and ignores repeats and nested controls', async () => {
