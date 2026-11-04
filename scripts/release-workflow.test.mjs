@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 const workflow = name => readFileSync(new URL(`../.github/workflows/${name}.yml`, import.meta.url), 'utf8');
 
@@ -180,11 +184,40 @@ test('each pull request workflow reports one required check that skipped work pa
     const jobs = [...source.slice(source.indexOf('\njobs:\n')).matchAll(/^  ([a-z][a-z0-9_-]*):$/gm)].map(match => match[1]).filter(job => job !== 'passed');
     assert.deepEqual(passed.match(/needs: \[([^\]]+)\]/)[1].split(', ').sort(), jobs.sort(), name);
     // Reads every job of the run: a matrix leg that never got a runner is invisible through `needs`.
-    assert.match(passed, /\n    permissions:\n      actions: read\n/, name);
-    assert.match(passed, /actions\/runs\/\$GITHUB_RUN_ID\/attempts\/\$GITHUB_RUN_ATTEMPT\/jobs" --paginate/, name);
+    assert.match(passed, /\n    permissions:\n      actions: read\n      contents: read\n/, name);
+    assert.match(passed, /run: bash scripts\/ci\/require-jobs-passed\.sh\n/, name);
     assert.equal(passed.match(/SELF: (.+)\n/)[1], passed.match(/\n    name: (.+)\n/)[1], name);
-    assert.ok(passed.includes(`$3 != "success" && $3 != "skipped"`), name);
     assert.doesNotMatch(passed, /needs\.\*\.result/, name);
+  }
+  const gate = readFileSync(new URL('ci/require-jobs-passed.sh', import.meta.url), 'utf8');
+  assert.match(gate, /actions\/runs\/\$GITHUB_RUN_ID\/attempts\/\$GITHUB_RUN_ATTEMPT\/jobs" --paginate/);
+  assert.ok(gate.includes(`$3 != "success" && $3 != "skipped"`));
+  // A reusable workflow's jobs can still read as in progress when `needs` releases the gate.
+  assert.match(gate, /for _ in \$\(seq 30\); do[\s\S]*\$2 != "completed"[\s\S]*sleep 10\ndone/);
+});
+
+test('the required-check gate waits for jobs to settle and rejects any unfinished or failed job', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'jobs-gate-'));
+  try {
+    const bin = join(directory, 'bin');
+    mkdirSync(bin);
+    const responses = join(directory, 'responses');
+    // Each call to the fake gh prints the next prepared listing.
+    writeFileSync(join(bin, 'gh'), `#!/bin/sh\nn=$(cat "${responses}/count" 2>/dev/null || echo 0)\nnext=$((n+1))\n[ -f "${responses}/$next" ] || next=$n\necho $next > "${responses}/count"\ncat "${responses}/$next"\n`, { mode: 0o755 });
+    writeFileSync(join(bin, 'sleep'), '#!/bin/sh\n', { mode: 0o755 });
+    const gate = fileURLToPath(new URL('ci/require-jobs-passed.sh', import.meta.url));
+    const run = (...listings) => {
+      rmSync(responses, { recursive: true, force: true });
+      mkdirSync(responses);
+      listings.forEach((listing, index) => writeFileSync(join(responses, String(index + 1)), listing));
+      return spawnSync('bash', [gate], { encoding: 'utf8', env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, SELF: 'Gate',
+        GITHUB_REPOSITORY: 'o/r', GITHUB_RUN_ID: '1', GITHUB_RUN_ATTEMPT: '1' } });
+    };
+    assert.equal(run('a\tin_progress\tnull\n', 'a\tcompleted\tsuccess\nb\tcompleted\tskipped\n').status, 0);
+    assert.notEqual(run('a\tcompleted\tsuccess\nb\tcompleted\tcancelled\n').status, 0);
+    assert.notEqual(run('a\tqueued\tnull\n').status, 0);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
   }
 });
 
