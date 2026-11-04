@@ -1,79 +1,68 @@
+//! The Linux controller owns its bundled engine as a child process and replaces it when it
+//! exits, until Quit confirms teardown.
 use std::{
     path::{Path, PathBuf},
-    sync::{
-        Mutex,
-        atomic::{AtomicBool, Ordering},
-    },
-    time::Duration,
+    process::ExitStatus,
+    sync::{Arc, Mutex, MutexGuard},
 };
 
 use crate::native_text::{
     current_locale,
     dialogs::{Text, detail, text},
 };
-use mixrelay_desktop_core::timing::AsyncDelay as _;
+use mixrelay_desktop_core::lifecycle::{ExitObservation, shutdown::ShutdownGate};
 use mixrelay_engine_supervisor::ControllerEngine;
-use mixrelay_time::MonotonicClock as _;
 use tauri::Manager;
 
 /// Owns only this controller's bundled engine, not an existing localhost listener.
 pub(crate) struct EngineLifecycle {
     engine: Mutex<ControllerEngine>,
-    quitting: AtomicBool,
-    finished: AtomicBool,
+    shutdown: Arc<ShutdownGate>,
 }
 
 impl EngineLifecycle {
     pub(crate) fn start() -> Result<Self, String> {
         tauri::async_runtime::block_on(crate::linux_service::start_driver())
             .map_err(|error| error.to_string())?;
-        let executable = std::env::current_exe().map_err(|error| error.to_string())?;
-        let path = bundled_engine_path(&executable)?;
-        let engine = ControllerEngine::start(&path, &mixrelay_time::StdClock::new())
-            .map_err(|error| detail(current_locale(), Text::BundledEngineStartFailed, error))?;
+        let engine =
+            ControllerEngine::start(&bundled_engine()?, &mixrelay_time::StdClock::new())
+                .map_err(|error| detail(current_locale(), Text::BundledEngineStartFailed, error))?;
         Ok(Self {
             engine: Mutex::new(engine),
-            quitting: AtomicBool::new(false),
-            finished: AtomicBool::new(false),
+            shutdown: Arc::default(),
         })
     }
 
     pub(crate) fn exit_requested(&self, app: &tauri::AppHandle, api: &tauri::ExitRequestApi) {
-        if self.finished.load(Ordering::Acquire) {
-            return;
-        }
-        api.prevent_exit();
-        if self.quitting.swap(true, Ordering::AcqRel) {
-            return;
-        }
-        app.state::<crate::control_proxy::ControlProxyClient>()
-            .close_admission();
-        let app = app.clone();
-        tauri::async_runtime::spawn(async move {
-            match finish_engine(&app).await {
-                Ok(warning) => {
-                    if let Some(warning) = warning {
-                        rfd::AsyncMessageDialog::new()
-                            .set_title("MixRelay")
-                            .set_description(&warning)
-                            .set_level(rfd::MessageLevel::Error)
-                            .set_buttons(rfd::MessageButtons::OkCustom(
-                                text(current_locale(), Text::Ok).into(),
-                            ))
-                            .show()
-                            .await;
-                    }
-                    app.state::<Self>().finished.store(true, Ordering::Release);
-                    app.exit(0);
-                }
-                Err(error) => {
-                    app.state::<Self>().quitting.store(false, Ordering::Release);
-                    tracing::error!(%error, "owned audio engine shutdown failed");
-                    crate::status_menu::shutdown_failed(&app).await;
-                }
-            }
-        });
+        crate::engine_exit::on_exit_requested(
+            app,
+            api,
+            &self.shutdown,
+            || {
+                app.state::<crate::control_proxy::ControlProxyClient>()
+                    .close_admission();
+                let app = app.clone();
+                async move { finish_engine(&app).await }
+            },
+            "owned audio engine shutdown failed",
+        );
     }
+
+    fn engine(&self) -> Result<MutexGuard<'_, ControllerEngine>, String> {
+        self.engine
+            .lock()
+            .map_err(|_| text(current_locale(), Text::EngineOwnershipLockFailed).to_owned())
+    }
+
+    /// The owned engine's exit status, or `None` while it runs.
+    fn engine_exit(&self) -> Result<Option<ExitStatus>, String> {
+        self.engine()?.try_wait().map_err(|error| error.to_string())
+    }
+}
+
+fn bundled_engine() -> Result<PathBuf, String> {
+    let executable = std::env::current_exe().map_err(|error| error.to_string())?;
+    bundled_engine_path(&executable)
 }
 
 fn bundled_engine_path(desktop: &Path) -> Result<PathBuf, String> {
@@ -99,22 +88,8 @@ pub(crate) fn monitor(app: &tauri::AppHandle) {
     tauri::async_runtime::spawn(async move {
         let lifecycle = app.state::<EngineLifecycle>();
         crate::engine_supervision::supervise(
-            || {
-                lifecycle.finished.load(Ordering::Acquire)
-                    || lifecycle.quitting.load(Ordering::Acquire)
-            },
-            || {
-                lifecycle
-                    .engine
-                    .lock()
-                    .map_err(|_| text(current_locale(), Text::EngineOwnershipLockFailed).to_owned())
-                    .and_then(|mut engine| {
-                        engine
-                            .try_wait()
-                            .map(|status| status.is_some())
-                            .map_err(|error| error.to_string())
-                    })
-            },
+            || lifecycle.shutdown.stopping(),
+            || lifecycle.engine_exit().map(|status| status.is_some()),
             || {
                 let app = app.clone();
                 async move {
@@ -128,31 +103,21 @@ pub(crate) fn monitor(app: &tauri::AppHandle) {
     });
 }
 
+/// Replaces the exited engine unless Quit began meanwhile; returns whether commands resumed.
 async fn restart_owned_engine(app: &tauri::AppHandle) -> Result<bool, String> {
     let lifecycle = app.state::<EngineLifecycle>();
     let client = app.state::<crate::control_proxy::ControlProxyClient>();
     client.drain().await?;
-    if lifecycle.quitting.load(Ordering::Acquire) {
+    if lifecycle.shutdown.stopping() {
         return Ok(false);
     }
-    {
-        let mut engine = lifecycle
-            .engine
-            .lock()
-            .map_err(|_| text(current_locale(), Text::EngineOwnershipLockFailed).to_owned())?;
-        if engine
-            .try_wait()
-            .map_err(|error| error.to_string())?
-            .is_none()
-        {
-            return Err(text(current_locale(), Text::PreviousEngineRunning).to_owned());
-        }
+    if lifecycle.engine_exit()?.is_none() {
+        return Err(text(current_locale(), Text::PreviousEngineRunning).to_owned());
     }
     crate::linux_service::start_driver()
         .await
         .map_err(|error| error.to_string())?;
-    let executable = std::env::current_exe().map_err(|error| error.to_string())?;
-    let path = bundled_engine_path(&executable)?;
+    let path = bundled_engine()?;
     let replacement = tauri::async_runtime::spawn_blocking(move || {
         ControllerEngine::start(&path, &mixrelay_time::StdClock::new())
     })
@@ -160,11 +125,8 @@ async fn restart_owned_engine(app: &tauri::AppHandle) -> Result<bool, String> {
     .map_err(|error| error.to_string())?
     .map_err(|error| error.to_string())?;
     {
-        let mut engine = lifecycle
-            .engine
-            .lock()
-            .map_err(|_| text(current_locale(), Text::EngineOwnershipLockFailed).to_owned())?;
-        if lifecycle.quitting.load(Ordering::Acquire) {
+        let mut engine = lifecycle.engine()?;
+        if lifecycle.shutdown.stopping() {
             // Dropping the uninstalled child closes only its private shutdown lease.
             return Ok(false);
         }
@@ -181,41 +143,26 @@ async fn finish_engine(app: &tauri::AppHandle) -> Result<Option<String>, String>
     app.state::<crate::control_proxy::ControlProxyClient>()
         .drain()
         .await?;
-    {
-        let lifecycle = app.state::<EngineLifecycle>();
-        lifecycle
-            .engine
-            .lock()
-            .map_err(|_| text(current_locale(), Text::EngineOwnershipLockFailed))?
-            .request_shutdown();
-    }
-    let timer = crate::async_time::TokioDelay::new(mixrelay_time::StdClock::new());
-    let mut notice = mixrelay_desktop_core::lifecycle::ExitNotice::new(&timer);
-    loop {
-        let status = app
-            .state::<EngineLifecycle>()
-            .engine
-            .lock()
-            .map_err(|_| text(current_locale(), Text::EngineOwnershipLockFailed))?
-            .try_wait()
-            .map_err(|error| error.to_string())?;
-        if let Some(status) = status {
-            return Ok((!status.success())
-                .then(|| detail(current_locale(), Text::EngineFinalizationFailed, status)));
-        }
-        if notice.due(&timer) {
-            tracing::warn!("waiting for owned audio engine finalization");
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.set_title(text(current_locale(), Text::EngineStoppingTitle));
-            }
-        }
-        timer
-            .wait_until(mixrelay_time::Deadline::after(
-                timer.now(),
-                Duration::from_millis(100),
-            ))
-            .await;
-    }
+    let lifecycle = app.state::<EngineLifecycle>();
+    lifecycle.engine()?.request_shutdown();
+    let status =
+        mixrelay_desktop_core::lifecycle::await_engine_exit(
+            &crate::async_time::TokioDelay::new(mixrelay_time::StdClock::new()),
+            || {
+                std::future::ready(lifecycle.engine_exit().map(|status| {
+                    status.map_or(ExitObservation::Pending, ExitObservation::Stopped)
+                }))
+            },
+            || {
+                tracing::warn!("waiting for owned audio engine finalization");
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.set_title(text(current_locale(), Text::EngineStoppingTitle));
+                }
+            },
+        )
+        .await?;
+    Ok((!status.success())
+        .then(|| detail(current_locale(), Text::EngineFinalizationFailed, status)))
 }
 
 #[cfg(test)]

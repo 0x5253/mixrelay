@@ -1,4 +1,4 @@
-use super::super::forward_transport_error;
+use super::super::forward::transport_error;
 use super::*;
 use std::{fs, time::Instant};
 use tokio::io::{AsyncBufReadExt as _, AsyncReadExt as _, AsyncWriteExt as _, BufReader};
@@ -19,7 +19,7 @@ async fn an_interrupted_initial_catalog_read_reports_retryable_transport_without
         .exchange("control_get_graph_catalog", Value::Null)
         .await
         .unwrap_err();
-    let result = forward_transport_error("control_get_graph_catalog", &failure).unwrap();
+    let result = transport_error("control_get_graph_catalog", &failure).unwrap();
     assert_eq!(result["status"], 503);
     assert_eq!(result["body"]["code"], "control_unavailable");
     assert_eq!(
@@ -46,12 +46,12 @@ fn catalog_transport_classification_keeps_security_protocol_and_mutation_failure
     ] {
         let reason = failure.to_string();
         assert_eq!(
-            forward_transport_error("control_get_graph_catalog", &failure),
+            transport_error("control_get_graph_catalog", &failure),
             Err(Value::String(reason))
         );
     }
     assert!(
-        forward_transport_error(
+        transport_error(
             "control_mutate_graph_catalog",
             &ConnectionFailure::ResponseTimeout
         )
@@ -76,7 +76,7 @@ async fn a_missing_socket_retains_its_os_error_and_unsent_delivery() {
         .await
         .unwrap_err();
     assert!(matches!(failure, ConnectionFailure::Connect(_)));
-    let response = forward_transport_error("control_get_graph_catalog", &failure).unwrap();
+    let response = transport_error("control_get_graph_catalog", &failure).unwrap();
     let diagnostic = &response["body"]["parameters"]["diagnostic"];
     assert_eq!(diagnostic["platform"], std::env::consts::OS);
     assert_eq!(diagnostic["boundary"], "editor_runtime");

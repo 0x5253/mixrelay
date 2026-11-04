@@ -1,3 +1,4 @@
+//! One executable runs as the graph editor or as the background runtime.
 use std::ffi::OsStr;
 
 /// The editor and the background runtime share one signed app bundle.
@@ -21,6 +22,20 @@ impl AppMode {
         if self == Self::Service {
             config.app.windows.clear();
         }
+    }
+
+    /// Each mode keeps its own log files.
+    pub(crate) fn log_role(self) -> &'static str {
+        match self {
+            Self::Graph => "desktop",
+            Self::Service => "driver-runtime",
+        }
+    }
+
+    /// The Linux editor quits with its window; elsewhere closing only hides it. The runtime
+    /// never quits from a window.
+    pub(crate) fn quits_on_main_window_close(self) -> bool {
+        cfg!(target_os = "linux") && self == Self::Graph
     }
 }
 
@@ -47,6 +62,15 @@ mod tests {
         assert_eq!(
             AppMode::detect([OsStr::new("--driver")].into_iter()),
             AppMode::Graph
+        );
+    }
+
+    #[test]
+    fn closing_a_window_never_quits_the_runtime() {
+        assert!(!AppMode::Service.quits_on_main_window_close());
+        assert_eq!(
+            AppMode::Graph.quits_on_main_window_close(),
+            cfg!(target_os = "linux")
         );
     }
 
