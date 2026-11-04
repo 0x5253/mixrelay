@@ -113,6 +113,15 @@ opt-level = 3
 [profile.dev.package.mixrelay-audio-recorder]
 opt-level = 3
 
+# The realtime transport owns callback queues and frame-time rings sized for the release
+# FIFO; filling and draining them unoptimized costs tens of milliseconds per owner.
+[profile.dev.package.mixrelay-macos-transport]
+opt-level = 3
+
+# Built-in effects are realtime DSP; their contract tests run seconds of audio per effect.
+[profile.dev.package.mixrelay-render]
+opt-level = 3
+
 [profile.dev.package.rubato]
 opt-level = 3
 

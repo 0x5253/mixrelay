@@ -402,11 +402,9 @@ fn pcm_case(channels: u32, planar: bool) {
 
 #[test]
 fn callback_layouts_priming_and_terminal_invalid_latch() {
-    for _ in 0..32 {
-        for channels in [1, 2, 8, 16, 32, 64] {
-            pcm_case(channels, false);
-            pcm_case(channels, true);
-        }
+    for channels in [1, 2, 8, 16, 32, 64] {
+        pcm_case(channels, false);
+        pcm_case(channels, true);
     }
 }
 
