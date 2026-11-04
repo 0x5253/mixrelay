@@ -11,7 +11,6 @@ import { NodeOptionsSection } from './NodeOptionsSection';
 import { NodeMuteButton, NodePowerButton } from './NodeSignalControls';
 import { PathField } from './PathField';
 import { StateButton } from './StateButton';
-import { TextField } from './TextField';
 import { ThemePicker } from './ThemePicker';
 import { TransportButton } from './TransportButton';
 
@@ -100,12 +99,6 @@ function FieldAndNodeActions({ disabled, onAction }: { disabled: boolean; onActi
           disabled={disabled}
           onChoose={onAction}
         />
-        <TextField
-          label="Password"
-          type="password"
-          defaultValue="sample-password"
-          disabled={disabled}
-        />
         <ThemePicker />
       </section>
       <section aria-label="Node actions" className={styles.row}>
@@ -189,15 +182,6 @@ export const KeyboardOwners: Story = {
     await userEvent.keyboard('{Enter}');
     await userEvent.keyboard(' ');
     await expect(args.onAction).toHaveBeenCalledTimes(buttons.length * 2 + 2);
-    const eye = fields.getByRole('button', {
-      name: `Password: ${i18n.t('common.showPassword')}`,
-    });
-    eye.focus();
-    await userEvent.keyboard('{Enter}');
-    await expect(eye).toHaveAttribute('aria-pressed', 'true');
-    await userEvent.keyboard(' ');
-    await expect(eye).toHaveAttribute('aria-pressed', 'false');
-    await expect(fields.getByLabelText('Password')).toHaveAttribute('type', 'password');
     const theme = fields
       .getAllByRole('button')
       .find((button) => ['menu', 'true'].includes(button.getAttribute('aria-haspopup') ?? ''));

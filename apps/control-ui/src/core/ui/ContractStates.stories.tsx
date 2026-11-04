@@ -112,13 +112,6 @@ function FieldStates({ long = false }: { long?: boolean }) {
         disabled
         error="장치 변경 요청 중에는 편집할 수 없습니다."
       />
-      <TextField
-        type="password"
-        label="샘플 키"
-        defaultValue="example-key-only"
-        description="표시·숨기기만 확인하는 샘플입니다."
-      />
-      <TextField type="password" label="비활성 샘플 키" defaultValue="example-key-only" disabled />
       <SelectField
         label="채널 처리"
         value={selected}

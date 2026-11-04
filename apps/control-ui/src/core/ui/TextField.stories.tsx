@@ -11,7 +11,6 @@ const meta = {
     value: 'Studio',
     description: '저장할 그래프 이름을 입력합니다.',
     error: '',
-    type: 'text',
     disabled: false,
     readOnly: false,
     required: false,
@@ -25,7 +24,6 @@ const meta = {
     },
     description: { control: 'text' },
     error: { control: 'text', description: '실패 이유와 입력의 invalid 관계.' },
-    type: { control: 'select', options: ['text', 'password', 'email', 'search'] },
     disabled: { control: 'boolean' },
     readOnly: { control: 'boolean' },
     required: { control: 'boolean' },
@@ -71,9 +69,6 @@ export const Playground: Story = {};
 export const Invalid: Story = { args: { error: '이름을 저장하지 못했습니다. 입력은 보존됩니다.' } };
 export const ReadOnly: Story = { args: { readOnly: true } };
 export const Disabled: Story = { args: { disabled: true } };
-export const Password: Story = {
-  args: { label: '샘플 키', value: 'example-only', type: 'password' },
-};
 export const Editing: Story = {
   play: async ({ canvasElement, args }) => {
     const input = within(canvasElement).getByRole('textbox', { name: String(args.label) });

@@ -244,8 +244,6 @@ export const fr = {
   },
   common: {
     close: 'Fermer',
-    showPassword: 'Afficher le mot de passe',
-    hidePassword: 'Masquer le mot de passe',
     appName: 'MixRelay',
     beta: 'Aperçu privé',
     cancel: 'Annuler',
