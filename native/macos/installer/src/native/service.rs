@@ -25,13 +25,12 @@ use super::{
 
 mod engine;
 mod payload;
+mod plan;
 mod runtime;
 
 use payload::{installed_hal_version, read_bounded_file};
-use runtime::{
-    activate_driver, activate_restored_driver, capture_service_process, wait_for_driver_ready,
-    wait_for_service_exit,
-};
+use plan::{RegistrationRestore, recoverable_engine_registration};
+use runtime::{activate_driver, activate_restored_driver, stop_driver, wait_for_driver_ready};
 
 /// The actual macOS `ServiceLifecycle` boundary for the coordinated transaction.
 pub struct NativeServiceLifecycle {
@@ -261,9 +260,7 @@ impl ServiceLifecycle for NativeServiceLifecycle {
             ));
         }
         if matches!(current, RegistrationState::Loaded { .. }) {
-            let process = capture_service_process(&current)?;
-            launchctl::bootout(&launchctl::DRIVER)?;
-            wait_for_service_exit(process)?;
+            stop_driver(&current)?;
             if Self::current_registration()? != RegistrationState::Absent {
                 return Err(NativeError::LaunchdState(
                     "Driver bootout returned but the verified service remains registered",
@@ -392,9 +389,7 @@ impl ServiceLifecycle for NativeServiceLifecycle {
                     "cannot drain a registered Driver without its verified payload",
                 ));
             }
-            let process = capture_service_process(&current)?;
-            launchctl::bootout(&launchctl::DRIVER)?;
-            wait_for_service_exit(process)?;
+            stop_driver(&current)?;
         }
         if Self::current_registration()? != RegistrationState::Absent {
             return Err(NativeError::LaunchdState(
@@ -453,23 +448,22 @@ impl ServiceLifecycle for NativeServiceLifecycle {
         if snapshot.engine_was_registered {
             engine::register().map_err(NativeError::UserData)?;
         }
-        match &snapshot.registration {
-            RegistrationState::Absent => {
-                if self.coreaudio_reload_attempted {
-                    if snapshot.hal_was_present {
-                        hal_reload::reload_and_wait(
-                            self.hal_hosts.as_ref(),
-                            &self.hal_mapping_paths,
-                            wait_for_hal_presence,
-                        )?;
-                    } else {
-                        hal_reload::reload_coreaudio()?;
-                        wait_for_hal_absence()?;
-                    }
-                }
-                Ok(())
+        match RegistrationRestore::plan(
+            &snapshot.registration,
+            self.coreaudio_reload_attempted,
+            snapshot.hal_was_present,
+        ) {
+            RegistrationRestore::Nothing => Ok(()),
+            RegistrationRestore::ReloadRestoredHal => hal_reload::reload_and_wait(
+                self.hal_hosts.as_ref(),
+                &self.hal_mapping_paths,
+                wait_for_hal_presence,
+            ),
+            RegistrationRestore::ReloadWithoutHal => {
+                hal_reload::reload_coreaudio()?;
+                wait_for_hal_absence()
             }
-            RegistrationState::Loaded { .. } => {
+            RegistrationRestore::BootstrapRestoredJob => {
                 let expected =
                     snapshot
                         .launchd_configuration
@@ -505,34 +499,4 @@ fn require_reload_approval(approved: bool) -> Result<(), NativeError> {
         return Err(NativeError::CoreAudioReloadApprovalRequired);
     }
     Ok(())
-}
-
-// Removal can drain an exact-identity job even after its definition was deleted.
-// Rollback can re-register it only when the original definition existed.
-fn recoverable_engine_registration(
-    operation: crate::OperationKind,
-    registered: bool,
-    definition_present: bool,
-) -> Result<bool, NativeError> {
-    if operation == crate::OperationKind::Install && registered && !definition_present {
-        return Err(NativeError::LaunchdState(
-            "audio engine registration has no validated owned definition",
-        ));
-    }
-    Ok(registered && definition_present)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn removal_accepts_a_deleted_engine_definition_without_inventing_rollback_payload() {
-        assert!(
-            !recoverable_engine_registration(crate::OperationKind::Remove, true, false).unwrap()
-        );
-        assert!(
-            recoverable_engine_registration(crate::OperationKind::Install, true, false).is_err()
-        );
-        assert!(recoverable_engine_registration(crate::OperationKind::Remove, true, true).unwrap());
-    }
 }
