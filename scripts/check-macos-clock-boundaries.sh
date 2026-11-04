@@ -13,4 +13,4 @@ cargo test -p mixrelay-engine-service --lib native_callback_and_hal_contracts --
 cargo test -p mixrelay-macos-transport --lib device_io:: -- --nocapture
 cargo test -p mixrelay-macos-process-tap --lib -- --nocapture
 cargo test -p mixrelay-engine-service --lib macos_devices_tests -- --nocapture
-node scripts/lab/native-check.mjs cargo test -p mixrelay-desktop-shell macos_audio::clock_pump::tests -- --nocapture
+node scripts/lab/native-check.mjs cargo test -p mixrelay-desktop-shell macos_audio::clock_pump:: -- --nocapture

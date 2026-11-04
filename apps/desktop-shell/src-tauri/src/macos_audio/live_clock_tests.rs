@@ -1,11 +1,19 @@
 //! Opt-in real process tap + actual desktop SRC pump + isolated v2 registry.
 //! Never attaches to the installed engine's graph or a physical/default output.
-use super::super::*;
 use super::*;
+use crate::macos_audio::{
+    application_source::NativePump,
+    clock_pump::{self, PumpMailbox},
+    process_tap::{ProcessTap, TapReader},
+};
+use mixrelay_macos_transport::endpoint_identity::{endpoint_uid, parse_endpoint_id};
+use mixrelay_time::StdClock;
 use std::{
     io::{BufRead, BufReader, Write},
     process::{Child, Command, Stdio},
-    time::Instant,
+    sync::{Arc, atomic::Ordering},
+    thread::JoinHandle,
+    time::{Duration, Instant},
 };
 
 #[repr(C)]
@@ -137,7 +145,38 @@ impl Drop for ToneOwner {
     }
 }
 
-fn measure_phase(registry: &RegistryOwner, rate: u32, capture: &CaptureProbeSession) -> Clock {
+/// Stops and joins the pump before the registry it writes into is destroyed, even when an
+/// assertion unwinds first.
+struct PumpOwner {
+    mailbox: Arc<PumpMailbox<NativePump>>,
+    worker: Option<JoinHandle<Option<String>>>,
+}
+impl PumpOwner {
+    fn start(capture: TapReader, transport: ApplicationSourceTransport) -> Self {
+        let mailbox = Arc::new(PumpMailbox::<NativePump>::default());
+        let worker_mailbox = Arc::clone(&mailbox);
+        let worker = std::thread::spawn(move || {
+            clock_pump::run::<NativePump>(capture, transport, 2, &worker_mailbox, StdClock::new())
+                .err()
+        });
+        Self {
+            mailbox,
+            worker: Some(worker),
+        }
+    }
+    /// The pump's failure, if it stopped with one.
+    fn stop(&mut self) -> Option<String> {
+        self.mailbox.stop.store(true, Ordering::Release);
+        self.worker.take().and_then(|worker| worker.join().unwrap())
+    }
+}
+impl Drop for PumpOwner {
+    fn drop(&mut self) {
+        let _ = self.stop();
+    }
+}
+
+fn measure_phase(registry: &RegistryOwner, rate: u32, capture: &ProcessTap) -> Clock {
     // The three prepared FIFOs together retain less than two seconds at every
     // tested rate. A larger gap identifies a stale epoch or a different host origin.
     const MAX_RETAINED_NANOS: u64 = 2_000_000_000;
@@ -199,39 +238,12 @@ fn live_owned_application_tap_v2_src_rate_changes() {
     let _tone = ToneOwner::start();
     let (registry, transport) = RegistryOwner::create();
     let capture = Arc::new(
-        CaptureProbeSession::start("io.mixrelay.test-virtual-clock-source", None)
+        ProcessTap::start("io.mixrelay.test-virtual-clock-source", None)
             .expect("owned process tap; permission denial requires user action, never reset"),
     );
     assert_eq!(capture.stats().channels, 2);
     let worker_capture = capture.acquire_reader().expect("sole fixture PCM reader");
-    let stop = Arc::new(AtomicBool::new(false));
-    let worker_stop = stop.clone();
-    let failure = Arc::new(Mutex::new(None));
-    let worker_failure = failure.clone();
-    let handoff = Arc::new(capture_transaction::CaptureHandoff::default());
-    let worker_handoff = Arc::clone(&handoff);
-    let playback = Arc::new(capture_transaction::CaptureHandoff::default());
-    let worker_playback = Arc::clone(&playback);
-    let worker = std::thread::spawn(move || {
-        if let Err(error) = clock_pump::run_with_handoff(
-            worker_capture,
-            transport,
-            2,
-            PumpControl {
-                stop: &worker_stop,
-                capture: &worker_handoff,
-                playback: &worker_playback,
-            },
-        ) {
-            *worker_failure.lock().unwrap() = Some(error);
-        }
-    });
-    let pump = AudioPump {
-        stop,
-        worker: Some(worker),
-        handoff,
-        playback,
-    };
+    let mut pump = PumpOwner::start(worker_capture, transport);
     let first = measure_phase(&registry, 44_100, &capture);
     let second = measure_phase(&registry, 48_000, &capture);
     let third = measure_phase(&registry, 44_100, &capture);
@@ -257,8 +269,7 @@ fn live_owned_application_tap_v2_src_rate_changes() {
         health.sample_time, health.host_time, health.clock_discontinuities
     );
     assert!(health.sample_time.is_finite() && health.host_time != 0);
-    drop(pump);
-    let failure = failure.lock().unwrap().clone();
+    let failure = pump.stop();
     assert!(failure.is_none(), "pump failed: {failure:?}");
     println!("LIVE application component qualification passed; installed engine graph untouched");
 }

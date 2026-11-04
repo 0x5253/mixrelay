@@ -1,6 +1,6 @@
 //! Application selector capabilities and forwarding validation before tap creation.
 
-use super::CaptureProbeSession;
+use super::process_tap::ProcessTap;
 use mixrelay_audio_graph::{ApplicationCaptureRequest, SourcePlaybackPolicy};
 use mixrelay_audio_io::{
     ApplicationCaptureBackend, ApplicationCaptureCapabilities, ApplicationSelectorKind,
@@ -8,6 +8,19 @@ use mixrelay_audio_io::{
 };
 use mixrelay_macos_transport::endpoint_identity::{endpoint_uid, parse_endpoint_id};
 use std::collections::BTreeSet;
+
+pub(super) const FORWARDING_IDENTITY_REQUIRED: &str =
+    "forwarding requires an exact MixRelay endpoint identity";
+
+/// The native UID of the `MixRelay` device a request forwards to; `None` unless the
+/// request names an exact endpoint.
+pub(super) fn forwarding_device_uid(request: &ApplicationCaptureRequest) -> Option<String> {
+    request
+        .forwarding_endpoint
+        .as_ref()
+        .and_then(|endpoint| parse_endpoint_id(endpoint.as_str()))
+        .map(endpoint_uid)
+}
 
 pub(super) struct MacApplicationCaptureBackend {
     capabilities: ApplicationCaptureCapabilities,
@@ -29,7 +42,7 @@ impl Default for MacApplicationCaptureBackend {
 }
 
 impl ApplicationCaptureBackend for MacApplicationCaptureBackend {
-    type Session = CaptureProbeSession;
+    type Session = ProcessTap;
 
     fn capabilities(&self) -> &ApplicationCaptureCapabilities {
         &self.capabilities
@@ -47,21 +60,17 @@ impl ApplicationCaptureBackend for MacApplicationCaptureBackend {
         let target_device_uid = match request.source_playback {
             SourcePlaybackPolicy::Preserve => None,
             SourcePlaybackPolicy::MuteWhileCaptured => {
-                let id = request
-                    .forwarding_endpoint
-                    .as_ref()
-                    .and_then(|endpoint| parse_endpoint_id(endpoint.as_str()))
-                    .ok_or_else(|| HostAudioBackendError::CapabilityUnavailable {
-                        capability: "forwarding requires an exact MixRelay endpoint identity"
-                            .to_owned(),
-                    })?;
-                Some(endpoint_uid(id))
+                Some(forwarding_device_uid(request).ok_or_else(|| {
+                    HostAudioBackendError::CapabilityUnavailable {
+                        capability: FORWARDING_IDENTITY_REQUIRED.to_owned(),
+                    }
+                })?)
             }
         };
-        CaptureProbeSession::prepare_selector(&request.selector, target_device_uid.as_deref())
-            .and_then(|session| {
-                session.start_native()?;
-                Ok(session)
+        ProcessTap::prepare_selector(&request.selector, target_device_uid.as_deref())
+            .and_then(|tap| {
+                tap.start_native()?;
+                Ok(tap)
             })
             .map_err(|error| HostAudioBackendError::BackendFailure {
                 message: error.to_string(),
