@@ -225,8 +225,6 @@ pub(super) fn controller_with_inventory(
         },
         document,
     )
-    // Busy rejections are asserted, not timed; a short admission keeps them fast.
-    .with_control_admission(std::time::Duration::from_millis(10))
 }
 
 pub(super) fn settings(controller: &EngineGraphController) -> VirtualEndpointSettings {

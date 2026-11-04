@@ -41,13 +41,14 @@ impl AsyncDelay for FastTime {
     }
 }
 
-/// Connects within `timeout` of fast time. Each exchange with an in-process fixture server
-/// keeps seconds of real headroom, so only the connection budget can expire.
+/// The product's connection options within `timeout` of fast time. Each exchange with an
+/// in-process fixture server keeps seconds of real headroom, so only the connection budget
+/// can expire.
 fn options(timeout: Duration) -> runtime::ConnectOptions<'static> {
     runtime::ConnectOptions {
-        compatibility: compatibility(),
         timeout,
         exchange_timeout: Duration::from_mins(5),
+        ..connect_options()
     }
 }
 
@@ -153,10 +154,38 @@ async fn exited_first_launch_is_retried_during_the_same_explicit_connection() {
 }
 
 #[tokio::test]
+async fn product_connection_wiring_reaches_an_answering_runtime() {
+    let directory = tempfile::tempdir().unwrap();
+    let (connection, executable) = fixture(directory.path(), "exit 2");
+    let server = tokio::spawn(serve_connection(
+        UnixListener::bind(directory.path().join("control.sock")).unwrap(),
+        200,
+    ));
+    let stages = std::sync::Mutex::new(Vec::new());
+    assert_eq!(
+        connect(
+            &connection,
+            &Launcher {
+                executable: &executable,
+                admission: || Ok(true),
+            },
+            |stage| stages.lock().unwrap().push(stage)
+        )
+        .await
+        .unwrap(),
+        RuntimeStatus::Ready
+    );
+    assert_eq!(*stages.lock().unwrap(), [ConnectStage::PreparingEngine]);
+    server.abort();
+}
+
+#[tokio::test]
 async fn busy_owner_and_a_living_failed_engine_are_never_duplicated() {
     let directory = tempfile::tempdir().unwrap();
-    let (connection, executable) = fixture(directory.path(), "touch launched");
+    let (connection, executable) = fixture(directory.path(), "exit 2");
     let time = FastTime::new();
+    // `Starting` is reported before every launch, so its absence proves none happened.
+    let stages = std::sync::Mutex::new(Vec::new());
     assert_eq!(
         runtime::connect_until_ready(
             &connection,
@@ -166,13 +195,13 @@ async fn busy_owner_and_a_living_failed_engine_are_never_duplicated() {
             },
             &time,
             options(Duration::from_secs(1)),
-            |_| {}
+            |stage| stages.lock().unwrap().push(stage)
         )
         .await
         .unwrap(),
         RuntimeStatus::Unavailable
     );
-    assert!(!directory.path().join("launched").exists());
+    assert!(stages.lock().unwrap().is_empty());
     let server = tokio::spawn(serve_connection(
         UnixListener::bind(directory.path().join("control.sock")).unwrap(),
         503,
@@ -193,7 +222,6 @@ async fn busy_owner_and_a_living_failed_engine_are_never_duplicated() {
         .unwrap(),
         RuntimeStatus::Unavailable
     );
-    assert!(!directory.path().join("launched").exists());
     // The answering runtime owns its engine start; it is reported once, never relaunched.
     assert_eq!(*stages.lock().unwrap(), [ConnectStage::PreparingEngine]);
     server.abort();
@@ -202,7 +230,7 @@ async fn busy_owner_and_a_living_failed_engine_are_never_duplicated() {
 #[tokio::test]
 async fn a_slow_but_healthy_engine_is_reported_as_being_prepared() {
     let directory = tempfile::tempdir().unwrap();
-    let (connection, executable) = fixture(directory.path(), "touch launched");
+    let (connection, executable) = fixture(directory.path(), "exit 2");
     let listener = UnixListener::bind(directory.path().join("control.sock")).unwrap();
     let time = std::sync::Arc::new(FastTime::new());
     let server_time = std::sync::Arc::clone(&time);
@@ -244,7 +272,6 @@ async fn a_slow_but_healthy_engine_is_reported_as_being_prepared() {
         RuntimeStatus::Ready
     );
     assert_eq!(*stages.lock().unwrap(), [ConnectStage::PreparingEngine]);
-    assert!(!directory.path().join("launched").exists());
     server.await.unwrap();
 }
 

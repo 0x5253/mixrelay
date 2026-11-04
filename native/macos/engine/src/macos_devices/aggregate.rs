@@ -132,8 +132,8 @@ mod tests {
     use super::super::{
         DeviceSet, MacDevices,
         device::Device,
+        device_fixture::wait_until,
         simulated::{CAPTURED, SimulatedHost},
-        wait_until,
         worker_retirement::WORKERS,
     };
     use super::*;

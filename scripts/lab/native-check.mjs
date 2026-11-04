@@ -110,8 +110,8 @@ export function buildPlan(os, mode) {
     commands.push(os === "darwin"
       ? ["cargo", "test", ...platformOptions, "--lib"]
       : ["bash", "scripts/check-lv2-boundary.sh"]);
-    // Platform adapters live in the engine binary, not its portable library.
-    // Omitting --bins silently skips platform adapter tests.
+    // Platform adapters are tested in the engine service library; --bins keeps the
+    // unit tests that remain in binary targets, such as the macOS installer apps.
     commands.push(["cargo", "test", "--locked", "--workspace", "--lib", "--bins"]);
     if (os === "linux") {
       commands.push(["bash", "native/linux/pipewire/tests/run-stream-buffer-metadata.sh"]);

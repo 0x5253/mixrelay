@@ -184,4 +184,6 @@ fn combine_error(slot: &mut Option<io::Error>, error: &io::Error, operation: &st
 }
 
 #[cfg(test)]
+mod reaper_fixture;
+#[cfg(test)]
 mod tests;

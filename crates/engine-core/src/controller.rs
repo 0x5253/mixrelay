@@ -127,8 +127,9 @@ impl EngineGraphController {
     }
 
     /// Replaces how long a node control waits for a graph mutation before reporting busy.
+    #[cfg(test)]
     #[must_use]
-    pub fn with_control_admission(mut self, wait: Duration) -> Self {
+    pub(crate) fn with_control_admission(mut self, wait: Duration) -> Self {
         self.control_admission = wait;
         self
     }

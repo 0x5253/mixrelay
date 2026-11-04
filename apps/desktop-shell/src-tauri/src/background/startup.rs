@@ -94,17 +94,11 @@ pub(crate) async fn runtime_connect(
             return Ok(RuntimeStatus::Incompatible);
         }
     }
-    let status = runtime::connect_until_ready(
+    let status = connect(
         connection.inner(),
         &Launcher {
             executable: &executable,
             admission: controller_admission_available,
-        },
-        &crate::async_time::TokioDelay::new(mixrelay_time::StdClock::new()),
-        runtime::ConnectOptions {
-            compatibility: compatibility(),
-            timeout: START_TIMEOUT,
-            exchange_timeout: EXCHANGE_TIMEOUT,
         },
         report,
     )
@@ -116,6 +110,30 @@ pub(crate) async fn runtime_connect(
     }
     publish_readiness(&app, status);
     Ok(status)
+}
+
+/// Connects explicitly in wall-clock time within the product's start and exchange budgets.
+async fn connect<A: Fn() -> std::io::Result<bool>>(
+    connection: &Connection,
+    launcher: &Launcher<'_, A>,
+    report: impl FnMut(ConnectStage),
+) -> std::io::Result<RuntimeStatus> {
+    runtime::connect_until_ready(
+        connection,
+        launcher,
+        &crate::async_time::TokioDelay::new(mixrelay_time::StdClock::new()),
+        connect_options(),
+        report,
+    )
+    .await
+}
+
+fn connect_options() -> runtime::ConnectOptions<'static> {
+    runtime::ConnectOptions {
+        compatibility: compatibility(),
+        timeout: START_TIMEOUT,
+        exchange_timeout: EXCHANGE_TIMEOUT,
+    }
 }
 
 fn connection_gate(app: &tauri::AppHandle) -> std::sync::Arc<tokio::sync::Mutex<()>> {

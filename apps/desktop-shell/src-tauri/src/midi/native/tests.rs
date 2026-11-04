@@ -1,16 +1,5 @@
 use super::*;
 
-/// An open input port without a native connection, delivering into `mailbox`.
-pub(in crate::midi) fn port(device: Device, mailbox: Arc<Mailbox>) -> Port<()> {
-    Port {
-        device,
-        mailbox,
-        native_id: "20:0".into(),
-        token: 1,
-        _connection: (),
-    }
-}
-
 fn discovered(address: &str) -> Discovered {
     vec![(
         Device {

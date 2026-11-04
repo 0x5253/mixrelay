@@ -19,7 +19,7 @@ fn overflow_during_a_two_port_drain_preserves_transport_order() {
     let mut ports = port(Arc::clone(&first));
     ports.insert(
         "second".into(),
-        native::tests::port(bindings[1].control.device.clone(), Arc::clone(&second)),
+        native::port_fixture::port(bindings[1].control.device.clone(), Arc::clone(&second)),
     );
     for _ in 0..1024 {
         first.receive(&[0x90, 60, 100]);
@@ -177,7 +177,7 @@ fn cancelling_learn_discards_pending_gain_and_requires_pickup_again() {
 fn port(mailbox: Arc<mixrelay_midi_control::mailbox::Mailbox>) -> BTreeMap<String, Port<()>> {
     BTreeMap::from([(
         "controller".into(),
-        native::tests::port(
+        native::port_fixture::port(
             Device {
                 id: "controller".into(),
                 name: "Controller".into(),

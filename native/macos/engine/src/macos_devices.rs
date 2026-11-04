@@ -42,8 +42,6 @@ mod worker_retirement;
 
 use aggregate::Aggregate;
 use device::Device;
-#[cfg(test)]
-use device_fixture::wait_until;
 pub(crate) use device_set::DeviceSet;
 use format::PublishedFormat;
 use handoff::{Publication, ResourceConsumer, ResourceHandoff};

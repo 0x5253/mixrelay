@@ -226,4 +226,6 @@ fn alsa_identity(name: &str) -> String {
 }
 
 #[cfg(test)]
-pub(super) mod tests;
+pub(super) mod port_fixture;
+#[cfg(test)]
+mod tests;
