@@ -26,7 +26,10 @@ RUN node /usr/local/lib/node_modules/npm/bin/npm-cli.js install --global pnpm@11
 WORKDIR /workspace
 COPY --chown=lab:lab . .
 USER lab
-ENV CARGO_HOME=/home/lab/.cargo CARGO_BUILD_JOBS=2 CI=true
+# Every build downloads its crates; hosted runners intermittently reset or truncate
+# crates.io transfers. Retry harder and use one HTTP/1.1 stream per transfer.
+ENV CARGO_HOME=/home/lab/.cargo CARGO_BUILD_JOBS=2 CI=true \
+    CARGO_NET_RETRY=10 CARGO_HTTP_MULTIPLEXING=false
 RUN pnpm install --frozen-lockfile
 ENTRYPOINT ["node", "scripts/lab/native-check.mjs"]
 CMD ["build"]
