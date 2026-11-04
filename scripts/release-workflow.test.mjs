@@ -64,7 +64,7 @@ test('Linux release reuses inspected native-CPU packages and the checked Arch pa
   assert.match(source, /dpkg-deb --field "\$package" Version/);
   assert.match(source, /rpm -qp --queryformat %\{VERSION\} "\$package"/);
   assert.match(source, /prepare-arch-driver-package\.mjs/);
-  assert.match(source, /makepkg --nodeps --noconfirm/);
+  assert.match(source, /PKGEXT=\.pkg\.tar\.zst makepkg --nodeps --noconfirm/);
   assert.match(source, /bsdtar -xOf "\$package" \.PKGINFO/);
   assert.match(source, /sha256sum \*\.deb > SHA256SUMS-/);
   assert.match(source, /sha256sum \*\.rpm > "SHA256SUMS-\$RPM_ID"/);

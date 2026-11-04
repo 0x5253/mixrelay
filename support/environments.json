@@ -156,7 +156,7 @@
         "rootfs": {
           "url": "https://github.com/0x5253/mixrelay/releases/download/archlinuxarm-20261104/archlinuxarm-container-20261104.tar.zst",
           "algorithm": "sha256",
-          "digest": "605196b93d28bc92d0c900e557faa1f339501ae100e043db379e606ee2496bf1"
+          "digest": "a8a55ecff61c772811ac6dc5ad62a84f4b6e0aa7014b5e7a9f1bd8d37d0864f0"
         },
         "architectures": [
           "arm64"
@@ -511,7 +511,7 @@
     "archarm-arm64": {
       "url": "https://github.com/0x5253/mixrelay/releases/download/archlinuxarm-20261104/archlinuxarm-cloudimg-20261104.qcow2",
       "algorithm": "sha256",
-      "digest": "2ac815194aab12dba1cc5ebf56cc63c17ef6a391dec32fe0c6f1aecad008316e",
+      "digest": "0df02642c1b33035f0d6a63a38c7986b89cf8474bff2d2a92781f089aa3ffa5f",
       "format": "qcow2"
     },
     "fedora-x64": {

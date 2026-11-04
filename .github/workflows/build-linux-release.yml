@@ -126,8 +126,9 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libarchive-tools
       - run: node scripts/lab/distro-image.mjs ${{ matrix.distro }}
       - run: docker compose -f infra/lab/compose.yaml build ${{ matrix.distro }}
+      # Arch Linux ARM's makepkg.conf still defaults to xz; the release asset name is zstd.
       - name: Wrap the checked DEB payload without compiling or stripping
-        run: docker compose -f infra/lab/compose.yaml run --name mixrelay-arch-wrap --entrypoint bash ${{ matrix.distro }} -c 'cd packaging/linux/candidate-input && makepkg --nodeps --noconfirm'
+        run: docker compose -f infra/lab/compose.yaml run --name mixrelay-arch-wrap --entrypoint bash ${{ matrix.distro }} -c 'cd packaging/linux/candidate-input && PKGEXT=.pkg.tar.zst makepkg --nodeps --noconfirm'
       - env:
           PKGARCH: ${{ matrix.pkgarch }}
           ARTIFACT: ${{ matrix.id }}

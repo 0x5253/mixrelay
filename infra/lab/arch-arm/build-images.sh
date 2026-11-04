@@ -101,6 +101,8 @@ docker export mixrelay-alarm-vm |
   pacman --disable-sandbox -S --noconfirm --needed dosfstools mtools e2fsprogs qemu-img >/dev/null
   mkdir /work/root /work/esp
   bsdtar -xpf - --numeric-owner --xattrs -C /work/root
+  # The export carries Docker's container marker and runtime state; a booted guest is no container.
+  rm -rf /work/root/.dockerenv /work/root/run/*
   # The ESP is mounted at /boot, so kernel upgrades in the guest replace the booted files.
   mv /work/root/boot/* /work/esp/
   mkdir -p /work/esp/EFI/BOOT /work/esp/loader/entries

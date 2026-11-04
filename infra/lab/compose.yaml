@@ -39,7 +39,7 @@ services:
     build:
       <<: *build
       args:
-        DISTRO_IMAGE: mixrelay-lab/archarm:605196b93d28bc92
+        DISTRO_IMAGE: mixrelay-lab/archarm:a8a55ecff61c7728
   fedora:
     <<: *runtime
     build:
