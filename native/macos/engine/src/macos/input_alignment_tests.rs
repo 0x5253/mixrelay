@@ -17,7 +17,7 @@ fn native_credit_bursts_reach_the_capture_frontier_before_graph_slicing() {
     let resources = MacDevices::new(status.clone(), 48_000, 128);
     let devices = publish(&resources, &[]);
     let nanos = Arc::new(std::sync::atomic::AtomicU64::new(0));
-    let registry = mixrelay_macos_transport::source_registry::SourceRegistry::with_clock(
+    let registry = mixrelay_macos_transport::source_registry::SourceRegistry::new(
         Box::new(SchedulingClock {
             nanos: nanos.clone(),
         }),
@@ -275,7 +275,7 @@ fn an_application_with_a_later_ready_frontier_joins_a_running_native_input() {
     let _input_bridge = input.serve();
     let _output_bridge = output.serve();
     let nanos = Arc::new(std::sync::atomic::AtomicU64::new(0));
-    let registry = mixrelay_macos_transport::source_registry::SourceRegistry::with_clock(
+    let registry = mixrelay_macos_transport::source_registry::SourceRegistry::new(
         Box::new(SchedulingClock {
             nanos: Arc::clone(&nanos),
         }),

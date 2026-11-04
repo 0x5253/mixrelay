@@ -3,7 +3,7 @@ use super::*;
 use mixrelay_macos_transport::{
     application_source_transport::mr_application_source_transport_attach,
     source_control::{SourceAttachment, SourceRequest},
-    source_registry::{SourceRegistry, mr_engine_source_id_token},
+    source_registry::{SourceRegistry, ffi::mr_engine_source_id_token},
 };
 use std::{ffi::c_char, os::fd::IntoRawFd};
 

@@ -55,8 +55,7 @@ fn unrouted_virtual_input_negotiates_format_and_stopped_input_cannot_drain_old_p
     let plan = unrouted_virtual_plan();
     let binding = &plan.source_bindings()[0];
     assert!(!binding.is_routed_source());
-    let registry =
-        SourceRegistry::with_clock(Box::new(Clock), mixrelay_realtime::Timebase::current());
+    let registry = SourceRegistry::new(Box::new(Clock), mixrelay_realtime::Timebase::current());
     let mut request = SourceRequest {
         capacity_frames: 16_384,
         channels: 2,

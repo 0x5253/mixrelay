@@ -550,8 +550,9 @@ fn failed_local_attachment_reclaims_its_registry_mapping_and_can_retry() {
         *slot = std::ffi::c_char::from_ne_bytes([*byte]);
     }
     // SAFETY: the static string is terminated and readable for the token calculation.
-    let token =
-        unsafe { crate::source_registry::mr_engine_source_id_token(c"local-attachment".as_ptr()) };
+    let token = unsafe {
+        crate::source_registry::ffi::mr_engine_source_id_token(c"local-attachment".as_ptr())
+    };
     let failed = SourceTransport::create_attaching(&registry, &request, |raw| {
         raw.mapped_size = 0;
         // SAFETY: attach consumes this unique real descriptor even when its extent fails.
@@ -609,8 +610,9 @@ fn prepared_producer_detects_terminal_storage_before_the_next_stream() {
         *slot = std::ffi::c_char::from_ne_bytes([*byte]);
     }
     // SAFETY: the static source ID is terminated and readable throughout the call.
-    let token =
-        unsafe { crate::source_registry::mr_engine_source_id_token(c"terminal-local".as_ptr()) };
+    let token = unsafe {
+        crate::source_registry::ffi::mr_engine_source_id_token(c"terminal-local".as_ptr())
+    };
     let producer = SourceTransport::create(&registry, &request).unwrap();
     assert!(registry.producer_can_rearm(token));
     producer

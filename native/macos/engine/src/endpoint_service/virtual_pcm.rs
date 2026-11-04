@@ -116,7 +116,7 @@ impl<W: Worker> Endpoint<W> {
         }
         // SAFETY: the default request retains a terminated canonical source ID.
         let source_token = unsafe {
-            mixrelay_macos_transport::source_registry::mr_engine_source_id_token(
+            mixrelay_macos_transport::source_registry::ffi::mr_engine_source_id_token(
                 request.source_id.as_ptr(),
             )
         };
