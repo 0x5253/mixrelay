@@ -126,7 +126,9 @@ fn admit_single_editor(builder: Builder, mode: AppMode) -> Builder {
 /// State behind the control commands, in both modes.
 fn manage_control_state(builder: Builder) -> Builder {
     let builder = builder
-        .manage(Arc::new(diagnostics::ExportAdmission::default()))
+        .manage(Arc::new(
+            mixrelay_desktop_core::diagnostics::ExportAdmission::default(),
+        ))
         .manage(control_proxy::ControlProxyClient::for_session())
         .manage(control_proxy::workspace::WorkspaceFiles::default())
         .manage(control_proxy::telemetry::TelemetrySubscriptions::default());

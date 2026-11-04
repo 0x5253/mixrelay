@@ -7,7 +7,7 @@ use std::{
 };
 
 use mixrelay_desktop_core::diagnostics::{self, ExportPermit, REPORT_LIMIT, ReportEnvironment};
-pub(crate) use mixrelay_desktop_core::diagnostics::{EditorContext, ExportAdmission};
+use mixrelay_desktop_core::diagnostics::{EditorContext, ExportAdmission};
 use mixrelay_driver_core::DriverSnapshot;
 use serde_json::Value;
 use tauri::{AppHandle, Manager as _};
