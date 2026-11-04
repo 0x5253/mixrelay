@@ -184,7 +184,6 @@ it.each(
         </MixRelayProvider>
       </I18nextProvider>,
     );
-    expect(screen.queryByText(i18n.t('audioSession.diagnostics'))).not.toBeInTheDocument();
     expect(screen.getByText(`${i18n.t('audioSession.bufferLatency')} 5.33 ms`)).toBeInTheDocument();
     // Keep one editable settings form; native and persisted values remain an internal contract.
     expect(screen.queryByRole('button', { name: i18n.t('audioSession.sampleRate') })).toBeNull();

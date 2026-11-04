@@ -16,7 +16,7 @@
     "check:audio-formats": "cargo test -p mixrelay-audio-io --lib format_contract::tests",
     "fixtures:replies": "pnpm fixtures:replies:check || pnpm fixtures:replies:check",
     "fixtures:replies:check": "node scripts/lab/native-check.mjs cargo test --no-fail-fast -p mixrelay-control-protocol -p mixrelay-driver-core -p mixrelay-desktop-shell -p mixrelay-desktop-core --lib --bins reply_fixture",
-    "check:macos-engine": "node scripts/lab/native-check.mjs cargo test -p mixrelay-macos-engine --lib -- --test-threads=1",
+    "check:macos-engine": "node scripts/lab/native-check.mjs cargo test -p mixrelay-macos-engine --lib",
     "check:crate-layers": "node --test scripts/check-crate-layers.test.mjs && node scripts/check-crate-layers.mjs",
     "check:native": "node scripts/lab/native-check.mjs cargo test -p mixrelay-macos-transport -p mixrelay-macos-hal -p mixrelay-macos-test-support && pnpm check:macos-engine && cargo run -p mixrelay-macos-hal-bundle",
     "check:rust": "cargo fmt --all --check && cargo machete && node scripts/lab/native-check.mjs cargo clippy --workspace --all-targets --all-features -- -D warnings && pnpm coverage:rust",

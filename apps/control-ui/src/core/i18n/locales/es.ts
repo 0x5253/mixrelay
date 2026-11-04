@@ -165,17 +165,13 @@ export const es = {
       'MixRelay pausó el audio porque el motor se detuvo inesperadamente varias veces. Revise los cambios recientes y luego reanude.',
     pauseNotSaved:
       'Aplicado, pero no se pudo guardar. Es posible que no se conserve al reiniciar MixRelay.',
-    diagnostics: 'Detalles de audio',
-    processingRate: 'Frecuencia de muestreo de procesamiento',
     processingBuffer: 'Búfer de procesamiento',
     bufferLatency: 'Retardo del búfer',
     bufferLatencyHint:
       'Retardo de un búfer de procesamiento (muestras ÷ frecuencia de muestreo), no la latencia total de entrada y salida.',
     frames: 'tramas',
     sampleRate: 'Frecuencia de muestreo',
-    blockSize: 'Tamaño del búfer',
     apply: 'Aplicar',
-    applying: 'Aplicando…',
     changeNotice: 'Cambiar este ajuste interrumpe brevemente el audio.',
     captureUnavailable:
       'La captura de audio de aplicaciones no está disponible en la sesión de audio actual.',
@@ -190,29 +186,14 @@ export const es = {
         'El grafo cambió o todavía se está aplicando. Vuelva a intentarlo cuando termine de aplicarse.',
     },
     unavailable: 'Sesión de audio no disponible',
-    attention: 'Requiere atención',
     backend: 'Sistema de audio',
-    clock: 'Reloj',
-    deviceRate: 'Frecuencia de muestreo del dispositivo',
-    unknown: 'No observado',
-    conversion: 'Conversión de frecuencia de muestreo',
-    drift: 'Corrección de deriva',
-    supported: 'Compatible',
     unsupported: 'No implementado',
     locked:
       'Este adaptador funciona actualmente con una frecuencia de muestreo y un tamaño de búfer fijos. La reconfiguración en funcionamiento no está implementada.',
-    syncNotice:
-      'El uso de varios dispositivos puede requerir conversión de frecuencia de muestreo y sincronización de los relojes de los dispositivos.',
     backends: {
       core_audio: 'Core Audio',
       pipe_wire: 'PipeWire FIFO',
       contract_only: 'Solo definición de interfaz',
-    },
-    clocks: {
-      engine_timer: 'Temporizador del motor',
-      device: 'Dispositivo de audio',
-      audio_server: 'Servidor de audio',
-      host: 'Anfitrión de plug-ins',
     },
     issues: {
       processing_failed:
@@ -237,8 +218,6 @@ export const es = {
   },
   common: {
     close: 'Cerrar',
-    appName: 'MixRelay',
-    beta: 'Vista previa privada',
     cancel: 'Cancelar',
     actions: 'Acciones',
     create: 'Crear',
@@ -271,16 +250,7 @@ export const es = {
     untitledGraph: 'Grafo sin título',
     untitledGraphNumbered: 'Grafo sin título {{count}}',
     audioEngine: 'Motor de audio',
-    engineShort: 'Motor',
     workspace: 'Espacio de trabajo de enrutamiento',
-    signalPathLabel: 'Ruta de señal de MixRelay',
-    capture: 'Captura',
-    captureDescription: 'El audio de las aplicaciones y del sistema entra aquí.',
-    stream: 'Transmisión',
-    streamDescription: 'OBS recibe la mezcla final de este dispositivo.',
-    remote: 'Control remoto',
-    remoteDescription:
-      'El control por LAN permanece desactivado hasta que este Mac habilite explícitamente el emparejamiento.',
   },
   routing: {
     deviceApps: {
@@ -410,9 +380,6 @@ export const es = {
       busDescription: '{{kind}} {{name}} {{channels}}',
       directions: 'Entrada: {{inputs}} · Salida: {{outputs}}',
     },
-    title: 'Enrutamiento de E/S virtual',
-    description:
-      'Enrute el audio enviado a MixRelay por las aplicaciones de macOS hacia la entrada del dispositivo utilizada por OBS y los DAW.',
     canvasLabel: 'Grafo de enrutamiento de E/S virtual de MixRelay',
     ports: {
       application: 'Audio de la aplicación',
@@ -442,28 +409,22 @@ export const es = {
       edgeLabel: '{{source}} CH {{sourceChannel}} → {{target}} CH {{targetChannel}}',
       meterChannel: '{{name}} canal {{channel}}',
     },
-    toggleGain: 'Ganancia de −6 dB',
-    apply: 'Aplicar',
     nodes: {
       application: 'Aplicación',
       attack: 'Ataque',
       audioInput: 'Entrada predeterminada',
       audioOutput: 'Salida predeterminada',
-      captureChannels: 'Salidas',
       ceiling: 'Límite máximo',
       compressor: 'Compresor',
-      compressorDescription: 'Control de dinámica con canales vinculados',
       deviceName: 'Nombre del dispositivo',
       virtualOutput: 'Grafo → dispositivo',
       virtualInput: 'Dispositivo → grafo',
       virtualDevice: 'MixRelay Virtual I/O',
       newVirtualDevice: 'Nuevo dispositivo virtual',
-      virtualAvailable: 'Conectar',
       virtualAttached: 'Conectado',
       virtualSourcePort: 'Audio del dispositivo',
       gain: 'Ganancia',
       limiter: 'Limitador',
-      limiterDescription: 'Evitar picos de salida por encima del límite máximo',
       makeupGain: 'Ganancia de compensación',
       mixer: 'Mezclador',
       options: 'Opciones',
@@ -471,7 +432,6 @@ export const es = {
       processor: 'Procesador',
       processorLayoutUnavailable: 'Disposición del procesador no disponible',
       outputGain: 'Ganancia de salida',
-      renderChannels: 'Entradas',
       ratio: 'Relación',
       release: 'Liberación',
       sourceGain: 'Ganancia de la fuente',
@@ -532,8 +492,6 @@ export const es = {
     layout: {
       failed:
         'No se pudo guardar o cargar la disposición de los nodos y la vista. Se conservan sus ediciones actuales.',
-      retry: 'Guardar la disposición actual',
-      reload: 'Cargar la disposición guardada',
     },
     processorControl: {
       reportTitle: 'Informe de búsqueda de efectos',
@@ -562,10 +520,6 @@ export const es = {
     },
     processorEditor: {
       open: 'Abrir',
-      states: {
-        failed: 'No disponible',
-        opening: 'Abriendo',
-      },
       failures: {
         displayUnavailable:
           'Se requiere X11 o XWayland para los editores nativos en esta sesión de Linux.',
@@ -577,147 +531,10 @@ export const es = {
     },
   },
   studioGraph: {
-    editorLabel: 'Editor de grafos de audio de MixRelay',
-    canvasLabel: 'Grafo de señales de la mezcla de transmisión',
-    sessionName: 'Mezcla de transmisión / Principal',
-    saved: 'Guardado ahora',
-    running: 'Motor en ejecución',
-    remote: 'Control móvil',
-    addNode: 'Añadir nodo',
-    search: 'Buscar nodos',
-    library: 'Biblioteca de nodos',
-    dragHint: 'Arrastrar al lienzo para añadir',
-    inspector: 'Nodo seleccionado',
-    groups: {
-      source: 'Fuente',
-      processor: 'Procesador',
-      analysis: 'Análisis',
-      output: 'Salida',
-    },
-    states: {
-      foundation: 'Base',
-      planned: 'Previsto',
-      provider: 'Proveedor',
-    },
-    flow: {
-      capture: '01 · Captura',
-      shape: '02 · Ajuste',
-      deliver: '03 · Salida',
-    },
-    status: {
-      nodes: '{{count}} nodos',
-      channels: 'Grafo de 2 canales · Coma flotante de 32 bits',
-      healthy: '0 interrupciones · Correcto',
-    },
-    details: {
-      chrome: 'Chrome · Audio de pestaña',
-      microphone: 'Scarlett 2i2 · Entrada 1',
-      twoSources: 'Chrome + micrófono',
-      streamControl: 'Umbral −12 dB',
-      voiceContour: '4 bandas · Claridad de voz',
-      stereo48k: 'MixRelay Stream · 48 kHz',
-      headphones: 'Altavoces del MacBook Pro',
-    },
-    controls: {
-      bypass: 'Omitir procesamiento',
-      output: 'Ganancia de salida',
-      mix: 'Señal original / procesada',
-      routing: 'Enrutamiento de canales',
-    },
-    inventory: {
-      eyebrow: 'Referencia de funciones del producto',
-      title: 'Inventario de nodos',
-      description:
-        'Configura el enrutamiento, el procesamiento, la grabación y la transmisión en un único grafo de audio de MixRelay.',
-    },
     nodes: {
-      application: {
-        name: 'Aplicación',
-        description: 'Capturar por separado el audio de Chrome, Firefox, juegos y otros procesos',
-      },
       systemAudio: {
         name: 'Audio del sistema',
         description: 'Capturar toda la salida de macOS y sus efectos de sonido',
-      },
-      inputDevice: {
-        name: 'Dispositivo de entrada',
-        description: 'Micrófonos y entradas de interfaces de audio',
-      },
-      passThru: {
-        name: 'Paso directo',
-        description: 'Recibir una señal de otro grafo o anfitrión',
-      },
-      audioFile: {
-        name: 'Archivo de audio',
-        description: 'Reproducir archivos y listas de reproducción como fuente',
-      },
-      browserRemote: {
-        name: 'Entrada remota',
-        description: 'Audio proporcionado por un cliente LAN emparejado',
-      },
-      mixer: {
-        name: 'Mezclador',
-        description: 'Combinar canales con controles de panorama, silencio y solo',
-      },
-      gain: {
-        name: 'Ganancia',
-        description: 'Ajuste preciso del nivel e inversión de polaridad',
-      },
-      compressor: {
-        name: 'Compresor',
-        description: 'Controlar el rango dinámico y los picos',
-      },
-      parametricEq: {
-        name: 'Ecualizador paramétrico',
-        description: 'Ajuste de tono y filtros multibanda',
-      },
-      ducking: {
-        name: 'Atenuación automática',
-        description: 'Priorizar la voz mediante una señal de cadena lateral',
-      },
-      speechDenoise: {
-        name: 'Reducción de ruido de voz',
-        description: 'Reducción de ruido en tiempo real con proveedor intercambiable',
-      },
-      delaySync: {
-        name: 'Retardo / sincronización',
-        description: 'Alineación de vídeo y entradas con precisión de milisegundos',
-      },
-      audioUnit: {
-        name: 'Audio Unit',
-        description: 'Alojar plug-ins AU en la cadena de procesamiento',
-      },
-      levelMeter: {
-        name: 'Medidor de nivel',
-        description: 'Observar los niveles de pico y RMS',
-      },
-      spectrum: {
-        name: 'Espectro',
-        description: 'Analizar la distribución de frecuencias en tiempo real',
-      },
-      loudness: {
-        name: 'Sonoridad',
-        description: 'Medir LUFS, pico verdadero y objetivos de transmisión',
-      },
-      virtualDevice: {
-        name: 'Dispositivo virtual',
-        description: 'Una salida CoreAudio visible para OBS y los DAW',
-      },
-      monitor: {
-        name: 'Monitor',
-        description: 'Escucha de baja latencia mediante auriculares o altavoces',
-      },
-      recorder: {
-        name: 'Grabador',
-        description: 'Grabar la mezcla o las pistas separadas en archivos',
-      },
-      rtmp: {
-        name: 'Transmisión RTMP',
-        description: 'Transmitir directamente a plataformas de transmisión',
-      },
-      icecast: {
-        name: 'Icecast / SHOUTcast',
-        description: 'Transmisión continua de radio por internet',
       },
     },
   },

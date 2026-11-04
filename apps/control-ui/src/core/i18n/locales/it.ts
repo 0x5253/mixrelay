@@ -166,17 +166,13 @@ export const it = {
       'MixRelay ha messo in pausa l’audio perché il motore si è arrestato inaspettatamente più volte. Controlla le modifiche recenti, poi riprendi.',
     pauseNotSaved:
       'Applicato, ma non salvato. Potrebbe non essere mantenuto al riavvio di MixRelay.',
-    diagnostics: 'Dettagli audio',
-    processingRate: 'Frequenza di campionamento di elaborazione',
     processingBuffer: 'Buffer di elaborazione',
     bufferLatency: 'Ritardo del buffer',
     bufferLatencyHint:
       'Un buffer di elaborazione (campioni ÷ frequenza di campionamento), non la latenza totale di ingresso/uscita.',
     frames: 'frame',
     sampleRate: 'Frequenza di campionamento',
-    blockSize: 'Dimensione del buffer',
     apply: 'Applica',
-    applying: 'Applicazione…',
     changeNotice: 'La modifica di questa impostazione interrompe brevemente l’audio.',
     captureUnavailable:
       'L’acquisizione audio delle applicazioni non è disponibile nella sessione audio corrente.',
@@ -191,29 +187,14 @@ export const it = {
         'Il grafo è cambiato o è ancora in applicazione. Riprova dopo che è stato applicato.',
     },
     unavailable: 'Sessione audio non disponibile',
-    attention: 'Richiede attenzione',
     backend: 'Backend',
-    clock: 'Orologio',
-    deviceRate: 'Frequenza di campionamento del dispositivo',
-    unknown: 'Non rilevato',
-    conversion: 'Conversione della frequenza di campionamento',
-    drift: 'Correzione della deriva',
-    supported: 'Supportato',
     unsupported: 'Non implementato',
     locked:
       'Questo adattatore usa attualmente frequenza di campionamento e dimensione del buffer fisse. La riconfigurazione durante l’esecuzione non è implementata.',
-    syncNotice:
-      'L’uso di più dispositivi può richiedere la conversione della frequenza di campionamento e la sincronizzazione degli orologi dei dispositivi.',
     backends: {
       core_audio: 'Core Audio',
       pipe_wire: 'PipeWire FIFO',
       contract_only: 'Solo contratto',
-    },
-    clocks: {
-      engine_timer: 'Timer del motore',
-      device: 'Dispositivo audio',
-      audio_server: 'Server audio',
-      host: 'Host dei plug-in',
     },
     issues: {
       processing_failed:
@@ -238,8 +219,6 @@ export const it = {
   },
   common: {
     close: 'Chiudi',
-    appName: 'MixRelay',
-    beta: 'Anteprima privata',
     cancel: 'Annulla',
     actions: 'Azioni',
     create: 'Crea',
@@ -271,16 +250,7 @@ export const it = {
     untitledGraph: 'Grafo senza titolo',
     untitledGraphNumbered: 'Grafo senza titolo {{count}}',
     audioEngine: 'Motore audio',
-    engineShort: 'Motore',
     workspace: 'Spazio di instradamento',
-    signalPathLabel: 'Percorso del segnale MixRelay',
-    capture: 'Acquisizione',
-    captureDescription: 'Qui entra l’audio delle applicazioni e del sistema.',
-    stream: 'Stream',
-    streamDescription: 'OBS riceve il mix finale da questo dispositivo.',
-    remote: 'Controllo remoto',
-    remoteDescription:
-      'Il controllo LAN resta disattivato finché questo Mac non abilita esplicitamente l’abbinamento.',
   },
   routing: {
     deviceApps: {
@@ -410,9 +380,6 @@ export const it = {
       busDescription: '{{kind}} {{name}} {{channels}}',
       directions: 'Ingresso: {{inputs}} · Uscita: {{outputs}}',
     },
-    title: 'Instradamento I/O virtuale',
-    description:
-      'Rimanda l’audio inviato a MixRelay dalle applicazioni macOS all’ingresso del dispositivo usato da OBS e DAW.',
     canvasLabel: 'Grafo di instradamento I/O virtuale MixRelay',
     ports: {
       application: 'Audio dell’app',
@@ -443,28 +410,22 @@ export const it = {
       edgeLabel: '{{source}} CH {{sourceChannel}} → {{target}} CH {{targetChannel}}',
       meterChannel: '{{name}} canale {{channel}}',
     },
-    toggleGain: 'Guadagno −6 dB',
-    apply: 'Applica',
     nodes: {
       application: 'Applicazione',
       attack: 'Attacco',
       audioInput: 'Ingresso predefinito',
       audioOutput: 'Uscita predefinita',
-      captureChannels: 'Uscite',
       ceiling: 'Livello massimo',
       compressor: 'Compressore',
-      compressorDescription: 'Controllo della dinamica a canali collegati',
       deviceName: 'Nome del dispositivo',
       virtualOutput: 'Grafo → dispositivo',
       virtualInput: 'Dispositivo → grafo',
       virtualDevice: 'MixRelay Virtual I/O',
       newVirtualDevice: 'Nuovo dispositivo virtuale',
-      virtualAvailable: 'Collega',
       virtualAttached: 'Collegato',
       virtualSourcePort: 'Audio dal dispositivo',
       gain: 'Guadagno',
       limiter: 'Limiter',
-      limiterDescription: 'Impedisci picchi di uscita oltre il livello massimo',
       makeupGain: 'Guadagno compensativo',
       mixer: 'Mixer',
       options: 'Opzioni',
@@ -472,7 +433,6 @@ export const it = {
       processor: 'Processore',
       processorLayoutUnavailable: 'Configurazione del processore non disponibile',
       outputGain: 'Guadagno in uscita',
-      renderChannels: 'Ingressi',
       ratio: 'Rapporto',
       release: 'Rilascio',
       sourceGain: 'Guadagno della sorgente',
@@ -534,8 +494,6 @@ export const it = {
     layout: {
       failed:
         'Impossibile salvare o caricare la disposizione dei nodi e la vista. Le modifiche attuali sono conservate.',
-      retry: 'Salva la disposizione attuale',
-      reload: 'Carica la disposizione salvata',
     },
     processorControl: {
       reportTitle: 'Rapporto di ricerca degli effetti',
@@ -563,10 +521,6 @@ export const it = {
     },
     processorEditor: {
       open: 'Apri',
-      states: {
-        failed: 'Non disponibile',
-        opening: 'Apertura',
-      },
       failures: {
         displayUnavailable:
           'Per gli editor nativi in questa sessione Linux è necessario X11 o XWayland.',
@@ -578,147 +532,10 @@ export const it = {
     },
   },
   studioGraph: {
-    editorLabel: 'Editor del grafo audio MixRelay',
-    canvasLabel: 'Grafo del segnale del mix di trasmissione',
-    sessionName: 'Mix di trasmissione / Principale',
-    saved: 'Appena salvato',
-    running: 'Motore in esecuzione',
-    remote: 'Controllo mobile',
-    addNode: 'Aggiungi nodo',
-    search: 'Cerca nodi',
-    library: 'Libreria dei nodi',
-    dragHint: 'Trascina sulla tela per aggiungere',
-    inspector: 'Nodo selezionato',
-    groups: {
-      source: 'Sorgente',
-      processor: 'Processore',
-      analysis: 'Analisi',
-      output: 'Uscita',
-    },
-    states: {
-      foundation: 'Base',
-      planned: 'Pianificato',
-      provider: 'Fornitore',
-    },
-    flow: {
-      capture: '01 · Acquisizione',
-      shape: '02 · Elaborazione',
-      deliver: '03 · Invio',
-    },
-    status: {
-      nodes: '{{count}} nodi',
-      channels: 'Grafo a 2 canali · virgola mobile a 32 bit',
-      healthy: '0 interruzioni · Funzionamento regolare',
-    },
-    details: {
-      chrome: 'Chrome · Audio della scheda',
-      microphone: 'Scarlett 2i2 · Ingresso 1',
-      twoSources: 'Chrome + microfono',
-      streamControl: 'Soglia −12 dB',
-      voiceContour: '4 bande · Chiarezza della voce',
-      stereo48k: 'MixRelay Stream · 48 kHz',
-      headphones: 'Altoparlanti MacBook Pro',
-    },
-    controls: {
-      bypass: 'Bypass',
-      output: 'Guadagno in uscita',
-      mix: 'Segnale originale / elaborato',
-      routing: 'Instradamento dei canali',
-    },
-    inventory: {
-      eyebrow: 'Base delle funzionalità del prodotto',
-      title: 'Inventario dei nodi',
-      description:
-        'Configura instradamento, elaborazione, registrazione e trasmissione in un unico grafo audio di MixRelay.',
-    },
     nodes: {
-      application: {
-        name: 'Applicazione',
-        description: 'Acquisisci separatamente Chrome, Firefox, giochi e altri processi',
-      },
       systemAudio: {
         name: 'Audio di sistema',
         description: 'Acquisisci tutta l’uscita macOS e gli effetti sonori',
-      },
-      inputDevice: {
-        name: 'Dispositivo di ingresso',
-        description: 'Microfoni e ingressi delle interfacce audio',
-      },
-      passThru: {
-        name: 'Passaggio diretto',
-        description: 'Ricevi un segnale da un altro grafo o host',
-      },
-      audioFile: {
-        name: 'File audio',
-        description: 'Riproduci file e playlist come sorgente',
-      },
-      browserRemote: {
-        name: 'Ingresso remoto',
-        description: 'Audio fornito da un client LAN abbinato',
-      },
-      mixer: {
-        name: 'Mixer',
-        description: 'Combina i canali con controlli di panoramica, silenziamento e solo',
-      },
-      gain: {
-        name: 'Guadagno',
-        description: 'Regolazione precisa del livello e inversione di polarità',
-      },
-      compressor: {
-        name: 'Compressore',
-        description: 'Controlla la gamma dinamica e i picchi',
-      },
-      parametricEq: {
-        name: 'EQ parametrico',
-        description: 'Regolazione del timbro multibanda e filtri',
-      },
-      ducking: {
-        name: 'Ducking automatico',
-        description: 'Dai priorità alla voce con un segnale sidechain',
-      },
-      speechDenoise: {
-        name: 'Riduzione del rumore della voce',
-        description: 'Pulizia in tempo reale con fornitore sostituibile',
-      },
-      delaySync: {
-        name: 'Ritardo / sincronizzazione',
-        description: 'Allineamento al millisecondo di video e ingressi',
-      },
-      audioUnit: {
-        name: 'Audio Unit',
-        description: 'Ospita plug-in AU nella catena di elaborazione',
-      },
-      levelMeter: {
-        name: 'Misuratore di livello',
-        description: 'Osserva i livelli di picco e RMS',
-      },
-      spectrum: {
-        name: 'Spettro',
-        description: 'Analizza la distribuzione delle frequenze in tempo reale',
-      },
-      loudness: {
-        name: 'Loudness',
-        description: 'Misura LUFS, true peak e obiettivi di trasmissione',
-      },
-      virtualDevice: {
-        name: 'Dispositivo virtuale',
-        description: 'Un’uscita CoreAudio visibile a OBS e DAW',
-      },
-      monitor: {
-        name: 'Monitoraggio',
-        description: 'Ascolto a bassa latenza tramite cuffie o altoparlanti',
-      },
-      recorder: {
-        name: 'Registratore',
-        description: 'Registra il mix o le tracce separate su file',
-      },
-      rtmp: {
-        name: 'Diretta RTMP',
-        description: 'Invia direttamente alle piattaforme di streaming',
-      },
-      icecast: {
-        name: 'Icecast / SHOUTcast',
-        description: 'Trasmissione radio internet continua',
       },
     },
   },
