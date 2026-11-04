@@ -10,6 +10,7 @@ const SUPPORT: &str = include_str!("../../../../support/environments.json");
 pub(super) enum Package {
     Pkg,
     Deb,
+    Rpm,
     Arch,
 }
 
@@ -18,6 +19,7 @@ impl Package {
         let suffix = match self {
             Self::Pkg => ".pkg",
             Self::Deb => ".deb",
+            Self::Rpm => ".rpm",
             Self::Arch => ".pkg.tar.zst",
         };
         url::Url::parse(url).is_ok_and(|url| url.path().ends_with(suffix))
@@ -36,7 +38,37 @@ struct Support {
 #[derive(Deserialize)]
 struct Artifact {
     id: String,
+    os: String,
+    arch: String,
     format: String,
+    asset: String,
+}
+
+/// One published release file named by the support contract.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ReleaseAsset {
+    pub name: String,
+    pub os: String,
+    pub arch: String,
+    /// False for companion files that no platform installs, such as the Stream Deck plugin.
+    pub installer: bool,
+}
+
+fn support() -> Result<Support, UpdateError> {
+    serde_json::from_str(SUPPORT).map_err(|_| UpdateError::Unavailable)
+}
+
+pub(super) fn release_assets(version: &str) -> Result<Vec<ReleaseAsset>, UpdateError> {
+    Ok(support()?
+        .artifacts
+        .into_iter()
+        .map(|artifact| ReleaseAsset {
+            name: artifact.asset.replace("{version}", version),
+            os: artifact.os,
+            arch: artifact.arch,
+            installer: artifact.format != "streamDeckPlugin",
+        })
+        .collect())
 }
 
 #[derive(Deserialize)]
@@ -52,7 +84,7 @@ pub(super) fn linux(os_release: &str, arch: &str) -> Result<Package, UpdateError
         .find_map(|line| line.strip_prefix("ID="))
         .map(|id| id.trim_matches(['\'', '"']))
         .ok_or(UpdateError::Unavailable)?;
-    let support: Support = serde_json::from_str(SUPPORT).map_err(|_| UpdateError::Unavailable)?;
+    let support = support()?;
     let target = support
         .targets
         .iter()
@@ -65,6 +97,7 @@ pub(super) fn linux(os_release: &str, arch: &str) -> Result<Package, UpdateError
         .and_then(|artifact| match artifact.format.as_str() {
             "pkg" => Some(Package::Pkg),
             "deb" => Some(Package::Deb),
+            "rpm" => Some(Package::Rpm),
             "arch" => Some(Package::Arch),
             _ => None,
         })

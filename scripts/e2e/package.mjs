@@ -159,6 +159,9 @@ export function installAndVerify(
         ],
         1200000,
       );
+    } else if (definition.format === 'rpm') {
+      run('bsdtar', ['-xf', archive, '-C', extracted]);
+      install('sudo', ['-n', 'dnf', 'install', '-y', archive], 1200000);
     } else {
       run('bsdtar', ['-xf', archive, '-C', extracted]);
       install('sudo', ['-n', 'pacman', '-U', '--noconfirm', archive], 1200000);

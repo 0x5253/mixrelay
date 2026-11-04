@@ -17,7 +17,7 @@ case "$ID" in
     fi
     apt-get "${apt_options[@]}" update
     apt-get "${apt_options[@]}" install -y --no-install-recommends \
-      build-essential ca-certificates clang libclang-rt-dev cmake curl git pkg-config rsync ripgrep \
+      build-essential ca-certificates clang libarchive-tools libclang-rt-dev cmake curl git pkg-config rpm rsync ripgrep \
       libasound2-dev liblilv-dev lv2-dev libpipewire-0.3-dev libssl-dev \
       libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev \
       librsvg2-dev libx11-dev libxrandr-dev libxi-dev \
@@ -29,6 +29,14 @@ case "$ID" in
       alsa-lib lilv lv2 pipewire wireplumber gtk3 webkit2gtk-4.1 \
       libayatana-appindicator librsvg libx11 libxrandr libxi \
       dbus xorg-server-xvfb xorg-xauth
+    ;;
+  fedora)
+    dnf install -y --setopt=install_weak_deps=False \
+      gcc gcc-c++ make ca-certificates clang compiler-rt cmake curl git pkgconf-pkg-config openssl-devel \
+      rsync ripgrep alsa-lib-devel lilv-devel lv2-devel pipewire-devel pipewire wireplumber \
+      gtk3-devel webkit2gtk4.1-devel libayatana-appindicator-gtk3-devel librsvg2-devel \
+      libX11-devel libXrandr-devel libXi-devel dbus-daemon dbus-x11 xorg-x11-server-Xvfb xorg-x11-xauth \
+      libasan libubsan shadow-utils
     ;;
   *) echo "Unsupported distribution: $ID" >&2; exit 2 ;;
 esac

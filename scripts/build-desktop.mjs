@@ -5,6 +5,7 @@ import { readdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { inspectPackage } from "./check-linux-package.mjs";
+import { inspectRpm } from "./check-rpm-package.mjs";
 import { loadContract, checkGenerated } from './support-contract.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -85,12 +86,15 @@ function validateLinuxConfigBuildArguments(args) {
   if (hasLinuxConfigOverride(args) && !hasExplicitLinuxBundleAction(args)) {
     throw new Error("Linux desktop builds with --config/-c must provide a valid --bundles/-b selection or --no-bundle");
   }
+  if (linuxBuildIncludes(args, "rpm") && !linuxBuildIncludes(args, "deb")) {
+    throw new Error("An RPM is checked against the DEB from the same build; bundle deb with rpm");
+  }
 }
 
-export function linuxBuildIncludesDebian(args = []) {
+export function linuxBuildIncludes(args, format) {
   const { explicit, selected } = bundleArguments(args);
   // The Linux config defaults to deb and rpm.
-  return explicit ? selected.includes("deb") : true;
+  return explicit ? selected.includes(format) : true;
 }
 
 function optionValue(args, longName, shortName) {
@@ -107,7 +111,7 @@ function optionValue(args, longName, shortName) {
   return undefined;
 }
 
-export function linuxDebianBundleDirectory(args = [], env = process.env) {
+export function linuxBundleDirectory(args = [], env = process.env, format = "deb") {
   const targetRoot = env.CARGO_TARGET_DIR
     ? resolve(root, env.CARGO_TARGET_DIR)
     : resolve(root, "target");
@@ -115,10 +119,10 @@ export function linuxDebianBundleDirectory(args = [], env = process.env) {
   const separator = args.indexOf("--");
   const buildArgs = separator === -1 ? args : args.slice(0, separator);
   const profile = buildArgs.some(argument => argument === "--debug" || argument === "-d") ? "debug" : "release";
-  return resolve(targetRoot, ...(target ? [target] : []), profile, "bundle", "deb");
+  return resolve(targetRoot, ...(target ? [target] : []), profile, "bundle", format);
 }
 
-export function listDebianPackages(directory, listDirectory = readdirSync) {
+export function listPackages(directory, extension, listDirectory = readdirSync) {
   let entries;
   try {
     entries = listDirectory(directory, { withFileTypes: true });
@@ -128,8 +132,8 @@ export function listDebianPackages(directory, listDirectory = readdirSync) {
   }
   const packages = [];
   for (const entry of entries) {
-    if (!entry.name.endsWith(".deb")) continue;
-    if (!entry.isFile()) throw new Error(`Debian build artifact is not a regular file: ${entry.name}`);
+    if (!entry.name.endsWith(extension)) continue;
+    if (!entry.isFile()) throw new Error(`Build artifact is not a regular file: ${entry.name}`);
     packages.push(resolve(directory, entry.name));
   }
   return packages.sort();
@@ -140,8 +144,9 @@ export async function main(
   platform = process.platform,
   run = spawnSync,
   inspectDebianPackage = inspectPackage,
-  findDebianPackages = listDebianPackages,
+  findPackages = listPackages,
   env = process.env,
+  inspectRpmPackage = inspectRpm,
 ) {
   try {
     const buildEnv = { ...env };
@@ -162,17 +167,22 @@ export async function main(
     if (result.error) throw result.error;
     if (result.signal) throw new Error(`Desktop build interrupted by ${result.signal}`);
     const status = result.status ?? 1;
-    if (status !== 0 || platform !== "linux" || !linuxBuildIncludesDebian(args)) return status;
+    if (status !== 0 || platform !== "linux" || !linuxBuildIncludes(args, "deb")) return status;
 
-    const bundleDirectory = linuxDebianBundleDirectory(args, buildEnv);
-    const packages = findDebianPackages(bundleDirectory);
-    if (packages.length !== 1) {
-      throw new Error(`Expected exactly one Debian package in ${bundleDirectory}; found ${packages.length}`);
-    }
-    const inspected = await inspectDebianPackage(packages[0]);
+    const onePackage = format => {
+      const bundleDirectory = linuxBundleDirectory(args, buildEnv, format);
+      const packages = findPackages(bundleDirectory, `.${format}`);
+      if (packages.length !== 1) {
+        throw new Error(`Expected exactly one ${format} package in ${bundleDirectory}; found ${packages.length}`);
+      }
+      return packages[0];
+    };
+    const deb = onePackage("deb");
+    const inspected = await inspectDebianPackage(deb);
     if (inspected && inspected.packageName !== "mix-relay") {
       throw new Error("The product build must produce the complete mix-relay package");
     }
+    if (linuxBuildIncludes(args, "rpm")) await inspectRpmPackage(onePackage("rpm"), deb);
     return 0;
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
@@ -187,7 +197,7 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
     desktopBuildCommand("darwin", process.argv.slice(2));
     const { checkMacosSigning, withMacosSigning } = await import("./macos-signing.mjs");
     checkMacosSigning();
-    return withMacosSigning((env, _config, owned) => main(process.argv.slice(2), "darwin", owned, inspectPackage, listDebianPackages, env));
+    return withMacosSigning((env, _config, owned) => main(process.argv.slice(2), "darwin", owned, inspectPackage, listPackages, env));
   };
   build().then(status => { process.exitCode = status; }).catch(error => {
     console.error(error.message);

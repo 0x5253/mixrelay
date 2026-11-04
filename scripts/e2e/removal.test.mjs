@@ -11,8 +11,13 @@ function fixture(t) {
   return output;
 }
 
-test('DEB and Arch removal use their package manager, reload services and require absence', (t) => {
-  for (const format of ['deb', 'arch']) {
+test('DEB, RPM and Arch removal use their package manager, reload services and require absence', (t) => {
+  const managers = {
+    deb: ['-n', 'apt-get', 'remove', '-y', 'mix-relay'],
+    rpm: ['-n', 'dnf', 'remove', '-y', 'mix-relay'],
+    arch: ['-n', 'pacman', '-R', '--noconfirm', 'mix-relay'],
+  };
+  for (const format of Object.keys(managers)) {
     const calls = [],
       output = fixture(t);
     removeInstalled(
@@ -25,12 +30,7 @@ test('DEB and Arch removal use their package manager, reload services and requir
       },
       () => false,
     );
-    assert.deepEqual(calls[0], [
-      'sudo',
-      format === 'deb'
-        ? ['-n', 'apt-get', 'remove', '-y', 'mix-relay']
-        : ['-n', 'pacman', '-R', '--noconfirm', 'mix-relay'],
-    ]);
+    assert.deepEqual(calls[0], ['sudo', managers[format]]);
     assert.deepEqual(calls[1], ['systemctl', ['--user', 'daemon-reload']]);
     assert.match(readFileSync(join(output, 'removal.log'), 'utf8'), /removed/);
   }

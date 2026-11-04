@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { desktopBuildCommand, linuxBuildIncludesDebian, linuxDebianBundleDirectory, listDebianPackages, main } from "./build-desktop.mjs";
+import { desktopBuildCommand, linuxBuildIncludes, linuxBundleDirectory, listPackages, main } from "./build-desktop.mjs";
 import { DESKTOP_CODE_CHECK_TAURI_CONFIG, desktopCodeCheckEnvironment } from "./core/desktop-build-policy.mjs";
 test("desktop code checks use only the canonical no-payload Tauri override", () => {
   const environment = desktopCodeCheckEnvironment({ CARGO_TARGET_DIR: "target/fixture" });
@@ -90,22 +90,26 @@ test("desktop packaging rejects canonical code-only config even without its mark
   assert.match(errors[0], /disabled in the code-check environment/);
 });
 
-test("Linux Debian output selection and target path follow Tauri build options", () => {
-  assert.equal(linuxBuildIncludesDebian([]), true);
-  assert.equal(linuxBuildIncludesDebian(["--bundles", "deb", "rpm"]), true);
-  assert.equal(linuxBuildIncludesDebian(["--bundles=appimage,rpm"]), false);
-  assert.equal(linuxBuildIncludesDebian(["-bdeb"]), true);
-  assert.equal(linuxBuildIncludesDebian(["--bundles=rpm", "deb"]), true);
-  assert.equal(linuxBuildIncludesDebian(["-brpm", "deb"]), true);
-  assert.equal(linuxBuildIncludesDebian(["-b=appimage,rpm"]), false);
-  assert.equal(linuxBuildIncludesDebian(["-brpm", "--", "deb"]), false);
-  assert.equal(linuxBuildIncludesDebian(["-b", "rpm"]), false);
-  assert.equal(linuxBuildIncludesDebian(["--no-bundle"]), false);
-  assert.equal(linuxBuildIncludesDebian(["--", "--bundles", "rpm"]), true);
+test("Linux package selection and target path follow Tauri build options", () => {
+  const debian = args => linuxBuildIncludes(args, "deb");
+  assert.equal(debian([]), true);
+  assert.equal(linuxBuildIncludes([], "rpm"), true);
+  assert.equal(debian(["--bundles", "deb", "rpm"]), true);
+  assert.equal(linuxBuildIncludes(["--bundles", "deb", "rpm"], "rpm"), true);
+  assert.equal(linuxBuildIncludes(["--bundles", "deb"], "rpm"), false);
+  assert.equal(debian(["--bundles=appimage,rpm"]), false);
+  assert.equal(debian(["-bdeb"]), true);
+  assert.equal(debian(["--bundles=rpm", "deb"]), true);
+  assert.equal(debian(["-brpm", "deb"]), true);
+  assert.equal(debian(["-b=appimage,rpm"]), false);
+  assert.equal(debian(["-brpm", "--", "deb"]), false);
+  assert.equal(debian(["-b", "rpm"]), false);
+  assert.equal(debian(["--no-bundle"]), false);
+  assert.equal(debian(["--", "--bundles", "rpm"]), true);
 
   const defaultDirectory = fileURLToPath(new URL("../target/release/bundle/deb", import.meta.url));
-  assert.equal(linuxDebianBundleDirectory([]), defaultDirectory);
-  assert.equal(linuxDebianBundleDirectory(["--debug", "--target", "aarch64-unknown-linux-gnu"]),
+  assert.equal(linuxBundleDirectory([]), defaultDirectory);
+  assert.equal(linuxBundleDirectory(["--debug", "--target", "aarch64-unknown-linux-gnu"]),
     fileURLToPath(new URL("../target/aarch64-unknown-linux-gnu/debug/bundle/deb", import.meta.url)));
   const targetedDebianDirectory = fileURLToPath(new URL(
     "../target/aarch64-unknown-linux-gnu/release/bundle/deb", import.meta.url,
@@ -114,14 +118,16 @@ test("Linux Debian output selection and target path follow Tauri build options",
     ["--target=aarch64-unknown-linux-gnu"], ["-t", "aarch64-unknown-linux-gnu"],
     ["-taarch64-unknown-linux-gnu"], ["-t=aarch64-unknown-linux-gnu"],
   ]) {
-    assert.equal(linuxDebianBundleDirectory(args), targetedDebianDirectory, args.join(" "));
+    assert.equal(linuxBundleDirectory(args), targetedDebianDirectory, args.join(" "));
   }
-  assert.equal(linuxDebianBundleDirectory(["--", "--debug", "-d", "-taarch64-unknown-linux-gnu"]),
+  assert.equal(linuxBundleDirectory(["--", "--debug", "-d", "-taarch64-unknown-linux-gnu"]),
     defaultDirectory);
-  assert.equal(linuxDebianBundleDirectory([], { CARGO_TARGET_DIR: "/fixture/mixrelay-target" }),
+  assert.equal(linuxBundleDirectory([], { CARGO_TARGET_DIR: "/fixture/mixrelay-target" }),
     "/fixture/mixrelay-target/release/bundle/deb");
-  assert.equal(linuxDebianBundleDirectory([], { CARGO_TARGET_DIR: "target/custom" }),
+  assert.equal(linuxBundleDirectory([], { CARGO_TARGET_DIR: "target/custom" }),
     fileURLToPath(new URL("../target/custom/release/bundle/deb", import.meta.url)));
+  assert.equal(linuxBundleDirectory([], {}, "rpm"),
+    fileURLToPath(new URL("../target/release/bundle/rpm", import.meta.url)));
 });
 
 test("Linux config override without a bundle action fails before stale Debian artifacts can pass", async t => {
@@ -160,18 +166,21 @@ test("Linux config override recognizes Tauri config and bundle attached forms", 
     let inspected = false;
     const status = await main(["-c", "override.json", ...bundle], "linux",
       () => ({ status: 0 }), async () => { inspected = true; },
-      () => ["/fixture/MixRelay_0.1.0_amd64.deb"]);
+      (_directory, extension) => [`/fixture/MixRelay_0.1.0_amd64${extension}`], undefined, async () => {});
     assert.equal(status, 0, bundle.join(" "));
     assert.equal(inspected, true, bundle.join(" "));
   }
 });
 
-test("Linux config overrides can explicitly select non-Debian or no bundles", async () => {
-  const failIfCalled = () => assert.fail("non-Debian output must not be inspected as a Debian build");
+test("Linux config overrides can explicitly select no bundles, but never an RPM without its DEB", async t => {
+  const errors = [];
+  t.mock.method(console, "error", message => errors.push(message));
+  const failIfCalled = () => assert.fail("no package may be built or inspected");
   assert.equal(await main(["--config=override.json", "-brpm"], "linux",
-    () => ({ status: 0 }), failIfCalled, failIfCalled), 0);
+    failIfCalled, failIfCalled, failIfCalled, undefined, failIfCalled), 1);
+  assert.match(errors[0], /checked against the DEB from the same build/);
   assert.equal(await main(["-c=override.json", "--no-bundle"], "linux",
-    () => ({ status: 0 }), failIfCalled, failIfCalled), 0);
+    () => ({ status: 0 }), failIfCalled, failIfCalled, undefined, failIfCalled), 0);
 });
 
 test("Linux product builds reject bundle formats without coordinated package removal", async t => {
@@ -192,7 +201,8 @@ test("config-like arguments after the separator are forwarded, not treated as wr
     builds += 1;
     assert.deepEqual(args.slice(-3), ["--", "--config", "runner-value"]);
     return { status: 0 };
-  }, async () => { inspected = true; }, () => ["/fixture/default.deb"]);
+  }, async () => { inspected = true; }, (_directory, extension) => [`/fixture/default${extension}`],
+  undefined, async () => {});
   assert.equal(status, 0);
   assert.equal(builds, 1);
   assert.equal(inspected, true);
@@ -211,10 +221,10 @@ test("relative target directory is shared by Tauri, engine hook and Debian inspe
     buildEnvironment = options.env;
     assert.equal(options.env.CARGO_TARGET_DIR, expectedRoot);
     return { status: 0 };
-  }, async () => {}, directory => {
-    assert.equal(directory, `${expectedRoot}/release/bundle/deb`);
-    return ["/fixture/MixRelay_0.1.0_arm64.deb"];
-  }), 0);
+  }, async () => {}, (directory, extension) => {
+    assert.equal(directory, `${expectedRoot}/release/bundle/${extension.slice(1)}`);
+    return [`/fixture/MixRelay_0.1.0_arm64${extension}`];
+  }, undefined, async () => {}), 0);
   assert.equal(process.env.CARGO_TARGET_DIR, "target/custom");
   const { buildPlan } = await import("./prepare-desktop-engine.mjs");
   const plan = buildPlan({
@@ -223,36 +233,46 @@ test("relative target directory is shared by Tauri, engine hook and Debian inspe
   assert.equal(plan.output, `${expectedRoot}/aarch64-unknown-linux-gnu/release/mixrelay-service`);
 });
 
-test("Debian package discovery ignores other bundles and rejects non-regular artifacts", () => {
+test("package discovery ignores other bundles and rejects non-regular artifacts", () => {
   const entries = [
     { name: "MixRelay.deb", isFile: () => true },
     { name: "MixRelay.rpm", isFile: () => true },
   ];
-  assert.deepEqual(listDebianPackages("/fixture/bundle/deb", () => entries), ["/fixture/bundle/deb/MixRelay.deb"]);
-  assert.throws(() => listDebianPackages("/fixture/bundle/deb", () => [
+  assert.deepEqual(listPackages("/fixture/bundle/deb", ".deb", () => entries), ["/fixture/bundle/deb/MixRelay.deb"]);
+  assert.deepEqual(listPackages("/fixture/bundle/rpm", ".rpm", () => entries), ["/fixture/bundle/rpm/MixRelay.rpm"]);
+  assert.throws(() => listPackages("/fixture/bundle/deb", ".deb", () => [
     { name: "link.deb", isFile: () => false },
   ]), /not a regular file/);
-  assert.deepEqual(listDebianPackages("/fixture/missing", () => {
+  assert.deepEqual(listPackages("/fixture/missing", ".deb", () => {
     const error = new Error("missing");
     error.code = "ENOENT";
     throw error;
   }), []);
 });
 
-test("successful Linux Debian build inspects its single produced artifact before returning success", async () => {
+test("successful Linux build inspects its DEB, then checks the RPM against that DEB", async () => {
   const calls = [];
   const inspected = [];
   const status = await main([], "linux", (command, args, options) => {
     calls.push({ command, args, options });
     return { status: 0 };
-  }, async path => { inspected.push(path); }, directory => {
-    assert.equal(directory, linuxDebianBundleDirectory([]));
-    return ["/fixture/MixRelay_0.1.0_amd64.deb"];
-  });
+  }, async path => { inspected.push(path); }, (directory, extension) => {
+    assert.equal(directory, linuxBundleDirectory([], {}, extension.slice(1)));
+    return [`/fixture/MixRelay_0.1.0_amd64${extension}`];
+  }, undefined, async (rpm, deb) => { inspected.push([rpm, deb]); });
   assert.equal(status, 0);
   assert.equal(calls.length, 1);
   assert.equal(calls[0].options.cwd, fileURLToPath(new URL("../apps/desktop-shell", import.meta.url)));
-  assert.deepEqual(inspected, ["/fixture/MixRelay_0.1.0_amd64.deb"]);
+  assert.deepEqual(inspected, ["/fixture/MixRelay_0.1.0_amd64.deb",
+    ["/fixture/MixRelay_0.1.0_amd64.rpm", "/fixture/MixRelay_0.1.0_amd64.deb"]]);
+});
+
+test("a failed RPM comparison fails the Linux build", async t => {
+  t.mock.method(console, "error", () => {});
+  assert.equal(await main([], "linux", () => ({ status: 0 }), async () => {},
+    (_directory, extension) => [`/fixture/MixRelay${extension}`], undefined, async () => {
+      throw new Error("RPM payload differs from the DEB");
+    }), 1);
 });
 
 test("missing or multiple Debian artifacts fail without inspecting a guessed package", async t => {
@@ -275,11 +295,11 @@ test("invalid Debian package inspection prevents a successful Linux build result
   assert.equal(status, 1);
 });
 
-test("non-Debian builds and nonzero Tauri builds do not invoke Debian inspection", async t => {
+test("nonzero Tauri builds do not invoke package inspection", async t => {
   t.mock.method(console, "error", () => {});
-  const failIfCalled = () => assert.fail("Debian package path should not be inspected");
-  assert.equal(await main(["--bundles", "rpm"], "linux", () => ({ status: 0 }), failIfCalled, failIfCalled), 0);
-  assert.equal(await main(["--bundles", "deb"], "linux", () => ({ status: 9 }), failIfCalled, failIfCalled), 9);
+  const failIfCalled = () => assert.fail("package path should not be inspected");
+  assert.equal(await main(["--bundles", "deb"], "linux", () => ({ status: 9 }), failIfCalled, failIfCalled,
+    undefined, failIfCalled), 9);
 });
 
 test("spawn failures, signals, and missing exit status fail the build", async t => {

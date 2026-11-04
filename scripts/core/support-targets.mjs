@@ -7,10 +7,14 @@ export function ciMatrices(contract) {
     linux: { include: contract.codeChecks.linuxDistributions.flatMap(distro =>
       distro.architectures.map(arch => ({ id: `${distro.id}-${arch}`, distro: distro.id, arch,
         runner: arch === 'arm64' ? 'ubuntu-24.04-arm' : 'ubuntu-24.04' }))) },
-    linuxBuild: { include: contract.artifacts.filter(a => a.os === 'linux' && a.format === 'deb').map(artifact => ({
-      id: artifact.id, arch: artifact.arch, distro: contract.build.linuxDistribution,
-      runner: artifact.arch === 'arm64' ? 'ubuntu-24.04-arm' : 'ubuntu-24.04',
-    })) },
+    // One build per CPU bundles every Tauri package format from the same binaries;
+    // the Arch package later wraps that CPU's checked DEB payload.
+    linuxBuild: { include: contract.artifacts.filter(a => a.os === 'linux' && a.format === 'deb').map(artifact => {
+      const rpm = contract.artifacts.find(a => a.os === 'linux' && a.arch === artifact.arch && a.format === 'rpm');
+      return { id: artifact.id, arch: artifact.arch, distro: contract.build.linuxDistribution,
+        runner: artifact.arch === 'arm64' ? 'ubuntu-24.04-arm' : 'ubuntu-24.04',
+        bundles: rpm ? 'deb,rpm' : 'deb', rpm: rpm?.id ?? '' };
+    }) },
   };
 }
 

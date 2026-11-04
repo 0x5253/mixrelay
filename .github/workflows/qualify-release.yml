@@ -53,7 +53,7 @@ jobs:
         run: |
           gh release view "$CANDIDATE_TAG" --json isDraft,isPrerelease | jq -e '.isDraft or .isPrerelease'
           mkdir candidate
-          gh release download "$CANDIDATE_TAG" --dir candidate --pattern '*.pkg' --pattern '*.deb' --pattern '*.pkg.tar.zst' --pattern '*.streamDeckPlugin' --pattern 'mix-relay.candidate.json'
+          gh release download "$CANDIDATE_TAG" --dir candidate --pattern '*.pkg' --pattern '*.deb' --pattern '*.rpm' --pattern '*.pkg.tar.zst' --pattern '*.streamDeckPlugin' --pattern 'mix-relay.candidate.json'
       - name: Install archive inspection tools
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libarchive-tools
       - name: Check source, contract, bytes and hosted execution matrix

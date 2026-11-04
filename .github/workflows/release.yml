@@ -159,13 +159,14 @@ jobs:
             fi
           done
           mkdir release-assets
-          find inputs -type f \( -name '*.pkg' -o -name '*.deb' -o -name '*.pkg.tar.zst' -o -name '*.streamDeckPlugin' \) -exec cp --no-clobber {} release-assets/ \;
-          test "$(find release-assets -type f | wc -l)" -eq 5
-          test -f "release-assets/MixRelay-Installer-$RELEASE_VERSION.pkg"
-          test -f "release-assets/MixRelay-StreamDeck-$RELEASE_VERSION.streamDeckPlugin"
-          test -f "release-assets/MixRelay_${RELEASE_VERSION}_amd64.deb"
-          test -f "release-assets/MixRelay_${RELEASE_VERSION}_arm64.deb"
-          test -f "release-assets/mix-relay-${RELEASE_VERSION}-1-x86_64.pkg.tar.zst"
+          # The support contract names every published file; nothing else is published.
+          node scripts/support-contract.mjs assets "$RELEASE_VERSION" > expected-assets.txt
+          while read -r asset; do
+            matches=$(find inputs -type f -name "$asset")
+            test "$(printf '%s\n' "$matches" | grep -c .)" -eq 1
+            cp --no-clobber "$matches" release-assets/
+          done < expected-assets.txt
+          diff <(sort expected-assets.txt) <(ls release-assets | sort)
           (cd release-assets && sha256sum * > SHA256SUMS && sha256sum --check SHA256SUMS)
       - name: Publish installers and checksums to the version's GitHub Release
         run: |
