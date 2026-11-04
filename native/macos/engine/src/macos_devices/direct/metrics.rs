@@ -13,12 +13,17 @@ pub(super) struct CallbackMetrics {
     maximum_load: AtomicU64,
 }
 
-impl CallbackMetrics {
-    #[cfg(test)]
-    pub(super) fn missed_count(&self) -> u64 {
-        self.missed.load(Ordering::Relaxed)
-    }
+/// One drained diagnostic window of callback execution counters.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub(super) struct CallbackWindow {
+    pub(super) calls: u64,
+    pub(super) frames: u64,
+    pub(super) missed: u64,
+    pub(super) over_budget: u64,
+    pub(super) maximum_load_permille: u64,
+}
 
+impl CallbackMetrics {
     pub(super) fn missed(&self) {
         self.missed.fetch_add(1, Ordering::Relaxed);
     }
@@ -45,12 +50,24 @@ impl CallbackMetrics {
 
     /// Control-side diagnostic window. Independent counters may straddle a
     /// concurrent callback; they are not a transactional audio-state snapshot.
+    pub(super) fn take_window(&self) -> CallbackWindow {
+        CallbackWindow {
+            calls: self.calls.swap(0, Ordering::Relaxed),
+            frames: self.frames.swap(0, Ordering::Relaxed),
+            missed: self.missed.swap(0, Ordering::Relaxed),
+            over_budget: self.over_budget.swap(0, Ordering::Relaxed),
+            maximum_load_permille: self.maximum_load.swap(0, Ordering::Relaxed),
+        }
+    }
+
     pub(super) fn report(&self, clock_id: u32, elapsed: Duration) {
-        let calls = self.calls.swap(0, Ordering::Relaxed);
-        let frames = self.frames.swap(0, Ordering::Relaxed);
-        let missed = self.missed.swap(0, Ordering::Relaxed);
-        let over_budget = self.over_budget.swap(0, Ordering::Relaxed);
-        let maximum_load_permille = self.maximum_load.swap(0, Ordering::Relaxed);
+        let CallbackWindow {
+            calls,
+            frames,
+            missed,
+            over_budget,
+            maximum_load_permille,
+        } = self.take_window();
         tracing::info!(
             clock_id,
             calls,
@@ -102,7 +119,7 @@ mod tests {
         assert_eq!(metrics.frames.load(Ordering::Relaxed), 0);
         assert_eq!(metrics.over_budget.load(Ordering::Relaxed), 0);
         assert_eq!(metrics.maximum_load.load(Ordering::Relaxed), 0);
-        assert_eq!(metrics.missed_count(), 0);
+        assert_eq!(metrics.missed.load(Ordering::Relaxed), 0);
         metrics.record(Duration::from_micros(250), 32, 48_000);
         assert_eq!(metrics.calls.load(Ordering::Relaxed), 1);
         assert_eq!(metrics.frames.load(Ordering::Relaxed), 32);

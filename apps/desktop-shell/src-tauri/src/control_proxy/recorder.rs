@@ -60,8 +60,9 @@ impl ControlProxyClient {
 
 #[cfg(test)]
 mod tests {
-    use super::super::recording_settings::{RecordingEncoding, RecordingSettings};
+    use super::super::recording_settings::RecordingSettings;
     use super::*;
+    use mixrelay_desktop_core::recording::RecordingEncoding;
     fn prepare_transport(
         action: &Value,
         status: &Value,

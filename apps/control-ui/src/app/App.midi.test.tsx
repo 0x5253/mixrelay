@@ -7,13 +7,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { I18nProvider, i18n } from '../core/i18n';
 import { MixRelayProvider } from '../core/theme/MixRelayProvider';
 import { midiFixture, midiPortFixture } from '../features/midi/midiFixtures';
-import {
-  advance,
-  eventually,
-  find,
-  findIn,
-  finishFakeTimerTest,
-} from '../test-support/fakeTimerQueries';
+import { advance, eventually, find, finishFakeTimerTest } from '../test-support/fakeTimerQueries';
 import { App } from './App';
 
 const defaultMatchMedia = vi.mocked(window.matchMedia).getMockImplementation();
@@ -163,43 +157,6 @@ function installGeometry() {
   }
   vi.stubGlobal('ResizeObserver', MeasuredObserver);
 }
-
-it('undoes graph deletion from the graph list with the original target IDs, then redoes and restores again', async () => {
-  const { port, user } = await fixture();
-  const mutate = vi.spyOn(port, 'mutateGraphCatalog');
-  await find('group', { name: 'Monitor trim' });
-  const sidebar = await find('complementary', { name: 'Graphs' });
-  const graphs = within(sidebar);
-  const deleteGraph = await findIn(graphs, 'button', { name: 'Untitled Graph: Delete graph' });
-  await eventually(() => expect(deleteGraph).toBeEnabled());
-  await user.click(deleteGraph);
-  await user.click(await find('button', { name: 'Delete graph' }));
-  await eventually(() =>
-    expect(screen.queryByRole('group', { name: 'Monitor trim' })).not.toBeInTheDocument(),
-  );
-  const newGraph = graphs.getByRole('button', { name: 'Untitled Graph: Delete graph' });
-  await eventually(() => expect(newGraph).toBeEnabled());
-  newGraph.focus();
-  await user.keyboard('{Control>}z{/Control}');
-  await find('group', { name: 'Monitor trim' });
-  expect((await port.getGraphCatalog()).activeId).toBe('graph-1');
-  expect((await port.getGraph()).nodes[0]?.id).toBe('gain');
-  const remaining = await findIn(graphs, 'button', { name: 'Untitled Graph: Delete graph' });
-  await eventually(() => expect(remaining).toBeEnabled());
-  remaining.focus();
-  await user.keyboard('{Control>}{Shift>}z{/Shift}{/Control}');
-  await eventually(() =>
-    expect(screen.queryByRole('group', { name: 'Monitor trim' })).not.toBeInTheDocument(),
-  );
-  const owner = graphs.getByRole('button', { name: 'Untitled Graph: Delete graph' });
-  await eventually(() => expect(owner).toBeEnabled());
-  owner.focus();
-  await user.keyboard('{Control>}z{/Control}');
-  await find('group', { name: 'Monitor trim' });
-  expect((await port.getGraphCatalog()).activeId).toBe('graph-1');
-  expect(mutate).toHaveBeenCalledWith(expect.objectContaining({ action: 'undo_delete' }));
-  expect(mutate).toHaveBeenCalledWith(expect.objectContaining({ action: 'redo_delete' }));
-});
 
 function expectInactiveChrome(toggle: HTMLElement) {
   const theme = screen.getByRole('button', { name: /Appearance:/ });

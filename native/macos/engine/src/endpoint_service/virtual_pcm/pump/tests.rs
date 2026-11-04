@@ -1,6 +1,7 @@
 //! Drives real pump cycles against HAL-shaped client queues and a graph source, with
 //! a synthetic host clock and graph consumers emulated through the source registry.
 use super::*;
+use mixrelay_audio_io::clock_bridge::BridgeError;
 use mixrelay_audio_io::{
     capture_alignment::{CaptureAlignment, CaptureFrontier},
     process::{ClockDomain, ProcessCycle},
@@ -677,7 +678,7 @@ fn a_failed_converter_preparation_retries_and_keeps_the_head() {
     for _ in 0..64 {
         fixture.period();
     }
-    fixture.pump.failing_converters = 3;
+    fixture.pump.converters = failing_converters(3, BridgeError::Allocation { samples: 0 });
     fixture.request(true);
     let epoch = fixture.pump.transport.clock().unwrap().epoch;
     // 10 + 20 + 40 ms of backoff, then admission.
@@ -728,8 +729,7 @@ fn an_invalid_converter_configuration_ends_the_endpoint() {
     let mut fixture = Fixture::new(48_000);
     fixture.route(ConsumerRoute::Routed { head: true });
     fixture.period();
-    fixture.pump.failing_converters = 1;
-    fixture.pump.converter_failure = mixrelay_audio_io::clock_bridge::BridgeError::InvalidConfig;
+    fixture.pump.converters = failing_converters(1, BridgeError::InvalidConfig);
     fixture.request(true);
     fixture.write();
     let nanos = (u128::from(fixture.written) + 32) * 1_000_000_000 / 48_000;
@@ -828,4 +828,16 @@ fn an_idle_cached_endpoint_reports_its_unpublished_loss_once_after_the_quiet_per
     assert_eq!(fixture.pump.idle_wait(quiet, fixture.timebase), None);
     assert!(fixture.pump.report.final_losses(losses).is_none());
     assert_eq!(fixture.pump.idle_wait(quiet, fixture.timebase), None);
+}
+
+/// A converter source whose first `count` preparations fail with `failure`.
+fn failing_converters(count: u32, failure: BridgeError) -> ConverterSource {
+    let mut remaining = count;
+    Box::new(move |clock, native| {
+        if remaining != 0 {
+            remaining -= 1;
+            return Err(Error::Bridge(failure));
+        }
+        Converter::new(clock, native)
+    })
 }

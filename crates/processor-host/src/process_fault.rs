@@ -70,6 +70,7 @@ impl ProcessFaults {
         self.counts[kind as usize].fetch_add(1, Ordering::Relaxed);
     }
 
+    /// Every fault recorded so far, read from the counters without an observer.
     #[cfg(test)]
     pub(super) fn total(&self) -> u64 {
         self.counts.iter().fold(0_u64, |total, counter| {

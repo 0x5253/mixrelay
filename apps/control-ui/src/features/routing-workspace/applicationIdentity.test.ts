@@ -4,8 +4,8 @@ import type {
   CapturableApplication,
   RuntimeApplicationSelector,
 } from '../../core/domain/control/inventory';
+import { presentRoutingApplicationIcons } from './applicationIcons';
 import { applicationInventorySelection, applicationSelectorKey } from './applicationIdentity';
-import { presentRoutingApplicationIcons } from './model';
 
 function application(
   selector: RuntimeApplicationSelector = {

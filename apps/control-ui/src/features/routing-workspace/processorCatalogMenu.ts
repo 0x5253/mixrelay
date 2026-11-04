@@ -1,10 +1,10 @@
 import type { TFunction } from 'i18next';
-import type { AudioGraphNodeMenuItem } from '../../core/audio-graph/AudioGraphCanvas';
+import type { AudioGraphNodeMenuItem } from '../../core/audio-graph/audioGraphCanvasTypes';
 import type {
   ExternalProcessorDescriptor,
   ProviderPorts,
 } from '../../core/domain/control/processors';
-import { providerPortsFrom } from './model';
+import { providerPortsFrom } from './domain/providerPorts';
 import type { useProcessorCatalog } from './useProcessorCatalog';
 
 /** Stable leaf identity shared by menu construction and processor insertion. */

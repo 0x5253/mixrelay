@@ -215,13 +215,6 @@ impl RackWorkerPlugin {
         &self.output_storage
     }
 
-    #[cfg(test)]
-    pub(crate) fn clear_outputs(&mut self) {
-        for channel in &mut self.output_storage {
-            channel.fill(0.0);
-        }
-    }
-
     pub(crate) fn bypass(&mut self, frames: usize) {
         for (channel_index, output) in self.output_storage.iter_mut().enumerate() {
             if let Some(input) =

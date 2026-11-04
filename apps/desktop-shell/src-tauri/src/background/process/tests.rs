@@ -1,8 +1,5 @@
 use super::*;
-use std::{
-    fs,
-    time::{Duration, Instant},
-};
+use crate::background::fixture_pipe::Pipe;
 
 #[test]
 fn editor_process_fixture() {
@@ -16,11 +13,15 @@ fn editor_process_fixture() {
 fn controller_survives_actual_editor_process_exit() {
     let directory = tempfile::tempdir().unwrap();
     let executable = directory.path().join("controller.sh");
-    let ready = directory.path().join("ready");
-    let stop = directory.path().join("stop");
-    let finished = directory.path().join("finished");
-    // A bounded fixture always exits even if an assertion fails; no native audio is opened.
-    mixrelay_test_support::write_executable(&executable, "#!/bin/sh\ncd \"$(dirname \"$0\")\"\nprintf ready > ready\ni=0\nwhile test ! -f stop && test \"$i\" -lt 100; do sleep 0.05; i=$((i+1)); done\nprintf finished > finished\n").unwrap();
+    let mut ready = Pipe::create(&directory.path().join("ready"));
+    let mut stop = Pipe::create(&directory.path().join("stop"));
+    let mut finished = Pipe::create(&directory.path().join("finished"));
+    // The fixture blocks only on `stop`, which the test holds open; no native audio is opened.
+    mixrelay_test_support::write_executable(
+        &executable,
+        "#!/bin/sh\ncd \"${0%/*}\"\nprintf ready > ready\nread -r _ < stop\nprintf finished > finished\n",
+    )
+    .unwrap();
     let status = std::process::Command::new(std::env::current_exe().unwrap())
         .args([
             "--exact",
@@ -30,18 +31,11 @@ fn controller_survives_actual_editor_process_exit() {
         .status()
         .unwrap();
     assert!(status.success());
-    let deadline = Instant::now() + Duration::from_secs(2);
-    while !ready.exists() {
-        assert!(Instant::now() < deadline);
-        std::thread::sleep(Duration::from_millis(10));
-    }
+    ready.receive("ready");
     assert!(
-        !finished.exists(),
+        !finished.readable(0),
         "editor exit must not stop the controller"
     );
-    fs::write(stop, "stop").unwrap();
-    while !finished.exists() {
-        assert!(Instant::now() < deadline);
-        std::thread::sleep(Duration::from_millis(10));
-    }
+    stop.send("stop\n");
+    finished.receive("finished");
 }

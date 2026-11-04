@@ -4,6 +4,7 @@ import type { AudioGraphModel, AudioGraphNode } from '../../core/audio-graph/mod
 import type { RuntimeGraphDocument } from '../../core/domain/control/graph';
 import { useUndoHistory } from '../../core/history/useUndoHistory';
 import { effectLabelsFromWords, effectTranslations } from '../../core/i18n/effects';
+import { presentRoutingApplicationIcons } from './applicationIcons';
 import {
   defaultEffectLabels,
   type EffectLabels,
@@ -16,15 +17,10 @@ import {
   isChainKind,
   isEffectKind,
 } from './builtinEffects';
-import {
-  addRoutingNode,
-  audioGraphToRuntimeGraph,
-  type GraphPresentation,
-  presentRoutingApplicationIcons,
-  runtimeGraphToAudioGraph,
-  updateRoutingNodeParameter,
-  updateRoutingNodeParameters,
-} from './model';
+import type { GraphPresentation } from './graphPresentation';
+import { addRoutingNode } from './routingNodeCreation';
+import { updateRoutingNodeParameter, updateRoutingNodeParameters } from './routingNodeParameters';
+import { audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 import { duplexReference, virtualSpec } from './virtualEndpointFixtures';
 
 const document: RuntimeGraphDocument = { schemaVersion: 2, revision: 4, nodes: [], edges: [] };

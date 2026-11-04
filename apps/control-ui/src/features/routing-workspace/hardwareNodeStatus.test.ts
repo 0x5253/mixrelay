@@ -3,7 +3,7 @@ import type { RuntimeGraphDocument } from '../../core/domain/control/graph';
 import type { AudioDeviceDescriptor } from '../../core/domain/control/inventory';
 import { i18n } from '../../core/i18n';
 import { presentHardwareNodeStatus } from './hardwareNodeStatus';
-import { audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './model';
+import { audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 
 const device: AudioDeviceDescriptor = {
   uid: 'explicit-interface',

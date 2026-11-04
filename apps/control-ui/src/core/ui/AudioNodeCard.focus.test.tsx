@@ -3,6 +3,7 @@ import { Fragment, useLayoutEffect, useState } from 'react';
 import { expect, it, vi } from 'vitest';
 import { MixRelayProvider } from '../theme/MixRelayProvider';
 import { AudioNodeCard } from './AudioNodeCard';
+import { AudioNodeHeaderActions } from './AudioNodeHeaderActions';
 import { NodePowerButton } from './NodeSignalControls';
 
 const base = {
@@ -58,32 +59,30 @@ function Recovery({
     />
   );
 }
-it('keeps bypass named and executable when its numeric contract has no choice labels', () => {
-  const change = vi.fn();
-  const view = render(
-    <MixRelayProvider>
-      <AudioNodeCard
-        {...base}
-        parameterControls={[{ ...bypass, choices: undefined }]}
-        onParameterChange={change}
-      />
-    </MixRelayProvider>,
+function HeaderBypass({ value, onChange }: { value: number; onChange: () => void }) {
+  return (
+    <AudioNodeHeaderActions
+      title="Effect"
+      bypassControls={[{ ...bypass, choices: undefined, value }]}
+      bypassDisabled={false}
+      onBypassChange={onChange}
+      headerRef={null}
+      targetRef={null}
+    />
   );
-  const processing = screen.getByRole('button', { name: (name) => name.endsWith('Bypass: 0') });
+}
+
+// Bypass naming is a pure rule (audioNodeCardModel); this covers the header's button wiring.
+it('keeps bypass executable and focused when its numeric contract has no choice labels', () => {
+  const change = vi.fn();
+  const view = render(<HeaderBypass value={0} onChange={change} />);
+  const processing = screen.getByRole('button', { name: 'Effect: Bypass: 0' });
   expect(processing).toHaveAttribute('aria-pressed', 'false');
   processing.focus();
   fireEvent.click(processing);
   expect(change).toHaveBeenCalledExactlyOnceWith('bypass', 1);
-  view.rerender(
-    <MixRelayProvider>
-      <AudioNodeCard
-        {...base}
-        parameterControls={[{ ...bypass, choices: undefined, value: 1 }]}
-        onParameterChange={change}
-      />
-    </MixRelayProvider>,
-  );
-  const bypassed = screen.getByRole('button', { name: (name) => name.endsWith('Bypass: 1') });
+  view.rerender(<HeaderBypass value={1} onChange={change} />);
+  const bypassed = screen.getByRole('button', { name: 'Effect: Bypass: 1' });
   expect(bypassed).toHaveFocus();
   expect(bypassed).toHaveAttribute('aria-pressed', 'true');
   fireEvent.click(bypassed);

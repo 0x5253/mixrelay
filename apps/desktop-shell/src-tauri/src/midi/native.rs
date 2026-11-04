@@ -33,19 +33,6 @@ pub(super) struct Port<C = MidiInputConnection<Arc<Mailbox>>> {
     _connection: C,
 }
 
-#[cfg(test)]
-impl Port<()> {
-    pub(super) fn fixture(device: Device, mailbox: Arc<Mailbox>) -> Self {
-        Self {
-            device,
-            mailbox,
-            native_id: "20:0".into(),
-            token: 1,
-            _connection: (),
-        }
-    }
-}
-
 type Discovered = Vec<(Device, String)>;
 
 #[cfg(target_os = "linux")]
@@ -238,5 +225,7 @@ fn alsa_identity(name: &str) -> String {
     format!("alsa:{names}")
 }
 
+#[cfg(test)]
+pub(super) mod port_fixture;
 #[cfg(test)]
 mod tests;

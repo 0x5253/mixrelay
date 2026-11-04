@@ -1,5 +1,7 @@
 //! Graph-facing queue handle and native worker lifetime.
 mod continuity;
+#[cfg(test)]
+mod tests;
 pub(super) use continuity::InputContinuity;
 
 use super::{

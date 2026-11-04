@@ -141,7 +141,7 @@ it.each(cases)('$name runs once per Enter/Space and has no wrapper Tab stop', as
       </I18nProvider>
     </MixRelayProvider>,
   );
-  const user = userEvent.setup();
+  const user = userEvent.setup({ delay: null });
   const target = screen.getByRole('button', { name: entry.name });
   target.focus();
   await user.keyboard('{Enter}');
@@ -175,7 +175,7 @@ it('names repeated delete actions by their target and skips disabled graph comma
       />
     </MixRelayProvider>,
   );
-  const user = userEvent.setup();
+  const user = userEvent.setup({ delay: null });
   await user.tab();
   expect(screen.getByRole('button', { name: /^Voice$/ })).toHaveFocus();
   await user.tab();
@@ -192,7 +192,7 @@ it('the icon-only dialog close runs once on Enter and once on Space', async () =
       </Dialog>
     </MixRelayProvider>,
   );
-  const user = userEvent.setup();
+  const user = userEvent.setup({ delay: null });
   const target = screen.getByRole('button', { name: 'Close' });
   await user.tab();
   expect(target).toHaveFocus();
@@ -202,6 +202,10 @@ it('the icon-only dialog close runs once on Enter and once on Space', async () =
   await user.tab();
   expect(screen.getByRole('button', { name: 'Next' })).toHaveFocus();
 });
+
+// Focus restoration and the theme attribute change outside the observed container, so
+// waitFor would otherwise only notice them on its 50 ms poll.
+const fastPoll = { interval: 5 };
 
 it.each(['{Enter}', ' '] as const)(
   'theme icon opens with %s, selects by keyboard and restores focus on Escape',
@@ -214,18 +218,21 @@ it.each(['{Enter}', ' '] as const)(
         </I18nProvider>
       </MixRelayProvider>,
     );
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const target = screen.getByRole('button');
     target.focus();
     await user.keyboard(key);
-    const menu = await screen.findByRole('menu');
+    const menu = await screen.findByRole('menu', undefined, fastPoll);
     expect(menu).toBeVisible();
     await user.keyboard('{Escape}');
-    await waitFor(() => expect(target).toHaveFocus());
+    await waitFor(() => expect(target).toHaveFocus(), fastPoll);
     await user.keyboard(key);
-    await screen.findByRole('menu');
+    await screen.findByRole('menu', undefined, fastPoll);
     await user.keyboard('{Home}{ArrowDown}{Enter}');
-    await waitFor(() => expect(document.documentElement).toHaveAttribute('data-theme', 'light'));
-    await waitFor(() => expect(target).toHaveFocus());
+    await waitFor(
+      () => expect(document.documentElement).toHaveAttribute('data-theme', 'light'),
+      fastPoll,
+    );
+    await waitFor(() => expect(target).toHaveFocus(), fastPoll);
   },
 );

@@ -1,4 +1,5 @@
 use super::*;
+use mixrelay_audio_graph::GraphCompiler;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 const FORMAT: RenderFormat = RenderFormat {

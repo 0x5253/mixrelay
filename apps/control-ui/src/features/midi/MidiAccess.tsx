@@ -1,4 +1,4 @@
-import { type ReactNode, useContext, useEffect, useEffectEvent, useState } from 'react';
+import { type ReactNode, useContext, useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { MidiAssignment, MidiBinding } from '../../core/domain/midi';
 import { MidiContext, MidiPanelContext } from '../../core/midi/MidiContext';
@@ -9,6 +9,7 @@ import { InlineNotice } from '../../core/ui/InlineNotice';
 import { hasPlatformModifier, platformModifier } from '../../core/ui/platformShortcut';
 import { Stack } from '../../core/ui/Stack';
 import { Text } from '../../core/ui/Text';
+import { MidiMappingController, midiShortcut } from './application/MidiMappingController';
 import styles from './MidiAccess.module.css';
 import { MidiBindingsList } from './MidiBindingsList';
 import { useMidiSession } from './useMidiSession';
@@ -36,52 +37,28 @@ function ConnectedMidiAccess({ port, children }: { port: MidiPort; children: Rea
   const [selected, setSelected] = useState<MidiAssignment | null>(null);
   const session = useMidiSession(port, true);
   const active = session.status?.mapMode ?? false;
-  const end = async () => {
-    if (await session.command('midi_cancel')) {
-      setSelected(null);
-      document.querySelector<HTMLElement>('[data-midi-toggle]')?.focus();
-    }
-  };
-  const toggle = async () => {
-    if (active) return end();
-    if (await session.command('midi_map', { enabled: true })) {
-      setSelected(null);
-    }
-  };
-  const assign = async (assignment: MidiAssignment) => {
-    if (
-      await session.command('midi_learn', {
-        assignment: {
-          target: assignment.target,
-          action: assignment.action,
-          graphName: assignment.graphName,
-          nodeName: assignment.nodeName,
-        },
-      })
-    )
-      setSelected(assignment);
-  };
-  const remove = async (binding: MidiBinding) => {
-    if (await session.command('midi_remove', { binding })) {
-      setSelected(null);
-      document.querySelector<HTMLElement>('[data-midi-toggle]')?.focus();
-    }
-  };
-  useMidiKeys(
-    port,
-    () => void toggle(),
-    () => void end(),
-    active,
+  const mapping = useMemo(
+    () =>
+      new MidiMappingController(session.command, {
+        select: setSelected,
+        release: () => document.querySelector<HTMLElement>('[data-midi-toggle]')?.focus(),
+      }),
+    [session.command],
   );
+  const toggle = () => void mapping.toggle(active);
+  const end = () => void mapping.end();
+  const assign = (assignment: MidiAssignment) => void mapping.assign(assignment);
+  const remove = (binding: MidiBinding) => void mapping.remove(binding);
+  useMidiKeys(port, toggle, end, active);
   return (
     <MidiContext.Provider
       value={{
         active,
         status: session.status,
         selected,
-        toggle: () => void toggle(),
-        assign: (assignment) => void assign(assignment),
-        remove: (binding) => void remove(binding),
+        toggle,
+        assign,
+        remove,
       }}
     >
       <MidiPanelContext.Provider
@@ -91,14 +68,10 @@ function ConnectedMidiAccess({ port, children }: { port: MidiPort; children: Rea
               session={session}
               status={session.status}
               selected={selected}
-              onSelect={(assignment) => void assign(assignment)}
-              onChange={async (identity, binding) => {
-                const saved = await session.command('midi_save', { identity, binding });
-                if (saved) setSelected({ ...binding, label: binding.nodeName });
-                return saved;
-              }}
-              onRemove={(binding) => void remove(binding)}
-              onClose={() => void end()}
+              onSelect={assign}
+              onChange={(identity, binding) => mapping.save(identity, binding)}
+              onRemove={remove}
+              onClose={end}
             />
           ) : null
         }
@@ -162,19 +135,11 @@ function MidiError() {
 
 function useMidiKeys(port: MidiPort, toggle: () => void, end: () => void, active: boolean) {
   const handle = useEffectEvent((event: KeyboardEvent) => {
-    if (event.repeat || event.isComposing) return;
-    if (
-      event.key.toLowerCase() === 'm' &&
-      hasPlatformModifier(event) &&
-      !event.altKey &&
-      !event.shiftKey
-    ) {
-      event.preventDefault();
-      toggle();
-    } else if (event.key === 'Escape' && active && !event.defaultPrevented) {
-      event.preventDefault();
-      end();
-    }
+    const command = midiShortcut(event, hasPlatformModifier(event), active);
+    if (!command) return;
+    event.preventDefault();
+    if (command === 'toggle') toggle();
+    else end();
   });
   const nativeToggle = useEffectEvent(toggle);
   useEffect(() => port.subscribeMapToggle?.(nativeToggle), [port]);

@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import type { AudioGraphNodeMenuItem } from '../../core/audio-graph/AudioGraphCanvas';
+import type { AudioGraphNodeMenuItem } from '../../core/audio-graph/audioGraphCanvasTypes';
 import type { AudioGraphModel, AudioGraphNode } from '../../core/audio-graph/model';
 import type { CapturableApplication } from '../../core/domain/control/inventory';
 import type { AudioSessionStatus } from '../../core/domain/control/status';

@@ -12,11 +12,8 @@ import { rebaseGraphEdit } from '../../core/domain/graph/rebaseGraphEdit';
 import type { ControlPort } from '../../core/ports/control/ControlPort';
 import type { WorkspaceView } from '../../core/ports/WorkspaceView';
 import { rebaseControlsWithHistory } from './controlReconciliation';
-import {
-  audioGraphToRuntimeGraph,
-  type GraphPresentation,
-  runtimeGraphToAudioGraph,
-} from './model';
+import type { GraphPresentation } from './graphPresentation';
+import { audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 import type { useProcessorParameterPublisher } from './useProcessorParameterPublisher';
 
 interface WorkspaceGraphView {

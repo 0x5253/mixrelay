@@ -145,11 +145,6 @@ impl CatalogStorage {
     pub(crate) fn record_warning(&self, warning: Option<String>) {
         *self.warning.lock() = warning;
     }
-
-    #[cfg(test)]
-    pub(crate) fn is_unlocked(&self) -> bool {
-        self.store.try_lock().is_some()
-    }
 }
 
 #[cfg(feature = "test-util")]
@@ -157,6 +152,17 @@ impl CatalogStorage {
     pub(crate) fn test_set_path(&self, path: PathBuf) {
         if let Some(store) = self.store.lock().as_mut() {
             store.path = path;
+        }
+    }
+}
+
+/// Lock observations for test doubles that call back into the controller.
+#[cfg(test)]
+mod lock_observation {
+    impl super::CatalogStorage {
+        /// Whether no caller holds the catalog store, so a callback may read it.
+        pub(crate) fn is_unlocked(&self) -> bool {
+            self.store.try_lock().is_some()
         }
     }
 }

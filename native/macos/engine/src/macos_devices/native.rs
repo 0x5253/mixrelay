@@ -1,4 +1,6 @@
 //! Native registration ownership and acknowledged teardown, never on DSP.
+#[cfg(test)]
+mod tests;
 use super::{
     admission::{Admission, Permit},
     aggregate::Aggregate,

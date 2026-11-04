@@ -1,11 +1,11 @@
 //! Actual service controller transactions over owned simulated `CoreAudio` resources.
+use crate::{EngineGraphController, EngineGraphControllerConfig};
 use mixrelay_audio_graph::{
     AudioDeviceInputConfig, AudioDeviceOutputConfig, DeviceSelector, GraphDocument, NodeConfig,
     NodeSpec, RenderFormat,
 };
 use mixrelay_control_server::ControlBackend;
 use mixrelay_engine_core::session::AdapterRuntimeStatus;
-use mixrelay_engine_service::{EngineGraphController, EngineGraphControllerConfig};
 use mixrelay_macos_engine::{
     MacDevices,
     test_support::{self, ActiveDevices as DeviceSet, CAPTURED, DEFAULT_BUFFER, SimulatedHost},

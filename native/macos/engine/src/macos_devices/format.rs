@@ -1,7 +1,8 @@
 //! Staged format transaction. Allocation precedes native mutation; commit publishes to workers.
 use super::buffer_control::{self, HostBufferControl};
 use super::buffer_transaction::{BufferFailure, BufferPlan};
-use super::{backend_error, bridge::DeviceBridge, device::Device};
+use super::{MacDevices, backend_error, bridge::DeviceBridge, device::Device, spec::specs};
+use mixrelay_audio_graph::{GraphDocument, RenderFormat};
 use mixrelay_audio_io::HostAudioBackendError;
 use mixrelay_engine_core::PreparedGraphFormat;
 use std::sync::{
@@ -29,6 +30,44 @@ impl PublishedFormat {
         }
     }
 }
+impl MacDevices {
+    /// Opens the replacement device set and its converters for `requested` while the
+    /// current set keeps running. Nothing is published until the returned format commits.
+    pub(super) fn prepare_device_format(
+        &self,
+        document: &GraphDocument,
+        current: RenderFormat,
+        requested: RenderFormat,
+    ) -> Result<Box<dyn PreparedGraphFormat>, HostAudioBackendError> {
+        self.require_preparation()?;
+        let cache = self
+            .cache
+            .lock()
+            .map_err(|_| backend_error("CoreAudio device cache poisoned"))?;
+        self.handoff.reclaim();
+        let reservation = self.handoff.reserve_format().ok_or_else(|| {
+            backend_error("CoreAudio resource or format update is already pending")
+        })?;
+        let (devices, next_cache) = self.prepare_device_set(&cache, specs(document), requested)?;
+        self.require_preparation()?;
+        let format = PreparedDeviceFormat::prepare(
+            devices.0.values().cloned(),
+            self.format.clone(),
+            current,
+            requested,
+            reservation,
+        )?;
+        Ok(Box::new(PreparedDeviceReplacement {
+            format,
+            devices,
+            next_cache,
+            cache: self.cache.clone(),
+            handoff: self.handoff.clone(),
+            hardware_clock: self.prepared_hardware_clock.clone(),
+        }))
+    }
+}
+
 pub(super) struct PreparedDeviceFormat {
     pub(super) reservation: super::handoff::FormatReservation,
     pub(super) devices: Vec<(Arc<Device>, DeviceBridge)>,
@@ -159,3 +198,6 @@ impl PreparedDeviceFormat {
         })
     }
 }
+
+#[cfg(test)]
+mod tests;

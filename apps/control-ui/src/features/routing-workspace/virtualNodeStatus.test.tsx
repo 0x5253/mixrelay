@@ -9,8 +9,8 @@ import type { AudioGraphModel } from '../../core/audio-graph/model';
 import { i18n } from '../../core/i18n';
 import { MixRelayProvider } from '../../core/theme/MixRelayProvider';
 import { AudioNodeCard } from '../../core/ui/AudioNodeCard';
-import { audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './model';
 import { RoutingWorkspace } from './RoutingWorkspace';
+import { audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 import { type GraphAvailability, presentVirtualNodeStatus } from './virtualNodeStatus';
 
 vi.mock('../../core/audio-graph/AudioGraphCanvas', () => ({

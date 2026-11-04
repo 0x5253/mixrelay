@@ -7,11 +7,7 @@ use std::{path::PathBuf, time::Duration};
 use tauri::Manager as _;
 const START_TIMEOUT: Duration = Duration::from_secs(30);
 
-#[cfg(test)]
-pub(super) fn compatible(hello: &Value) -> bool {
-    compatibility().accepts(hello)
-}
-fn compatibility() -> runtime::Compatibility<'static> {
+pub(super) fn compatibility() -> runtime::Compatibility<'static> {
     runtime::Compatibility {
         protocol: crate::control_channel::LINK_PROTOCOL,
         version: env!("CARGO_PKG_VERSION"),
@@ -98,11 +94,12 @@ pub(crate) async fn runtime_connect(
             return Ok(RuntimeStatus::Incompatible);
         }
     }
-    let status = connect_until_ready(
-        &connection,
-        &executable,
-        START_TIMEOUT,
-        controller_admission_available,
+    let status = connect(
+        connection.inner(),
+        &Launcher {
+            executable: &executable,
+            admission: controller_admission_available,
+        },
         report,
     )
     .await
@@ -113,6 +110,30 @@ pub(crate) async fn runtime_connect(
     }
     publish_readiness(&app, status);
     Ok(status)
+}
+
+/// Connects explicitly in wall-clock time within the product's start and exchange budgets.
+async fn connect<A: Fn() -> std::io::Result<bool>>(
+    connection: &Connection,
+    launcher: &Launcher<'_, A>,
+    report: impl FnMut(ConnectStage),
+) -> std::io::Result<RuntimeStatus> {
+    runtime::connect_until_ready(
+        connection,
+        launcher,
+        &crate::async_time::TokioDelay::new(mixrelay_time::StdClock::new()),
+        connect_options(),
+        report,
+    )
+    .await
+}
+
+fn connect_options() -> runtime::ConnectOptions<'static> {
+    runtime::ConnectOptions {
+        compatibility: compatibility(),
+        timeout: START_TIMEOUT,
+        exchange_timeout: EXCHANGE_TIMEOUT,
+    }
 }
 
 fn connection_gate(app: &tauri::AppHandle) -> std::sync::Arc<tokio::sync::Mutex<()>> {
@@ -136,30 +157,6 @@ impl<A: Fn() -> std::io::Result<bool>> runtime::ControllerLauncher for Launcher<
     fn launch(&self) -> std::io::Result<Self::Launch> {
         spawn_controller(self.executable)
     }
-}
-
-async fn connect_until_ready(
-    connection: &Connection,
-    executable: &std::path::Path,
-    timeout: Duration,
-    admission: impl Fn() -> std::io::Result<bool>,
-    report: impl Fn(ConnectStage),
-) -> std::io::Result<RuntimeStatus> {
-    runtime::connect_until_ready(
-        connection,
-        &Launcher {
-            executable,
-            admission,
-        },
-        &crate::async_time::TokioDelay::new(mixrelay_time::StdClock::new()),
-        runtime::ConnectOptions {
-            compatibility: compatibility(),
-            timeout,
-            exchange_timeout: EXCHANGE_TIMEOUT,
-        },
-        report,
-    )
-    .await
 }
 
 #[cfg_attr(
@@ -233,270 +230,4 @@ async fn installed_runtime_version() -> Option<String> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use serde_json::json;
-    use std::os::unix::fs::MetadataExt as _;
-    use tokio::{
-        io::{AsyncBufReadExt as _, AsyncWriteExt as _, BufReader},
-        net::UnixListener,
-    };
-
-    async fn serve_connection(listener: UnixListener, status: u16) {
-        loop {
-            let (stream, _) = listener.accept().await.unwrap();
-            let mut reader = BufReader::new(stream);
-            let mut frame = String::new();
-            reader.read_line(&mut frame).await.unwrap();
-            let request: Value = serde_json::from_str(&frame).unwrap();
-            let body = if request["command"]["name"] == "hello" {
-                json!({"protocolVersion":crate::control_channel::LINK_PROTOCOL,"product":"mixrelay-driver","version":env!("CARGO_PKG_VERSION")})
-            } else {
-                json!({"status":status})
-            };
-            reader
-                .get_mut()
-                .write_all(
-                    format!(
-                        "{}\n",
-                        json!({"id":request["id"],"status":200,"body":{"ok":body}})
-                    )
-                    .as_bytes(),
-                )
-                .await
-                .unwrap();
-        }
-    }
-
-    fn fixture(directory: &std::path::Path, script: &str) -> (Connection, PathBuf) {
-        let executable = directory.join("controller.sh");
-        mixrelay_test_support::write_executable(
-            &executable,
-            &format!("#!/bin/sh\ncd \"$(dirname \"$0\")\"\n{script}\n"),
-        )
-        .unwrap();
-        (
-            Connection::for_socket_fixture(
-                directory.join("control.sock"),
-                std::fs::metadata(directory).unwrap().uid(),
-            ),
-            executable,
-        )
-    }
-
-    #[tokio::test]
-    async fn exited_first_launch_is_retried_during_the_same_explicit_connection() {
-        let directory = tempfile::tempdir().unwrap();
-        let (connection, executable) = fixture(
-            directory.path(),
-            "printf attempt >> attempts\nif test ! -f first; then touch first; exit 2; fi\ntouch ready",
-        );
-        let path = directory.path().join("control.sock");
-        let ready = directory.path().join("ready");
-        let server = tokio::spawn(async move {
-            while !ready.exists() {
-                tokio::time::sleep(Duration::from_millis(10)).await;
-            }
-            serve_connection(UnixListener::bind(path).unwrap(), 200).await;
-        });
-        let stages = std::sync::Mutex::new(Vec::new());
-        assert_eq!(
-            connect_until_ready(
-                &connection,
-                &executable,
-                Duration::from_secs(4),
-                || Ok(true),
-                |stage| stages.lock().unwrap().push(stage)
-            )
-            .await
-            .unwrap(),
-            RuntimeStatus::Ready
-        );
-        assert_eq!(
-            std::fs::read_to_string(directory.path().join("attempts")).unwrap(),
-            "attemptattempt"
-        );
-        // A retried launch is still one Starting step, then its answering runtime starts the engine.
-        assert_eq!(
-            *stages.lock().unwrap(),
-            [ConnectStage::Starting, ConnectStage::PreparingEngine]
-        );
-        server.abort();
-    }
-
-    #[tokio::test]
-    async fn busy_owner_and_a_living_failed_engine_are_never_duplicated() {
-        let directory = tempfile::tempdir().unwrap();
-        let (connection, executable) = fixture(directory.path(), "touch launched");
-        assert_eq!(
-            connect_until_ready(
-                &connection,
-                &executable,
-                Duration::from_millis(100),
-                || Ok(false),
-                |_| {}
-            )
-            .await
-            .unwrap(),
-            RuntimeStatus::Unavailable
-        );
-        assert!(!directory.path().join("launched").exists());
-        let server = tokio::spawn(serve_connection(
-            UnixListener::bind(directory.path().join("control.sock")).unwrap(),
-            503,
-        ));
-        let stages = std::sync::Mutex::new(Vec::new());
-        assert_eq!(
-            connect_until_ready(
-                &connection,
-                &executable,
-                Duration::from_millis(100),
-                || Ok(true),
-                |stage| stages.lock().unwrap().push(stage)
-            )
-            .await
-            .unwrap(),
-            RuntimeStatus::Unavailable
-        );
-        assert!(!directory.path().join("launched").exists());
-        // The answering runtime owns its engine start; it is reported once, never relaunched.
-        assert_eq!(*stages.lock().unwrap(), [ConnectStage::PreparingEngine]);
-        server.abort();
-    }
-
-    #[tokio::test]
-    async fn a_slow_but_healthy_engine_is_reported_as_being_prepared() {
-        let directory = tempfile::tempdir().unwrap();
-        let (connection, executable) = fixture(directory.path(), "touch launched");
-        let listener = UnixListener::bind(directory.path().join("control.sock")).unwrap();
-        let server = tokio::spawn(async move {
-            let (stream, _) = listener.accept().await.unwrap();
-            let mut reader = BufReader::new(stream);
-            for (result, delay) in [
-                (
-                    json!({"protocolVersion":crate::control_channel::LINK_PROTOCOL,"product":"mixrelay-driver","version":env!("CARGO_PKG_VERSION")}),
-                    0,
-                ),
-                (json!({"status":200}), 300),
-            ] {
-                let mut frame = String::new();
-                reader.read_line(&mut frame).await.unwrap();
-                let request: Value = serde_json::from_str(&frame).unwrap();
-                tokio::time::sleep(Duration::from_millis(delay)).await;
-                reader
-                    .get_mut()
-                    .write_all(
-                        format!(
-                            "{}\n",
-                            json!({"id":request["id"],"status":200,"body":{"ok":result}})
-                        )
-                        .as_bytes(),
-                    )
-                    .await
-                    .unwrap();
-            }
-        });
-        let stages = std::sync::Mutex::new(Vec::new());
-        assert_eq!(
-            connect_until_ready(
-                &connection,
-                &executable,
-                Duration::from_secs(4),
-                || Ok(true),
-                |stage| stages.lock().unwrap().push(stage)
-            )
-            .await
-            .unwrap(),
-            RuntimeStatus::Ready
-        );
-        assert_eq!(*stages.lock().unwrap(), [ConnectStage::PreparingEngine]);
-        assert!(!directory.path().join("launched").exists());
-        server.await.unwrap();
-    }
-
-    #[tokio::test]
-    async fn a_broken_executable_has_a_fixed_retry_limit() {
-        let directory = tempfile::tempdir().unwrap();
-        let (connection, executable) =
-            fixture(directory.path(), "printf attempt >> attempts\nexit 2");
-        assert_eq!(
-            connect_until_ready(
-                &connection,
-                &executable,
-                Duration::from_secs(5),
-                || Ok(true),
-                |_| {}
-            )
-            .await
-            .unwrap(),
-            RuntimeStatus::Unavailable
-        );
-        assert_eq!(
-            std::fs::read_to_string(directory.path().join("attempts")).unwrap(),
-            "attemptattemptattempt"
-        );
-    }
-
-    #[test]
-    fn old_app_controller_and_future_protocol_are_not_driver_connections() {
-        for hello in [
-            json!({"protocolVersion":1,"version":"0.1.2"}),
-            json!({"protocolVersion":2,"product":"mixrelay-driver","version":env!("CARGO_PKG_VERSION")}),
-            json!({"protocolVersion":2,"product":"mixrelay-app","version":"0.1.2"}),
-            json!({"protocolVersion":4,"product":"mixrelay-driver","version":env!("CARGO_PKG_VERSION")}),
-            json!({"protocolVersion":2,"product":"mixrelay-driver","version":"0.1.1"}),
-            json!({"protocolVersion":2,"product":"mixrelay-driver","version":"0.1.2"}),
-            json!({"protocolVersion":2,"product":"mixrelay-driver","version":"0.2.0"}),
-        ] {
-            assert!(!compatible(&hello));
-        }
-        assert!(compatible(
-            &json!({"protocolVersion":crate::control_channel::LINK_PROTOCOL,"product":"mixrelay-driver","version":env!("CARGO_PKG_VERSION")})
-        ));
-    }
-
-    #[tokio::test]
-    async fn controller_with_unavailable_engine_never_opens_editor() {
-        for code in [200, 503] {
-            let directory = tempfile::tempdir().unwrap();
-            let connection = Connection::for_socket_fixture(
-                directory.path().join("control.sock"),
-                std::fs::metadata(directory.path()).unwrap().uid(),
-            );
-            let listener = UnixListener::bind(directory.path().join("control.sock")).unwrap();
-            let server = tokio::spawn(async move {
-                // The controller keeps a connection open for the next request.
-                let (stream, _) = listener.accept().await.unwrap();
-                let mut reader = BufReader::new(stream);
-                for result in [
-                    json!({"protocolVersion":crate::control_channel::LINK_PROTOCOL,"product":"mixrelay-driver","version":env!("CARGO_PKG_VERSION")}),
-                    json!({"status":code}),
-                ] {
-                    let mut frame = String::new();
-                    reader.read_line(&mut frame).await.unwrap();
-                    let request: Value = serde_json::from_str(&frame).unwrap();
-                    reader
-                        .get_mut()
-                        .write_all(
-                            format!(
-                                "{}\n",
-                                json!({"id":request["id"],"status":200,"body":{"ok":result}})
-                            )
-                            .as_bytes(),
-                        )
-                        .await
-                        .unwrap();
-                }
-            });
-            assert_eq!(
-                readiness(&connection).await,
-                if code == 200 {
-                    RuntimeStatus::Ready
-                } else {
-                    RuntimeStatus::Unavailable
-                }
-            );
-            server.await.unwrap();
-        }
-    }
-}
+mod tests;

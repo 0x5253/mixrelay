@@ -115,10 +115,6 @@ impl SavedGraphs {
         };
         true
     }
-    #[cfg(test)]
-    pub(super) fn push(&mut self, graph: SavedGraph) {
-        self.after.push(graph);
-    }
 }
 
 #[cfg(test)]

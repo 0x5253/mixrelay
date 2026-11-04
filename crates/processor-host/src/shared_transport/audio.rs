@@ -44,31 +44,6 @@ impl ParentAudio {
         self.mapping.header()
     }
 
-    #[cfg(test)]
-    pub(crate) fn acknowledged_output(&self) -> u64 {
-        self.header().output_consumed.load(Ordering::Acquire)
-    }
-
-    #[cfg(test)]
-    #[cfg(not(debug_assertions))]
-    pub(crate) fn acknowledge_benchmark_block(&self) {
-        let header = self.header();
-        let sequence = header.input_sequence.load(Ordering::Acquire);
-        header.input_consumed.store(sequence, Ordering::Release);
-        let block_frames = self.mapping.layout.block_frames;
-        let first_frame = self
-            .source_frame
-            .saturating_sub(u64::try_from(block_frames).expect("u32 fits u64"));
-        header
-            .output_first_frame
-            .store(first_frame, Ordering::Relaxed);
-        header.output_frames.store(
-            u32::try_from(block_frames).expect("mapping admission validates block size"),
-            Ordering::Relaxed,
-        );
-        header.output_sequence.store(sequence, Ordering::Release);
-    }
-
     /// Consumes one new callback's input timeline, even if the occupied slot
     /// rejects its packet. Never retry that callback: doing so advances time
     /// twice. Invalid dimensions or sequences do not consume timeline frames.
@@ -435,5 +410,40 @@ impl WorkerAudio {
             .store(packet.sequence, Ordering::Release);
         self.output_packet = None;
         true
+    }
+}
+
+/// Worker-side observations and acknowledgements for tests that run without a worker.
+#[cfg(test)]
+mod worker_double {
+    use std::sync::atomic::Ordering;
+
+    use super::ParentAudio;
+
+    impl ParentAudio {
+        /// Output samples the worker has consumed.
+        pub(crate) fn acknowledged_output(&self) -> u64 {
+            self.header().output_consumed.load(Ordering::Acquire)
+        }
+
+        /// Acknowledges the current block as the worker does, without a worker.
+        #[cfg(not(debug_assertions))]
+        pub(crate) fn acknowledge_benchmark_block(&self) {
+            let header = self.header();
+            let sequence = header.input_sequence.load(Ordering::Acquire);
+            header.input_consumed.store(sequence, Ordering::Release);
+            let block_frames = self.mapping.layout.block_frames;
+            let first_frame = self
+                .source_frame
+                .saturating_sub(u64::try_from(block_frames).expect("u32 fits u64"));
+            header
+                .output_first_frame
+                .store(first_frame, Ordering::Relaxed);
+            header.output_frames.store(
+                u32::try_from(block_frames).expect("mapping admission validates block size"),
+                Ordering::Relaxed,
+            );
+            header.output_sequence.store(sequence, Ordering::Release);
+        }
     }
 }

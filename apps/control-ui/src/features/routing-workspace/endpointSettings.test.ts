@@ -1,7 +1,8 @@
 import { expect, it } from 'vitest';
 import type { RuntimeGraphDocument } from '../../core/domain/control/graph';
 import type { VirtualEndpointSettings } from '../../core/domain/control/status';
-import { addRoutingNode, audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './model';
+import { addRoutingNode } from './routingNodeCreation';
+import { audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 import { unknownNativeFormats, virtualPolicy, virtualSpec } from './virtualEndpointFixtures';
 
 const empty: RuntimeGraphDocument = { schemaVersion: 2, revision: 1, nodes: [], edges: [] };

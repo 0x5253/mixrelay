@@ -1,5 +1,5 @@
 //! Application PCM ages enter the same destination windows as native device taps.
-use super::Observation;
+use crate::macos_devices::latency::Observation;
 use mixrelay_audio_graph::NodeKind;
 use mixrelay_audio_io::residence::ResidenceSnapshot;
 use mixrelay_macos_transport::{device_io::LatencySnapshot, source_registry::SourceRegistry};

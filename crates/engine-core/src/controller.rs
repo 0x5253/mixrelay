@@ -11,6 +11,8 @@ pub struct EngineGraphController {
     graph: RwLock<GraphDocument>,
     context: RwLock<CompileContext>,
     mutation: Mutex<()>,
+    /// How long a node control waits for a graph mutation before reporting busy.
+    control_admission: Duration,
     catalog: graph_catalog::CatalogStorage,
     catalog_restore: graph_catalog::CatalogRecall,
     required_endpoint_node_id: Option<NodeId>,
@@ -28,6 +30,9 @@ pub struct EngineGraphController {
     runtime_status: Arc<dyn RuntimeBackend>,
     documents: Arc<dyn document_files::DocumentFiles>,
 }
+
+/// Node controls stay responsive while a long graph mutation holds the writer.
+const CONTROL_ADMISSION: Duration = Duration::from_millis(250);
 
 pub struct EngineGraphControllerConfig {
     /// Sampled by hosted audio processing; `now` must not allocate or block.
@@ -99,6 +104,7 @@ impl EngineGraphController {
                 limits: CompileLimits::default(),
             }),
             mutation: Mutex::new(()),
+            control_admission: CONTROL_ADMISSION,
             catalog: graph_catalog::CatalogStorage::default(),
             catalog_restore: graph_catalog::CatalogRecall::default(),
             required_endpoint_node_id,
@@ -118,6 +124,14 @@ impl EngineGraphController {
         };
         controller.refresh_control_snapshot();
         controller
+    }
+
+    /// Replaces how long a node control waits for a graph mutation before reporting busy.
+    #[cfg(test)]
+    #[must_use]
+    pub(crate) fn with_control_admission(mut self, wait: Duration) -> Self {
+        self.control_admission = wait;
+        self
     }
 
     /// Constructs a controller with the built-in session document selected from

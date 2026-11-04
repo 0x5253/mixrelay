@@ -1,5 +1,6 @@
 //! Native integration fixture for recorder and document ownership tests.
 use super::*;
+use crate::controller_test_support::ControllerFixture;
 use mixrelay_audio_io::{
     NativeDeviceFormats, VirtualEndpointDeviceSettings, VirtualEndpointSettings,
     session::{AudioBackendKind, AudioSessionCapabilities, ClockAuthority, SessionFormat},
@@ -59,7 +60,7 @@ impl VirtualEndpointBackend for ConfigurableBackend {
     }
 }
 
-pub(super) fn controller(document: GraphDocument) -> EngineGraphController {
+pub(super) fn controller(document: GraphDocument) -> ControllerFixture {
     let inventory = document.clone();
     controller_with_inventory(document, &inventory)
 }
@@ -68,7 +69,7 @@ pub(super) fn controller(document: GraphDocument) -> EngineGraphController {
 pub(super) fn controller_with_inventory(
     document: GraphDocument,
     inventory: &GraphDocument,
-) -> EngineGraphController {
+) -> ControllerFixture {
     let format = RenderFormat {
         sample_rate: 48_000,
         block_frames: 128,
@@ -94,7 +95,7 @@ pub(super) fn controller_with_inventory(
         1: devices,
         ..ConfigurableBackend::default()
     };
-    EngineGraphController::new_with_initial_document(
+    ControllerFixture::new(
         Arc::new(ProcessorExchange::new(document.revision)),
         EngineGraphControllerConfig {
             clock: std::sync::Arc::new(mixrelay_time::ManualClock::default()),

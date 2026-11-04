@@ -1,7 +1,5 @@
 //! One multiplexed editor connection owns command delivery and telemetry subscriptions.
 use super::connection_failure::ConnectionFailure;
-#[cfg(test)]
-use super::startup;
 use super::{control_directory, link};
 use mixrelay_control_protocol::ControlTelemetry;
 use mixrelay_desktop_core::runtime_link::{CommandFrame, command_frame};
@@ -51,11 +49,15 @@ impl std::fmt::Debug for Connection {
 }
 
 impl Connection {
-    #[cfg(test)]
-    pub(super) fn for_socket_fixture(path: PathBuf, uid: u32) -> Self {
+    /// A connection to the runtime socket at `path`, accepted only from a peer running as `uid`.
+    pub(super) fn at_socket(
+        path: PathBuf,
+        uid: u32,
+        clock: Arc<dyn mixrelay_time::MonotonicClock>,
+    ) -> Self {
         Self {
             connect_gate: Arc::default(),
-            clock: Arc::new(mixrelay_time::ManualClock::default()),
+            clock,
             path,
             uid,
             next_request: Arc::new(AtomicU64::new(1)),
@@ -72,14 +74,11 @@ impl Connection {
         .map_err(ConnectionFailure::HomeMetadata)?
         .uid();
         let directory = control_directory(app).map_err(ConnectionFailure::ControlDirectory)?;
-        Ok(Self {
-            connect_gate: Arc::default(),
-            clock: Arc::new(mixrelay_time::StdClock::new()),
-            path: directory.join("control.sock"),
+        Ok(Self::at_socket(
+            directory.join("control.sock"),
             uid,
-            next_request: Arc::new(AtomicU64::new(1)),
-            link: Arc::default(),
-        })
+            Arc::new(mixrelay_time::StdClock::new()),
+        ))
     }
 
     pub(crate) async fn invoke(&self, name: &str, arguments: Value) -> Result<Value, Value> {
@@ -220,13 +219,6 @@ impl Connection {
                 CommandFrame::InvalidResponse => return Err(ConnectionFailure::InvalidResponse),
             }
         }
-    }
-
-    #[cfg(test)]
-    pub(crate) async fn running(&self) -> bool {
-        self.invoke("hello", Value::Null)
-            .await
-            .is_ok_and(|hello| startup::compatible(&hello))
     }
 }
 

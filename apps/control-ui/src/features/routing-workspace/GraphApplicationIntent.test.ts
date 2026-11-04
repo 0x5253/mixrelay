@@ -9,7 +9,8 @@ import type {
 } from '../../core/domain/control/graph';
 import { graphWriterDefaults } from '../../test-support/portDefaults';
 import { workspaceRuntime } from '../../test-support/workspaceRuntime';
-import { changedProcessorParameters, updateRoutingNodeParameter } from './model';
+import { changedProcessorParameters } from './processorParameterChanges';
+import { updateRoutingNodeParameter } from './routingNodeParameters';
 
 const change = (parameterId: number, value: number): ProcessorParameterChange => ({
   nodeId: 'p',

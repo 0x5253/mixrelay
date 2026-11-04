@@ -14,7 +14,7 @@ import {
 } from '../../core/application/workspace/GraphLayoutController';
 import { type AudioGraphModel, normalizeAudioGraphNodeSize } from '../../core/audio-graph/model';
 import type { GraphLayout } from '../../core/domain/control/catalog';
-import { routingLayoutProjection } from './model';
+import { routingLayoutProjection } from './runtimeGraphProjection';
 
 export function useGraphLayout(
   port: LayoutPort,

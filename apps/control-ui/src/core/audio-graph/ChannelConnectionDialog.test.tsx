@@ -47,37 +47,63 @@ function renderDialog(props: Partial<Parameters<typeof ChannelConnectionDialog>[
 
 function choose(field: RegExp, option: string) {
   fireEvent.click(screen.getByRole('button', { name: field }));
-  fireEvent.click(screen.getByRole('option', { name: option }));
+  // A text lookup inside the open list is far cheaper than an accessible-name query.
+  const listbox = screen.getByRole('listbox');
+  const choice = within(listbox).getByText(option).closest('[role="option"]');
+  fireEvent.click(choice as HTMLElement);
 }
 
 // Planning rules are unit-tested in channelConnectionForm.test.ts; these cover what the
 // dialog shows, what it submits, and where focus starts.
 const preview = () => within(screen.getByRole('list', { name: 'Preview' }));
 
-it('previews every pair and skipped channel, then commits only the accepted pairs', () => {
+// The first test also pays the file's one-time React Aria warm-up, so it stays the lightest.
+it('explains when no other node accepts input and cancels without connecting', () => {
+  const lonely: AudioGraphModel = { revision: 1, nodes: [node('app', 'Music', 0, 2)], edges: [] };
+  const { onCancel, onConnect } = renderDialog({ model: lonely });
+  expect(screen.getByText('No other node has input channels.')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Connect' })).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+  expect(onCancel).toHaveBeenCalledOnce();
+  expect(onConnect).not.toHaveBeenCalled();
+});
+
+it('offers nothing to commit until a destination is chosen', () => {
   const { onConnect } = renderDialog();
   expect(screen.getByRole('dialog', { name: 'Connect channels' })).toHaveTextContent('From Music');
+  expect(screen.queryByRole('list', { name: 'Preview' })).toBeNull();
+  choose(/Number of channels$/, '2');
+  expect(screen.getByRole('button', { name: /Number of channels$/ })).toHaveTextContent('2');
   expect(screen.getByRole('status')).toHaveTextContent(
     'Choose a destination and channels to preview the connections.',
   );
-  expect(screen.queryByRole('list', { name: 'Preview' })).toBeNull();
   const connect = screen.getByRole('button', { name: 'Connect' });
   expect(connect).toBeDisabled();
   fireEvent.submit(connect.closest('form') as HTMLFormElement);
   expect(onConnect).not.toHaveBeenCalled();
-  choose(/Destination$/, 'Monitor (2)');
-  choose(/First input channel$/, 'Monitor input, CH 2');
+});
+
+it('previews every pair and every skipped channel', () => {
+  renderDialog();
+  choose(/Destination$/, 'Monitor (1)');
   expect(screen.getByRole('status')).toHaveTextContent('Will connect: 2 · Skipped: 2');
   expect(
     preview()
       .getAllByRole('listitem')
       .map((item) => item.textContent),
   ).toEqual([
-    'CH 1 → CH 2',
-    'CH 2 → CH 3',
+    'CH 1 → CH 1',
+    'CH 2 → CH 2',
     'CH 3: No matching input channel',
     'CH 4: No matching input channel',
   ]);
+});
+
+it('commits only the accepted pairs from the chosen first input', () => {
+  const { onConnect } = renderDialog();
+  choose(/Destination$/, 'Monitor (2)');
+  choose(/First input channel$/, 'Monitor input, CH 2');
+  expect(screen.getByRole('status')).toHaveTextContent('Will connect: 2 · Skipped: 2');
   choose(/Number of channels$/, '2');
   expect(screen.getByRole('status')).toHaveTextContent('Will connect: 2 · Skipped: 0');
   fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
@@ -104,16 +130,6 @@ it('keeps a sparse canvas selection until the range is chosen explicitly', () =>
   expect(screen.getByRole('button', { name: /Number of channels$/ })).toHaveTextContent('3');
   fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
   expect(onConnect.mock.calls[0]?.[0]).toHaveLength(3);
-});
-
-it('explains when no other node accepts input and cancels without connecting', () => {
-  const lonely: AudioGraphModel = { revision: 1, nodes: [node('app', 'Music', 0, 2)], edges: [] };
-  const { onCancel, onConnect } = renderDialog({ model: lonely });
-  expect(screen.getByText('No other node has input channels.')).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Connect' })).toBeDisabled();
-  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-  expect(onCancel).toHaveBeenCalledOnce();
-  expect(onConnect).not.toHaveBeenCalled();
 });
 
 it('shows a vanished first output channel as unselected, matching what would be submitted', () => {

@@ -51,30 +51,6 @@ impl Reaper {
         })
     }
 
-    #[cfg(test)]
-    pub(super) fn refuse_preparation() -> io::Result<Self> {
-        Self::prepare_with(|_| {
-            Err(io::Error::new(
-                io::ErrorKind::ResourceBusy,
-                "reaper unavailable",
-            ))
-        })
-    }
-
-    #[cfg(test)]
-    pub(super) fn observe_exit() -> io::Result<(Self, std::sync::mpsc::Receiver<()>)> {
-        let (ended, observed) = std::sync::mpsc::channel();
-        let reaper = Self::prepare_with(|handoff| {
-            thread::Builder::new()
-                .name("mixrelay-test-reaper".into())
-                .spawn(move || {
-                    wait_for_owned_child(&handoff);
-                    let _ = ended.send(());
-                })
-        })?;
-        Ok((reaper, observed))
-    }
-
     /// Moves the only child into the prepared worker without creating a thread.
     pub(super) fn schedule(self, child: Child) {
         self.handoff
@@ -207,5 +183,7 @@ fn combine_error(slot: &mut Option<io::Error>, error: &io::Error, operation: &st
     }
 }
 
+#[cfg(test)]
+mod reaper_fixture;
 #[cfg(test)]
 mod tests;

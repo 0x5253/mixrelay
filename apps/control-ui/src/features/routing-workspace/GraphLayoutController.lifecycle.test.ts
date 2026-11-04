@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { monotonicClock, timerScheduler } from '../../core/adapters/browser/timers';
 import type { GraphLayout, GraphLayoutResponse } from '../../core/domain/control/catalog';
 import { catalogOf, graphWithNodes } from '../../test-support/portDefaults';
-import { routingLayoutProjection } from './model';
+import { routingLayoutProjection } from './runtimeGraphProjection';
 
 /** Every node the layouts in this file place. */
 const layoutGraph = graphWithNodes(['a', 'b', 'concurrent', 'fresh', 'input', 'output']);

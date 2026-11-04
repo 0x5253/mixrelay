@@ -66,11 +66,6 @@ impl<R: Clone, W> ReceiptLedger<R, W> {
         self.pending
     }
 
-    #[cfg(test)]
-    pub(super) fn len(&self) -> usize {
-        self.receipts.len()
-    }
-
     /// Stops new admissions. Known client IDs still resolve to their receipts.
     pub(super) fn close(&mut self) {
         self.admission_open = false;

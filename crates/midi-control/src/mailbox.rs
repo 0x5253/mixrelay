@@ -216,16 +216,6 @@ impl Mailbox {
         }
     }
 
-    #[cfg(test)]
-    fn receive_with(&self, bytes: &[u8], compare: &mut CompareBatch<'_>) {
-        let publication = self.begin();
-        self.receive_with_sequence(
-            bytes,
-            (publication.sequence, publication.generation),
-            compare,
-        );
-    }
-
     fn receive_with_sequence(
         &self,
         bytes: &[u8],

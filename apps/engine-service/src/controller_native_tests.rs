@@ -26,8 +26,9 @@ fn invalid_graph_after_successful_staging_removes_only_its_temporary_document() 
     let mut engine = endpoint_settings_tests::controller(GraphDocument::new(1, vec![], vec![]))
         .with_graph_catalog_path(path.clone());
     let prepares = Arc::new(AtomicUsize::new(0));
+    let base = engine.core.test_factory();
     engine.core.test_set_factory(Arc::new(CountingFactory {
-        base: engine.core.test_factory(),
+        base,
         prepares: prepares.clone(),
     }));
     let disk = fs::read(&path).unwrap();
@@ -60,13 +61,14 @@ fn providerless_pending_graph_needs_no_snapshot_or_shutdown_checkpoint() {
     assert_ne!(revisions.active, revisions.submitted);
     let disk = fs::read(&path).unwrap();
     engine.core.test_checkpoint_without_providers().unwrap();
-    let engine = Arc::new(engine);
+    let exchange = Arc::clone(&engine.exchange);
+    let engine = Arc::new(engine.engine);
     engine
         .start_control_maintenance()
         .unwrap()
         .finish()
         .unwrap();
-    assert_eq!(engine.exchange.revisions(), revisions);
+    assert_eq!(exchange.revisions(), revisions);
     assert_eq!(engine.graph(), document);
     assert_eq!(fs::read(&path).unwrap(), disk);
     assert!(engine.graph_catalog().unwrap().persistence_error.is_none());

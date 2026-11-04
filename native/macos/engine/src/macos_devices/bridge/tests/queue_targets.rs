@@ -6,8 +6,9 @@ fn observed_callback_bursts_preserve_targets_at_one_and_32_channels() {
     for channels in [1_u16, 32] {
         for (input, initial) in [(false, [532, 256]), (true, [256, 148])] {
             for aligned in [false, true] {
-                let (_device, context) =
-                    crate::macos_devices::tests::synthetic_device(channels, 48_000, 96_000, input);
+                let (_device, context) = crate::macos_devices::device_fixture::synthetic_device(
+                    channels, 48_000, 96_000, input,
+                );
                 context.clock_aligned.store(aligned, Ordering::Release);
                 let bridge = DeviceBridge::new(&context, 96_000).unwrap();
                 let divisor = if aligned { 2 } else { 1 };
@@ -88,7 +89,7 @@ fn measure_geometry(
     aligned: bool,
 ) -> Vec<Measurement> {
     let (_device, context) =
-        crate::macos_devices::tests::synthetic_device(1, graph_rate, native_rate, input);
+        crate::macos_devices::device_fixture::synthetic_device(1, graph_rate, native_rate, input);
     context.clock_aligned.store(aligned, Ordering::Release);
     let bridge = DeviceBridge::new(&context, native_rate).unwrap();
     let mut pcm = [0.25_f32; 2048];

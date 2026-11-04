@@ -1,7 +1,9 @@
 use super::*;
 use crate::controller_test_support::settle;
 use crate::endpoint_settings_tests::controller;
+use mixrelay_audio_graph::{ExecutionPlan, GraphCompiler};
 use mixrelay_control_protocol::{GraphCatalogAction, GraphCatalogRequest};
+use mixrelay_render::BlockProcessor;
 use std::{
     path::PathBuf,
     sync::atomic::{AtomicU64, Ordering},

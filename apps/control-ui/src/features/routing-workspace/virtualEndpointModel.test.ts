@@ -2,7 +2,8 @@ import { expect, it } from 'vitest';
 import type { RuntimeGraphDocument } from '../../core/domain/control/graph';
 import type { ExternalProcessorDescriptor } from '../../core/domain/control/processors';
 import { serializeGraphEdges } from './graphEdgeProjection';
-import { addRoutingNode, audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './model';
+import { addRoutingNode } from './routingNodeCreation';
+import { audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 import { duplexReference, virtualSpec } from './virtualEndpointFixtures';
 import { virtualEndpointNodeRequest } from './virtualEndpointMenu';
 

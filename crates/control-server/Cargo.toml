@@ -27,4 +27,4 @@ mixrelay-time = { path = "../time" }
 [dev-dependencies]
 mixrelay-time = { path = "../time", features = ["test-util"] }
 tower.workspace = true
-tokio = { workspace = true, features = ["io-util"] }
+tokio = { workspace = true, features = ["io-util", "test-util"] }

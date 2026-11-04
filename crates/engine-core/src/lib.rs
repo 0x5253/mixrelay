@@ -2,6 +2,7 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
     sync::Arc,
+    time::Duration,
 };
 
 use mixrelay_audio_graph::{
@@ -94,11 +95,6 @@ mod test_support;
 #[cfg(test)]
 #[path = "controller_tests.rs"]
 mod tests;
-
-#[cfg(test)]
-use mixrelay_audio_graph::{ExecutionPlan, GraphCompiler};
-#[cfg(test)]
-use mixrelay_render::BlockProcessor;
 
 #[cfg(feature = "test-util")]
 pub mod test_util;

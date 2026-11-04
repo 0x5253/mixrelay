@@ -6,7 +6,7 @@ import type { AudioGraphModel } from '../../core/audio-graph/model';
 import { i18n } from '../../core/i18n';
 import { MixRelayProvider } from '../../core/theme/MixRelayProvider';
 import { unexpected } from '../../test-support/portDefaults';
-import { routingLayoutProjection } from './model';
+import { routingLayoutProjection } from './runtimeGraphProjection';
 import type { useGraphLayout } from './useGraphLayout';
 import { presentNodeDisplayNames, useNodeDisplayNameEditor } from './useNodeDisplayNameEditor';
 

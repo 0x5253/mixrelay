@@ -88,21 +88,30 @@ impl<W: Worker> Inventory<W> {
         )
     }
 }
-fn idle<W: Worker>(inventory: &Inventory<W>) {
+fn wait_until(mut condition: impl FnMut() -> bool) {
     let deadline = Instant::now() + Duration::from_secs(10);
-    let mut state = inventory.shared.state.lock();
-    while state.pending.is_some() || state.busy {
-        let remaining = deadline.saturating_duration_since(Instant::now());
-        assert!(!remaining.is_zero(), "inventory worker did not complete");
+    while !condition() {
         assert!(
-            !inventory
-                .shared
-                .changed
-                .wait_for(&mut state, remaining)
-                .timed_out(),
+            Instant::now() < deadline,
             "inventory worker did not complete"
         );
+        std::thread::sleep(Duration::from_millis(1));
     }
+}
+/// Waits for the worker to take every queued job, then stops it. Stopping joins the
+/// worker after its in-flight preparation, so the registry reflects every submitted job.
+fn finish<W: Worker>(inventory: &Inventory<W>) {
+    wait_until(|| inventory.shared.state.lock().pending.is_none());
+    inventory.stop();
+}
+/// Waits until a prepared virtual source is present in the registry.
+fn wait_until_prepared<W: Worker>(pcm: &VirtualPcm<W>) {
+    wait_until(|| {
+        pcm.sources.set_consumer_route(
+            token(),
+            mixrelay_macos_transport::application_clock::ConsumerRoute::Unrouted,
+        )
+    });
 }
 #[test]
 fn idle_geometry_is_prepared_off_the_grant_owner_and_latest_removal_reclaims_it() {
@@ -115,11 +124,7 @@ fn idle_geometry_is_prepared_off_the_grant_owner_and_latest_removal_reclaims_it(
             mixrelay_realtime::host_time(),
         )
         .unwrap();
-    idle(&inventory);
-    assert!(pcm.sources.set_consumer_route(
-        token(),
-        mixrelay_macos_transport::application_clock::ConsumerRoute::Unrouted
-    ));
+    wait_until_prepared(&pcm);
     inventory
         .enqueue(
             Arc::clone(&pcm),
@@ -134,12 +139,11 @@ fn idle_geometry_is_prepared_off_the_grant_owner_and_latest_removal_reclaims_it(
             mixrelay_realtime::host_time(),
         )
         .unwrap();
-    idle(&inventory);
+    finish(&inventory);
     assert!(!pcm.sources.set_consumer_route(
         token(),
         mixrelay_macos_transport::application_clock::ConsumerRoute::Unrouted
     ));
-    inventory.stop();
     assert!(inventory.stopped());
 }
 #[test]
@@ -154,7 +158,7 @@ fn clear_discards_queued_or_in_flight_inventory_preparation() {
         )
         .unwrap();
     pcm.clear();
-    idle(&inventory);
+    finish(&inventory);
     assert!(!pcm.sources.set_consumer_route(
         token(),
         mixrelay_macos_transport::application_clock::ConsumerRoute::Unrouted
@@ -171,11 +175,7 @@ fn failed_deferred_preparation_retries_without_another_hal_snapshot() {
             mixrelay_realtime::host_time(),
         )
         .unwrap();
-    idle(&inventory);
-    assert!(pcm.sources.set_consumer_route(
-        token(),
-        mixrelay_macos_transport::application_clock::ConsumerRoute::Unrouted
-    ));
+    wait_until_prepared(&pcm);
 }
 
 fn token() -> u64 {
@@ -209,7 +209,7 @@ fn clear_generation_cancels_queued_work_independently_of_its_clock_stamp() {
             },
         )
         .unwrap();
-    idle(&inventory);
+    finish(&inventory);
     assert!(!pcm.sources.set_consumer_route(
         token(),
         mixrelay_macos_transport::application_clock::ConsumerRoute::Unrouted

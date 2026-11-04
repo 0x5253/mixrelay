@@ -52,14 +52,6 @@ impl CatalogRecall {
     pub(crate) fn complete(&self) {
         *self.pending.lock() = None;
     }
-
-    #[cfg(test)]
-    fn deadline(&self) -> Option<Instant> {
-        self.pending
-            .lock()
-            .as_ref()
-            .map(|pending| pending.retry_after)
-    }
 }
 
 impl EngineGraphController {

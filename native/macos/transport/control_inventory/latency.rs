@@ -1,10 +1,11 @@
 //! Runtime input latencies carried by every v1 inventory snapshot.
-use super::{
-    _xpc_type_array, MAX_ENTRIES, Message, Xpc, dictionary, endpoint_id, field, is_type,
-    new_message, ptr, uint, xpc_array_append_value, xpc_array_create, xpc_array_get_count,
-    xpc_array_get_value, xpc_dictionary_set_data, xpc_dictionary_set_uint64,
-    xpc_dictionary_set_value,
+use super::MAX_ENTRIES;
+use super::xpc::{
+    _xpc_type_array, Message, Xpc, dictionary, endpoint_id, field, is_type, new_message, uint,
+    xpc_array_append_value, xpc_array_create, xpc_array_get_count, xpc_array_get_value,
+    xpc_dictionary_set_data, xpc_dictionary_set_uint64, xpc_dictionary_set_value,
 };
+use std::ptr;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct InputLatency {

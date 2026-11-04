@@ -1,7 +1,7 @@
 import { createContext, type ReactNode, useContext, useId, useLayoutEffect } from 'react';
 import { Button } from 'react-aria-components';
 import { createPortal } from 'react-dom';
-import { MidiContext } from '../midi/MidiContext';
+import { useMidiMappingActive } from '../midi/MidiContext';
 import styles from './AudioNodeCard.module.css';
 import { Tooltip } from './Tooltip';
 import { useElementBounds } from './useElementBounds';
@@ -23,7 +23,7 @@ export function NodeOptionsSection({
   children: ReactNode;
   disabled?: boolean;
 }) {
-  const mapping = useContext(MidiContext)?.active ?? false;
+  const mapping = useMidiMappingActive();
   const measureDisclosure = useContext(NodeDisclosureMeasureContext);
   const headerTarget = useContext(NodeHeaderOptionsContext);
   const panelId = useId();

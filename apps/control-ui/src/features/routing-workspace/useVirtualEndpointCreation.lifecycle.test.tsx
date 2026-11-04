@@ -5,7 +5,7 @@ import { StorybookMockControlPort } from '../../core/adapters/fake/StorybookMock
 import type { RuntimeGraphDocument } from '../../core/domain/control/graph';
 import type { VirtualEndpointSpec } from '../../core/domain/control/status';
 import type { NameDialog } from '../../core/ui/NameDialog';
-import { runtimeGraphToAudioGraph } from './model';
+import { runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 import { useVirtualEndpointCreation } from './useVirtualEndpointCreation';
 import { virtualPolicy, virtualSpec } from './virtualEndpointFixtures';
 import { virtualEndpointItemId } from './virtualEndpointMenu';

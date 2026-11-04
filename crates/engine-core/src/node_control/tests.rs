@@ -158,7 +158,11 @@ fn first_unprepared_activation_builds_once_then_controls_reuse_the_published_pla
 fn native_restoration_keeps_reads_available_and_bounds_write_admission() {
     use mixrelay_audio_io::recording::{RecorderAction, RecorderRequest};
     use mixrelay_control_protocol::RecorderControlRequest;
-    let engine = std::sync::Arc::new(crate::endpoint_settings_tests::controller(graph()));
+    // Busy rejections are asserted, not timed; a short admission keeps them fast.
+    let engine = std::sync::Arc::new(
+        crate::endpoint_settings_tests::controller(graph())
+            .with_control_admission(std::time::Duration::from_millis(10)),
+    );
     let held = engine.mutation.lock();
     let (send, receive) = std::sync::mpsc::channel();
     let worker_engine = engine.clone();

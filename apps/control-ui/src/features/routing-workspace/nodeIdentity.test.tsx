@@ -8,7 +8,7 @@ import { removeGraphItems } from '../../core/domain/graph/topology';
 import { useUndoHistory } from '../../core/history/useUndoHistory';
 import { advance, eventually } from '../../test-support/fakeTimerQueries';
 import { workspaceRuntime } from '../../test-support/workspaceRuntime';
-import { runtimeGraphToAudioGraph } from './model';
+import { runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 
 afterEach(() => {
   vi.clearAllTimers();
@@ -84,7 +84,7 @@ it('node deletion history reapplies the original node IDs through the actual gra
 });
 
 it('a newly added replacement never reuses a deleted identity', async () => {
-  const { addRoutingNode } = await import('./model');
+  const { addRoutingNode } = await import('./routingNodeCreation');
   const empty: AudioGraphModel = { nodes: [], edges: [], revision: 1 };
   const first = addRoutingNode(empty, { kind: 'recorder' }, { x: 0, y: 0 });
   const firstId = first.nodes[0]?.id;

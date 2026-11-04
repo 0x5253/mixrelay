@@ -1,4 +1,11 @@
-use super::{LatencyNode, LatencyPlanError, LatencyRoute, route_delays};
+use super::{LatencyNode, LatencyPlanError, LatencyRoute, plan_arrivals};
+
+fn route_delays(
+    nodes: &[LatencyNode],
+    routes: &[LatencyRoute],
+) -> Result<Vec<u32>, LatencyPlanError> {
+    plan_arrivals(nodes, routes).map(|plan| plan.delays)
+}
 
 fn route(source: usize, destination: usize) -> LatencyRoute {
     LatencyRoute {

@@ -12,7 +12,8 @@ import type {
 import { controlState, statePush } from '../../test-support/controlTelemetry';
 import { graphWriterDefaults } from '../../test-support/portDefaults';
 import { workspaceRuntime } from '../../test-support/workspaceRuntime';
-import { addRoutingNode, runtimeGraphToAudioGraph } from './model';
+import { addRoutingNode } from './routingNodeCreation';
+import { runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 import { virtualSpec } from './virtualEndpointFixtures';
 
 const empty: RuntimeGraphDocument = { schemaVersion: 2, revision: 1, nodes: [], edges: [] };

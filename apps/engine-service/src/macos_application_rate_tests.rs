@@ -1,5 +1,6 @@
 //! Real controller/capability/format-staging path, with native rate negotiation
 //! replaced by an owned in-memory counter. Never opens a tap or changes HAL rate.
+use crate::{EngineGraphController, EngineGraphControllerConfig};
 use mixrelay_audio_graph::{
     CompileContext, CompileLimits, GraphCompiler, GraphDocument, NodeConfig, NodeSpec, RenderFormat,
 };
@@ -12,7 +13,6 @@ use mixrelay_engine_core::{
     ProcessingControlBackend, RuntimeStatusBackend, SessionFormatBackend, default_peak_meter_bank,
     session::AdapterRuntimeStatus,
 };
-use mixrelay_engine_service::{EngineGraphController, EngineGraphControllerConfig};
 use mixrelay_macos_engine::test_support;
 use mixrelay_processor_host::ProcessorCatalog;
 use mixrelay_render::{BlockProcessor, ProcessorExchange, RenderPlan};

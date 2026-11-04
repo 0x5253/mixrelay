@@ -9,12 +9,9 @@ import {
   effectKinds,
   effectPresets,
 } from './builtinEffects';
-import {
-  addRoutingNode,
-  audioGraphToRuntimeGraph,
-  runtimeGraphToAudioGraph,
-  updateRoutingNodeParameter,
-} from './model';
+import { addRoutingNode } from './routingNodeCreation';
+import { updateRoutingNodeParameter } from './routingNodeParameters';
+import { audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 
 const empty: AudioGraphModel = { revision: 10, nodes: [], edges: [] };
 const document: RuntimeGraphDocument = { schemaVersion: 2, revision: 10, nodes: [], edges: [] };

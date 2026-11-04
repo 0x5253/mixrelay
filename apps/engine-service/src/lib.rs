@@ -1,10 +1,20 @@
-//! Composes engine domain ports with native processor, recorder and file adapters.
+//! Composes engine domain ports with native processor, recorder and file adapters, and
+//! the macOS and Linux services that own them.
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+use mixrelay_pcm_ring as _;
+
 mod control_api;
 pub mod control_service;
+#[cfg(target_os = "linux")]
+pub mod linux;
+#[cfg(target_os = "macos")]
+pub mod macos;
 mod processor_bridge;
 mod processor_preparation;
 mod recording_bridge;
 mod recording_sinks;
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+mod shutdown;
 // Native lifetime owners remain outside the engine domain.
 #[cfg(test)]
 mod session;
@@ -58,14 +68,6 @@ pub struct EngineGraphControllerConfig {
 /// Native composition owner implementing the control-server's adapter contract.
 pub struct EngineGraphController {
     core: mixrelay_engine_core::EngineGraphController,
-    #[cfg(test)]
-    recording_registry: mixrelay_audio_recorder::RecorderRegistry,
-    #[cfg(test)]
-    processor_files: ProcessorFiles,
-    #[cfg(test)]
-    exchange: Arc<ProcessorExchange>,
-    #[cfg(test)]
-    incarnation: String,
 }
 impl EngineGraphController {
     #[must_use]
@@ -85,51 +87,23 @@ impl EngineGraphController {
         config: EngineGraphControllerConfig,
         document: GraphDocument,
     ) -> Self {
-        let (config, recording_registry, processor_files) = compose(config);
-        #[cfg(test)]
-        let incarnation = config.incarnation.clone();
-        #[cfg(test)]
-        let test_exchange = exchange.clone();
-        let core = mixrelay_engine_core::EngineGraphController::new_with_initial_document(
-            exchange, config, document,
-        );
-        #[cfg(not(test))]
-        drop((recording_registry, processor_files));
         Self {
-            core,
-            #[cfg(test)]
-            recording_registry,
-            #[cfg(test)]
-            processor_files,
-            #[cfg(test)]
-            exchange: test_exchange,
-            #[cfg(test)]
-            incarnation,
+            core: mixrelay_engine_core::EngineGraphController::new_with_initial_document(
+                exchange,
+                compose_native(config),
+                document,
+            ),
         }
     }
     pub fn new_with_configuration(
         exchange: Arc<ProcessorExchange>,
         config: EngineGraphControllerConfig,
     ) -> Self {
-        let (config, recording_registry, processor_files) = compose(config);
-        #[cfg(test)]
-        let incarnation = config.incarnation.clone();
-        #[cfg(test)]
-        let test_exchange = exchange.clone();
-        let core =
-            mixrelay_engine_core::EngineGraphController::new_with_configuration(exchange, config);
-        #[cfg(not(test))]
-        drop((recording_registry, processor_files));
         Self {
-            core,
-            #[cfg(test)]
-            recording_registry,
-            #[cfg(test)]
-            processor_files,
-            #[cfg(test)]
-            exchange: test_exchange,
-            #[cfg(test)]
-            incarnation,
+            core: mixrelay_engine_core::EngineGraphController::new_with_configuration(
+                exchange,
+                compose_native(config),
+            ),
         }
     }
     /// Exports the current native state before a recovery qualification snapshot.
@@ -169,13 +143,23 @@ impl mixrelay_engine_host::control_maintenance::MaintenanceTarget for EngineGrap
         self.core.finalize_control()
     }
 }
+/// Composes the domain configuration over the threaded recorder files and processor state
+/// files that this native service owns.
+fn compose_native(
+    config: EngineGraphControllerConfig,
+) -> mixrelay_engine_core::EngineGraphControllerConfig {
+    compose(
+        config,
+        mixrelay_audio_recorder::RecorderRegistry::threaded_files(),
+        ProcessorFiles::default(),
+    )
+}
+
 fn compose(
     config: EngineGraphControllerConfig,
-) -> (
-    mixrelay_engine_core::EngineGraphControllerConfig,
-    mixrelay_audio_recorder::RecorderRegistry,
-    ProcessorFiles,
-) {
+    recorders: mixrelay_audio_recorder::RecorderRegistry,
+    processor_files: ProcessorFiles,
+) -> mixrelay_engine_core::EngineGraphControllerConfig {
     let EngineGraphControllerConfig {
         clock,
         format,
@@ -187,9 +171,7 @@ fn compose(
         graph_resources,
         runtime_status,
     } = config;
-    let processor_files = ProcessorFiles::default();
     let processor_controls = ProcessorControlRegistry::new(Arc::new(processor_files.clone()));
-    let recorders = mixrelay_audio_recorder::RecorderRegistry::threaded_files();
     let factory = Arc::new(BuiltInProcessorFactory {
         recorders: recorders.clone(),
         catalog: processor_catalog.clone(),
@@ -202,29 +184,23 @@ fn compose(
         meters: meters.clone(),
         render_prepare: RenderPlan::prepare,
     });
-    (
-        mixrelay_engine_core::EngineGraphControllerConfig {
-            clock,
-            format,
-            meters,
-            initial_bindings,
-            endpoint_backend,
-            required_endpoint_node_id,
-            graph_resources,
-            runtime_status,
-            processor_catalog: Arc::new(processor_bridge::HostCatalog(processor_catalog)),
-            processor_controls: Arc::new(processor_bridge::HostControls(processor_controls)),
-            processor_files: Arc::new(processor_bridge::HostStateFiles(processor_files.clone())),
-            recording: Arc::new(recording_bridge::RegistryRecordingBackend(
-                recorders.clone(),
-            )),
-            factory,
-            documents: Arc::new(mixrelay_engine_host::document_files::DiskDocuments),
-            incarnation: mixrelay_engine_host::identity::new_incarnation(),
-        },
-        recorders,
-        processor_files,
-    )
+    mixrelay_engine_core::EngineGraphControllerConfig {
+        clock,
+        format,
+        meters,
+        initial_bindings,
+        endpoint_backend,
+        required_endpoint_node_id,
+        graph_resources,
+        runtime_status,
+        processor_catalog: Arc::new(processor_bridge::HostCatalog(processor_catalog)),
+        processor_controls: Arc::new(processor_bridge::HostControls(processor_controls)),
+        processor_files: Arc::new(processor_bridge::HostStateFiles(processor_files)),
+        recording: Arc::new(recording_bridge::RegistryRecordingBackend(recorders)),
+        factory,
+        documents: Arc::new(mixrelay_engine_host::document_files::DiskDocuments),
+        incarnation: mixrelay_engine_host::identity::new_incarnation(),
+    }
 }
 
 #[cfg(test)]
@@ -249,3 +225,34 @@ mod catalog_recording_native_tests;
 
 #[cfg(test)]
 use mixrelay_engine_core::{NoopGraphResourceBackend, default_peak_meter_bank};
+
+// Clippy recognizes test modules only by a plain `#[cfg(test)]`, so platform and lab
+// conditions stay in separate attributes.
+#[cfg(test)]
+#[cfg(target_os = "macos")]
+#[test]
+fn native_callback_and_hal_contracts() {
+    mixrelay_macos_test_support::assert_native_contracts();
+}
+/// The service bundle identity and microphone usage text that `build.rs` links into the
+/// shipped binary. Live Driver capture tests open input `IOProc`s, so TCC reads the same
+/// identity from this test harness when it is the responsible process.
+#[cfg(test)]
+#[cfg(target_os = "macos")]
+#[used]
+// SAFETY: the section holds only these plist bytes, which the linker emits verbatim.
+#[unsafe(link_section = "__TEXT,__info_plist")]
+static SERVICE_INFO_PLIST: [u8; include_bytes!("../../../native/macos/service/Info.plist").len()] =
+    *include_bytes!("../../../native/macos/service/Info.plist");
+#[cfg(test)]
+#[cfg(target_os = "macos")]
+mod macos_application_rate_tests;
+#[cfg(test)]
+#[cfg(target_os = "macos")]
+mod macos_devices_tests;
+#[cfg(test)]
+#[cfg(all(feature = "native-lab", target_os = "macos"))]
+mod macos_installed_driver_tests;
+#[cfg(test)]
+#[cfg(all(feature = "native-lab", target_os = "macos"))]
+mod macos_live_application_tests;

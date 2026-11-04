@@ -117,12 +117,13 @@ pub(in super::super) struct Pump {
     unwanted_skips: u64,
     /// Backoff after conversion storage could not be prepared.
     retry: Retry,
-    #[cfg(test)]
-    failing_converters: u32,
-    #[cfg(test)]
-    converter_failure: mixrelay_audio_io::clock_bridge::BridgeError,
+    converters: ConverterSource,
     report: Report,
 }
+
+/// Prepares conversion storage for an admitted stream. Tests substitute failing sources.
+type ConverterSource =
+    Box<dyn FnMut(SourceClockSnapshot, (u32, usize)) -> Result<Converter, Error> + Send>;
 impl Pump {
     #[cfg(test)]
     pub(super) fn prepare(
@@ -168,12 +169,7 @@ impl Pump {
             boundary: None,
             unwanted_skips: 0,
             retry: Retry::default(),
-            #[cfg(test)]
-            failing_converters: 0,
-            #[cfg(test)]
-            converter_failure: mixrelay_audio_io::clock_bridge::BridgeError::Allocation {
-                samples: 0,
-            },
+            converters: Box::new(Converter::new),
             report: Report::new(host_time()),
         })
     }
@@ -488,7 +484,7 @@ impl Pump {
             }
             let prepared = scheduling.outside(|| {
                 scheduling.retune(chunk.clock.rate);
-                match self.prepare_converter(clock, (chunk.clock.rate, self.input.len() / 128)) {
+                match (self.converters)(clock, (chunk.clock.rate, self.input.len() / 128)) {
                     Ok(converter) => {
                         self.converter = Some(converter);
                         self.retry.succeeded();
@@ -530,23 +526,6 @@ impl Pump {
         self.backlog.restarted();
         self.boundary = None;
         Ok(true)
-    }
-
-    #[cfg_attr(
-        not(test),
-        expect(clippy::unused_self, reason = "tests inject preparation failures here")
-    )]
-    fn prepare_converter(
-        &mut self,
-        clock: SourceClockSnapshot,
-        native: (u32, usize),
-    ) -> Result<Converter, Error> {
-        #[cfg(test)]
-        if self.failing_converters != 0 {
-            self.failing_converters -= 1;
-            return Err(Error::Bridge(self.converter_failure));
-        }
-        Converter::new(clock, native)
     }
 
     /// Writes converted output left by a failed publication while its stream is still

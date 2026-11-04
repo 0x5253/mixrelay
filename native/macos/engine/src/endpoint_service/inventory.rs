@@ -13,8 +13,6 @@ pub(super) struct Job {
 struct State {
     pending: Option<Job>,
     stopped: bool,
-    #[cfg(test)]
-    busy: bool,
 }
 #[derive(Default)]
 struct Shared {
@@ -91,10 +89,6 @@ fn run<W: Worker>(pcm: &VirtualPcm<W>, shared: &Shared) {
             if state.stopped {
                 return;
             }
-            #[cfg(test)]
-            {
-                state.busy = true;
-            }
             state.pending.take()
         };
         if let Some(mut job) = job {
@@ -117,12 +111,6 @@ fn run<W: Worker>(pcm: &VirtualPcm<W>, shared: &Shared) {
                     tracing::error!(boundary = "hal_shared_pcm", stage = "inventory_prepare", %error, "virtual input inventory preparation failed");
                 }
             }
-        }
-        #[cfg(test)]
-        {
-            let mut state = shared.state.lock();
-            state.busy = false;
-            shared.changed.notify_all();
         }
     }
 }

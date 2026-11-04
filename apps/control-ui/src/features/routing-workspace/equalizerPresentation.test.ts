@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import { presentEqualizerSampleRate } from './equalizerPresentation';
-import { addRoutingNode, runtimeGraphToAudioGraph } from './model';
+import { addRoutingNode } from './routingNodeCreation';
+import { runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 
 it('renders EQ at the engine sample rate while preserving authored parameters and other nodes', () => {
   const empty = runtimeGraphToAudioGraph({ schemaVersion: 2, revision: 1, nodes: [], edges: [] });

@@ -1,6 +1,8 @@
 //! Controller startup, plan admission and publication regression coverage.
 
 use super::*;
+use mixrelay_audio_graph::ExecutionPlan;
+use mixrelay_render::BlockProcessor;
 use mixrelay_render::{RenderPlan, RenderPlanError};
 
 #[test]

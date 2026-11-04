@@ -17,7 +17,7 @@ impl EngineGraphController {
         &self,
     ) -> Result<parking_lot::MutexGuard<'_, ()>, ProtocolError> {
         self.mutation
-            .try_lock_for(std::time::Duration::from_millis(250))
+            .try_lock_for(self.control_admission)
             .ok_or_else(|| ProtocolError {
                 code: ErrorCode::GraphExchangeBusy,
                 parameters: serde_json::json!({"reason":"graph mutation in progress"}),

@@ -75,7 +75,7 @@ impl BridgeActivity {
 
 #[cfg(test)]
 mod tests {
-    use super::super::{bridge::DeviceBridge, ffi, tests::synthetic_device};
+    use super::super::{bridge::DeviceBridge, device_fixture::synthetic_device, ffi};
     use super::*;
 
     #[test]

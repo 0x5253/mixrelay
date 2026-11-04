@@ -2,8 +2,9 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { MixRelayProvider } from '../theme/MixRelayProvider';
-import { AudioNodeCard, type AudioNodeCardProps } from './AudioNodeCard';
-import type { EndpointControl } from './AudioNodeEndpointOptions';
+import { AudioNodeCard } from './AudioNodeCard';
+import { AudioNodeEndpointOptions, type EndpointControl } from './AudioNodeEndpointOptions';
+import type { AudioNodeCardProps } from './audioNodeCardTypes';
 
 function fixture(props: Partial<AudioNodeCardProps> = {}) {
   const onEndpointChange = vi.fn();
@@ -33,14 +34,17 @@ function endpoint(overrides: Partial<EndpointControl> = {}): EndpointControl {
   };
 }
 
-function openOptions() {
-  fireEvent.click(screen.getByRole('button', { name: (name) => name.endsWith('Options') }));
+/** Endpoint rules render the options panel alone; the card's Options wiring is covered by
+ * the driver format tests. */
+function endpointFixture(control: EndpointControl) {
+  const onEndpointChange = vi.fn();
+  render(<AudioNodeEndpointOptions control={control} onChange={onEndpointChange} />);
+  return { onEndpointChange };
 }
 
 describe('native endpoint options boundaries', () => {
   it('rejects a blank name and commits a trimmed changed name on Enter', () => {
-    const { onEndpointChange } = fixture({ endpointControl: endpoint() });
-    openOptions();
+    const { onEndpointChange } = endpointFixture(endpoint());
     const name = screen.getByRole('textbox', { name: 'Device name' });
     fireEvent.change(name, { target: { value: '  ' } });
     fireEvent.blur(name);
@@ -57,8 +61,7 @@ describe('native endpoint options boundaries', () => {
   });
 
   it('keeps names read-only when renaming is unavailable', () => {
-    const { onEndpointChange } = fixture({ endpointControl: endpoint({ canRename: false }) });
-    openOptions();
+    const { onEndpointChange } = endpointFixture(endpoint({ canRename: false }));
     const name = screen.getByRole('textbox', { name: 'Device name' });
     expect(name).toHaveAttribute('readonly');
     fireEvent.blur(name);
@@ -68,13 +71,15 @@ describe('native endpoint options boundaries', () => {
   it.each(['render', 'capture'] as const)(
     'changes channel counts on a %s-only device without adding the other direction',
     async (direction) => {
-      const { onEndpointChange } = fixture({
-        endpointControl: endpoint({
+      const { onEndpointChange } = endpointFixture(
+        endpoint({
           renderChannels: direction === 'render' ? 2 : 0,
           captureChannels: direction === 'capture' ? 2 : 0,
+          // A short capability list keeps the opened list small.
+          allowedRenderChannels: [2, 4],
+          allowedCaptureChannels: [2, 4],
         }),
-      });
-      openOptions();
+      );
       fireEvent.click(screen.getByRole('button', { name: /Channels/ }));
       fireEvent.click(await screen.findByRole('option', { name: /^4$/ }));
       expect(onEndpointChange).toHaveBeenCalledExactlyOnceWith({
@@ -124,8 +129,7 @@ describe('processor and meter presentation boundaries', () => {
 });
 
 it('does not rename a device when its unchanged name loses focus or receives an ordinary key', () => {
-  const { onEndpointChange } = fixture({ endpointControl: endpoint() });
-  openOptions();
+  const { onEndpointChange } = endpointFixture(endpoint());
   const name = screen.getByRole('textbox', { name: 'Device name' });
   name.focus();
   fireEvent.keyDown(name, { key: 'ArrowLeft' });
@@ -135,13 +139,12 @@ it('does not rename a device when its unchanged name loses focus or receives an 
 });
 
 it('does not apply an observed channel count that the device no longer advertises as configurable', async () => {
-  const { onEndpointChange } = fixture({
-    endpointControl: endpoint({
+  const { onEndpointChange } = endpointFixture(
+    endpoint({
       allowedCaptureChannels: [4, 8],
       allowedRenderChannels: [4, 8],
     }),
-  });
-  openOptions();
+  );
   fireEvent.click(screen.getByRole('button', { name: /Channels/ }));
   fireEvent.click(await screen.findByRole('option', { name: /^2$/ }));
   expect(onEndpointChange).not.toHaveBeenCalled();
