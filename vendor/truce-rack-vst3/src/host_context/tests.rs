@@ -533,13 +533,26 @@ fn concurrent_callback_overlaps_service_without_losing_accepted_edits() {
             applied: service_applied,
             primed_edit_seen: false,
         };
-        for _ in 0..=CALLBACKS {
+        // A pass skips a bank while the callback thread is registered as its writer, so a
+        // fixed pass count can miss the primed edit when that thread is preempted mid-publish.
+        // Drain until the rendezvous has happened, then keep servicing concurrent callbacks.
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        while !rendezvous.primed_edit_seen {
+            assert!(
+                std::time::Instant::now() < deadline,
+                "service observes the primed edit"
+            );
             service_state
                 .edits
                 .service(|id, _| rendezvous.apply(id))
                 .expect("service callback bank");
         }
-        assert!(rendezvous.primed_edit_seen);
+        for _ in 0..CALLBACKS {
+            service_state
+                .edits
+                .service(|id, _| rendezvous.apply(id))
+                .expect("service callback bank");
+        }
     });
 
     start.wait();

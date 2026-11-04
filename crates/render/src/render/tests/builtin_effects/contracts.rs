@@ -5,7 +5,8 @@ use super::*;
 fn all_effects_are_partition_invariant_finite_and_compile_roundtrip() {
     for config in configs() {
         let channels = usize::from(config.channels);
-        let input: Vec<f32> = (0..48_000 * channels)
+        // A unit impulse across 4096 frames exercises every partition boundary below.
+        let input: Vec<f32> = (0..4096 * channels)
             .map(|index| if index < channels { 0.5 } else { 0.0 })
             .collect();
         let full = signal(&config, &input, None, &[1024]);
