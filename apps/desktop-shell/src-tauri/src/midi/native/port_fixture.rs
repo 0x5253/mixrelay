@@ -4,12 +4,12 @@ use mixrelay_midi_control::{Device, mailbox::Mailbox};
 use std::sync::Arc;
 
 /// An open input port without a native connection, delivering into `mailbox`.
-pub(in crate::midi) fn port(device: Device, mailbox: Arc<Mailbox>) -> Port<()> {
+pub(in crate::midi) fn port(device: Device, mailbox: Arc<Mailbox>, token: u32) -> Port<()> {
     Port {
         device,
         mailbox,
         native_id: "20:0".into(),
-        token: 1,
+        token,
         _connection: (),
     }
 }
