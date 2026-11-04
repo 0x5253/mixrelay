@@ -95,11 +95,6 @@ mod test_support;
 #[path = "controller_tests.rs"]
 mod tests;
 
-#[cfg(test)]
-use mixrelay_audio_graph::{ExecutionPlan, GraphCompiler};
-#[cfg(test)]
-use mixrelay_render::BlockProcessor;
-
 #[cfg(feature = "test-util")]
 pub mod test_util;
 

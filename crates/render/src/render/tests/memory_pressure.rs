@@ -47,7 +47,7 @@ fn every_pcm_reservation_failure_returns_and_reclaims_partial_storage() {
     // Bound the search above this fixture's effect lines, history, arena and scratch reservations.
     for successful_reservations in 0..64 {
         HEAP_BALANCE.with(|counter| counter.set(Some(HeapBalance::default())));
-        let result = buffers::fail_after(successful_reservations, || {
+        let result = buffers::fault_injection::fail_after(successful_reservations, || {
             BlockProcessor::new(Arc::clone(&plan))
         });
         let prepared = match result {
@@ -98,7 +98,8 @@ fn failed_preparation_preserves_active_revision_and_healthy_pcm() {
     let exchange = ProcessorExchange::new(1);
     let mut proposed_plan = RenderPlan::prepare(&execution).unwrap();
     proposed_plan.revision = 2;
-    let failed = buffers::fail_after(2, || BlockProcessor::new(Arc::new(proposed_plan)));
+    let failed =
+        buffers::fault_injection::fail_after(2, || BlockProcessor::new(Arc::new(proposed_plan)));
     assert!(matches!(failed, Err(RenderPlanError::BufferPreparation(_))));
     assert_eq!(exchange.revisions().active, 1);
     assert_eq!(exchange.revisions().submitted, 1);

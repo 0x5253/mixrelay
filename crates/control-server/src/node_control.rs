@@ -6,25 +6,20 @@ use axum::{
 };
 use mixrelay_control_protocol::{ErrorCode, NodeControlRequest, ProtocolError};
 
-use super::{ControlState, catalog_task, protocol_error_status};
+use crate::{
+    ControlState,
+    reply::{catalog_task, failure, reply},
+};
 
 pub(super) async fn snapshot(State(state): State<ControlState>) -> Response {
-    catalog_task(move || match state.backend.controls_snapshot() {
-        Ok(snapshot) => Json(snapshot).into_response(),
-        Err(error) => failure(error),
-    })
-    .await
+    catalog_task(move || reply(StatusCode::OK, state.backend.controls_snapshot())).await
 }
 
 pub(super) async fn list(
     State(state): State<ControlState>,
     Path(graph_id): Path<String>,
 ) -> Response {
-    catalog_task(move || match state.backend.node_controls(&graph_id) {
-        Ok(controls) => Json(controls).into_response(),
-        Err(error) => failure(error),
-    })
-    .await
+    catalog_task(move || reply(StatusCode::OK, state.backend.node_controls(&graph_id))).await
 }
 
 pub(super) async fn preview(
@@ -37,13 +32,12 @@ pub(super) async fn preview(
         Err(error) => return (StatusCode::BAD_REQUEST, Json(error)).into_response(),
     };
     catalog_task(move || {
-        match state
-            .backend
-            .preview_node_control(&graph_id, &node_id, request)
-        {
-            Ok(manifest) => Json(manifest).into_response(),
-            Err(error) => failure(error),
-        }
+        reply(
+            StatusCode::OK,
+            state
+                .backend
+                .preview_node_control(&graph_id, &node_id, request),
+        )
     })
     .await
 }
@@ -87,6 +81,5 @@ fn decode(
         })
 }
 
-fn failure(error: ProtocolError) -> Response {
-    (protocol_error_status(error.code), Json(error)).into_response()
-}
+#[cfg(test)]
+mod tests;

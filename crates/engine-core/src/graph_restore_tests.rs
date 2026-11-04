@@ -4,6 +4,16 @@ use crate::GraphDocument;
 use serde_json::{Value, json};
 use std::path::PathBuf;
 
+impl super::CatalogRecall {
+    /// When a deferred restore becomes due.
+    fn deadline(&self) -> Option<mixrelay_time::Instant> {
+        self.pending
+            .lock()
+            .as_ref()
+            .map(|pending| pending.retry_after)
+    }
+}
+
 struct TemporaryNativeFailure(std::sync::atomic::AtomicUsize);
 
 impl crate::GraphResourceBackend for TemporaryNativeFailure {

@@ -1,6 +1,15 @@
 use super::*;
 use std::sync::Arc;
 
+impl InstanceIds {
+    /// Identifiers with only `u64::MAX` left to issue.
+    pub(crate) fn final_available() -> Self {
+        Self {
+            next: AtomicU64::new(u64::MAX),
+        }
+    }
+}
+
 #[test]
 fn final_identifier_is_issued_once_and_exhaustion_never_wraps_to_zero() {
     let ids = InstanceIds {

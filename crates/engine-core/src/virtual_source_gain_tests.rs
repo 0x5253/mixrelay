@@ -2,6 +2,7 @@
 //! This does not open the host's installed virtual device or claim native re-open evidence.
 use super::*;
 use crate::endpoint_settings_tests::controller;
+use mixrelay_render::BlockProcessor;
 
 #[derive(Default)]
 struct RecordingEndpoint {

@@ -1,5 +1,12 @@
 use super::*;
 
+impl<R, W> ReceiptLedger<R, W> {
+    /// Receipts held, pending or complete; the operation tests check it too.
+    pub(in crate::operations) fn len(&self) -> usize {
+        self.receipts.len()
+    }
+}
+
 const TTL: Duration = Duration::from_mins(1);
 
 fn at(seconds: u64) -> Instant {

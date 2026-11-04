@@ -3,7 +3,7 @@ use mixrelay_audio_graph::GraphDocument;
 use mixrelay_control_protocol::{
     AppStatus, ControlStateSnapshot, ErrorCode, ExternalProcessorCatalog, GraphApplyRequest,
     GraphApplyResponse, GraphCatalogRequest, GraphCatalogResponse, GraphLayoutRequest,
-    GraphLayoutResponse, GraphRuntimeStatus, MeterSnapshot, ProcessorEditorFrame,
+    GraphLayoutResponse, GraphRuntimeStatus, MeterSnapshot, PROTOCOL_VERSION, ProcessorEditorFrame,
     ProcessorEditorInput, ProcessorEditorRequest, ProcessorEditorStatus, ProcessorParameterUpdate,
     ProcessorParameterUpdateResponse, ProcessorRetryRequest, ProcessorScanRequest, ProtocolError,
     SessionReconfigureRequest,
@@ -329,7 +329,106 @@ pub trait ControlBackend: Send + Sync {
     ) -> Result<GraphApplyResponse, ProtocolError>;
 }
 
-pub(super) fn processor_unavailable(node_id: &str) -> ProtocolError {
+#[derive(Debug, Default)]
+/// The backend of a server without an engine: reads are empty and every change is refused.
+pub(crate) struct UnavailableBackend;
+
+impl ControlBackend for UnavailableBackend {
+    fn status(&self) -> AppStatus {
+        AppStatus::default()
+    }
+
+    fn graph_status(&self) -> GraphRuntimeStatus {
+        GraphRuntimeStatus {
+            pending_reason: None,
+            protocol_version: PROTOCOL_VERSION,
+            active_revision: 0,
+            submitted_revision: 0,
+        }
+    }
+
+    fn graph(&self) -> GraphDocument {
+        GraphDocument::new(0, vec![], vec![])
+    }
+
+    fn meters(&self) -> MeterSnapshot {
+        MeterSnapshot {
+            protocol_version: PROTOCOL_VERSION,
+            revision: 0,
+            nodes: Vec::new(),
+        }
+    }
+
+    fn processors(&self) -> ExternalProcessorCatalog {
+        ExternalProcessorCatalog {
+            protocol_version: PROTOCOL_VERSION,
+            processors: Vec::new(),
+            diagnostics: Vec::new(),
+        }
+    }
+
+    fn rescan_processors(
+        &self,
+        _request: ProcessorScanRequest,
+    ) -> Result<ExternalProcessorCatalog, ProtocolError> {
+        Err(ProtocolError {
+            code: ErrorCode::ControlUnavailable,
+            parameters: serde_json::json!({}),
+        })
+    }
+
+    fn set_processor_parameter(
+        &self,
+        node_id: &str,
+        parameter_id: u32,
+        _update: ProcessorParameterUpdate,
+    ) -> Result<ProcessorParameterUpdateResponse, ProtocolError> {
+        Err(ProtocolError {
+            code: ErrorCode::ProcessorUnavailable,
+            parameters: serde_json::json!({
+                "nodeId": node_id,
+                "parameterId": parameter_id,
+            }),
+        })
+    }
+
+    fn processor_editor_status(
+        &self,
+        node_id: &str,
+    ) -> Result<ProcessorEditorStatus, ProtocolError> {
+        Err(processor_unavailable(node_id))
+    }
+
+    fn set_processor_editor(
+        &self,
+        node_id: &str,
+        _request: ProcessorEditorRequest,
+    ) -> Result<ProcessorEditorStatus, ProtocolError> {
+        Err(processor_unavailable(node_id))
+    }
+
+    fn retry_failed_processor(
+        &self,
+        _request: ProcessorRetryRequest,
+    ) -> Result<GraphApplyResponse, ProtocolError> {
+        Err(ProtocolError {
+            code: ErrorCode::ControlUnavailable,
+            parameters: serde_json::json!({"resource":"processor_retry"}),
+        })
+    }
+
+    fn apply_graph_request(
+        &self,
+        _request: GraphApplyRequest,
+    ) -> Result<GraphApplyResponse, ProtocolError> {
+        Err(ProtocolError {
+            code: ErrorCode::ControlUnavailable,
+            parameters: serde_json::json!({}),
+        })
+    }
+}
+
+fn processor_unavailable(node_id: &str) -> ProtocolError {
     ProtocolError {
         code: ErrorCode::ProcessorUnavailable,
         parameters: serde_json::json!({ "nodeId": node_id }),
@@ -350,7 +449,7 @@ fn recorder_unavailable() -> ProtocolError {
     }
 }
 
-pub(super) fn snapshot(backend: &(impl ControlBackend + ?Sized)) -> ControlStateSnapshot {
+pub(crate) fn snapshot(backend: &(impl ControlBackend + ?Sized)) -> ControlStateSnapshot {
     let editors = backend
         .graph()
         .nodes

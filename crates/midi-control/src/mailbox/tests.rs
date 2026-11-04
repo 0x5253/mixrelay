@@ -1,5 +1,17 @@
 use super::*;
 
+impl Mailbox {
+    /// Receives `bytes` under a fresh publication, comparing with `compare`.
+    fn receive_with(&self, bytes: &[u8], compare: &mut CompareBatch<'_>) {
+        let publication = self.begin();
+        self.receive_with_sequence(
+            bytes,
+            (publication.sequence, publication.generation),
+            compare,
+        );
+    }
+}
+
 #[test]
 fn a_press_published_across_a_clear_boundary_is_discarded() {
     let mailbox = Mailbox::default();

@@ -1,4 +1,21 @@
-use super::*;
+use std::sync::Arc;
+
+use axum::{
+    body::Body,
+    http::{Request, StatusCode, header::CONTENT_TYPE},
+};
+use mixrelay_audio_graph::GraphDocument;
+use mixrelay_control_protocol::{
+    ErrorCode, GraphApplyRequest, GraphApplyResponse, GraphApplyState, PROTOCOL_VERSION,
+    ProtocolError,
+};
+use serde_json::json;
+
+use crate::{
+    APPLICATION_CAPTURE_MANIFEST_ROUTE, APPLICATION_CAPTURE_PREVIEW_ROUTE, ControlOperations,
+    router, router_with_backend,
+    test_support::{TestBackend, clock, response_json},
+};
 
 fn backend() -> Arc<TestBackend> {
     TestBackend::with_result(Ok(GraphApplyResponse {
@@ -12,7 +29,7 @@ fn backend() -> Arc<TestBackend> {
 #[tokio::test]
 async fn unavailable_manifest_is_retryable_and_not_an_empty_capture_snapshot() {
     let (status, body) = response_json(
-        router(ControlOperations::new(crate::tests::clock())),
+        router(ControlOperations::new(clock())),
         Request::get(APPLICATION_CAPTURE_MANIFEST_ROUTE)
             .body(Body::empty())
             .unwrap(),
@@ -27,10 +44,7 @@ async fn unavailable_manifest_is_retryable_and_not_an_empty_capture_snapshot() {
 async fn current_and_preview_manifests_do_not_publish_graphs() {
     let backend = backend();
     let (status, body) = response_json(
-        router_with_backend(
-            backend.clone(),
-            ControlOperations::new(crate::tests::clock()),
-        ),
+        router_with_backend(backend.clone(), ControlOperations::new(clock())),
         Request::get(APPLICATION_CAPTURE_MANIFEST_ROUTE)
             .body(Body::empty())
             .unwrap(),
@@ -43,10 +57,7 @@ async fn current_and_preview_manifests_do_not_publish_graphs() {
     );
     let request: GraphApplyRequest = GraphDocument::new(6, vec![], vec![]).into();
     let (status, body) = response_json(
-        router_with_backend(
-            backend.clone(),
-            ControlOperations::new(crate::tests::clock()),
-        ),
+        router_with_backend(backend.clone(), ControlOperations::new(clock())),
         Request::post(APPLICATION_CAPTURE_PREVIEW_ROUTE)
             .header(CONTENT_TYPE, "application/json")
             .body(Body::from(serde_json::to_vec(&request).unwrap()))
@@ -63,10 +74,7 @@ async fn current_and_preview_manifests_do_not_publish_graphs() {
 async fn malformed_preview_is_rejected_before_backend_and_stale_status_is_preserved() {
     let backend = backend();
     let (status, _) = response_json(
-        router_with_backend(
-            backend.clone(),
-            ControlOperations::new(crate::tests::clock()),
-        ),
+        router_with_backend(backend.clone(), ControlOperations::new(clock())),
         Request::post(APPLICATION_CAPTURE_PREVIEW_ROUTE)
             .header(CONTENT_TYPE, "application/json")
             .body(Body::from("{}"))
@@ -81,10 +89,7 @@ async fn malformed_preview_is_rejected_before_backend_and_stale_status_is_preser
     });
     let request: GraphApplyRequest = GraphDocument::new(6, vec![], vec![]).into();
     let (status, body) = response_json(
-        router_with_backend(
-            backend.clone(),
-            ControlOperations::new(crate::tests::clock()),
-        ),
+        router_with_backend(backend.clone(), ControlOperations::new(clock())),
         Request::post(APPLICATION_CAPTURE_PREVIEW_ROUTE)
             .header(CONTENT_TYPE, "application/json")
             .body(Body::from(serde_json::to_vec(&request).unwrap()))

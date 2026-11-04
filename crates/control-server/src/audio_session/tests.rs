@@ -1,7 +1,18 @@
-use super::{
-    Arc, Body, ControlOperations, ErrorCode, GraphApplyResponse, GraphApplyState, PROTOCOL_VERSION,
-    ProtocolError, Request, ServiceExt, StatusCode, TestBackend, VIRTUAL_ENDPOINT_FORMAT_ROUTE,
-    json, router_with_backend,
+use std::sync::Arc;
+
+use axum::{
+    body::Body,
+    http::{Request, StatusCode},
+};
+use mixrelay_control_protocol::{
+    ErrorCode, GraphApplyResponse, GraphApplyState, PROTOCOL_VERSION, ProtocolError,
+};
+use serde_json::json;
+use tower::ServiceExt;
+
+use crate::{
+    ControlOperations, VIRTUAL_ENDPOINT_FORMAT_ROUTE, router_with_backend,
+    test_support::{TestBackend, clock},
 };
 
 fn accepted() -> Arc<TestBackend> {
@@ -14,7 +25,7 @@ fn accepted() -> Arc<TestBackend> {
 }
 
 async fn send(backend: Arc<TestBackend>, body: serde_json::Value) -> axum::response::Response {
-    router_with_backend(backend, ControlOperations::new(crate::tests::clock()))
+    router_with_backend(backend, ControlOperations::new(clock()))
         .oneshot(
             Request::put(VIRTUAL_ENDPOINT_FORMAT_ROUTE)
                 .header("content-type", "application/json")

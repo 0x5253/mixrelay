@@ -8,6 +8,10 @@ use crate::{
 use mixrelay_audio_graph::{NodeSpec, ProviderNodeConfig};
 use mixrelay_processor_state::{StateBlobSource, StateRef, write_bundle};
 
+fn load(files: &dyn DocumentFiles, path: &Path) -> Result<Catalog, ProtocolError> {
+    load_fingerprinted(files, path).map(|(catalog, _, _)| catalog)
+}
+
 fn request(engine: &EngineGraphController, operation: WorkspaceAction) -> WorkspaceRequest {
     let catalog = engine.read_catalog().unwrap();
     WorkspaceRequest {
@@ -220,9 +224,12 @@ fn startup_restores_multiple_graphs_and_persists_layout_edits() {
     let dir = crate::test_support::Documents::new("multiple-graph-catalog");
     let path = dir.join("graphs.json");
     let mut catalog = Catalog::imported(GraphDocument::new(1, vec![], vec![]));
-    let mut second = catalog.graphs.active().clone();
+    let first = catalog.graphs.active().clone();
+    let mut second = first.clone();
     second.id = "graph-2".into();
-    catalog.graphs.push(second);
+    catalog.graphs =
+        crate::graph_catalog::SavedGraphs::from_list(vec![first.clone(), second], &first.id)
+            .expect("the first graph stays selected");
     let bytes = serde_json::to_vec(&catalog).unwrap();
     dir.files.insert(&path, bytes.clone());
     let engine = controller(GraphDocument::new(1, vec![], vec![]))

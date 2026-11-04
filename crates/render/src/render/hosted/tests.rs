@@ -4,6 +4,13 @@ use crate::ProcessorExchange;
 use mixrelay_audio_graph::{CompileContext, CompileLimits, GraphCompiler, GraphDocument};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+impl HostedRack {
+    /// Samples of the shared hosted scratch storage.
+    pub(in crate::render) fn scratch_samples(&self) -> usize {
+        self.scratch.len()
+    }
+}
+
 struct Counter {
     identity: HostedProcessorIdentity,
     cursor: usize,

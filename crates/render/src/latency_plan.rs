@@ -172,14 +172,6 @@ pub(crate) struct LatencyPlan {
     pub(crate) terminal_arrivals: Vec<Option<u32>>,
 }
 
-#[cfg(test)]
-fn route_delays(
-    nodes: &[LatencyNode],
-    routes: &[LatencyRoute],
-) -> Result<Vec<u32>, LatencyPlanError> {
-    plan_arrivals(nodes, routes).map(|plan| plan.delays)
-}
-
 #[derive(Debug)]
 struct RouteState {
     arrivals: Vec<Option<u32>>,

@@ -255,8 +255,8 @@ pub fn runtime_node_id(graph_id: &str, node_id: &NodeId) -> NodeId {
 ///
 /// # Example
 /// ```
-/// use crate::{CompileContext, CompileLimits, GraphCompiler, RenderFormat};
 /// use mixrelay_audio_graph::composition::{DeviceRegistry, compose};
+/// use mixrelay_audio_graph::{CompileContext, CompileLimits, GraphCompiler, RenderFormat};
 /// let registry = DeviceRegistry::new(Vec::new())?;
 /// let context = CompileContext {
 ///     format: RenderFormat { sample_rate: 48_000, block_frames: 256 },

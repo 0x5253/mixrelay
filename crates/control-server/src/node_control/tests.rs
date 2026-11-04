@@ -1,75 +1,36 @@
-use super::*;
-use mixrelay_audio_graph::NodeControl;
-use mixrelay_control_protocol::{
-    GraphNodeControls, NodeControlCapabilities, NodeControlDescriptor, NodeControlRequest,
+use std::sync::Arc;
+
+use axum::{
+    body::Body,
+    http::{Request, StatusCode},
 };
+use mixrelay_control_protocol::{
+    ErrorCode, GraphApplyResponse, GraphApplyState, PROTOCOL_VERSION, ProtocolError,
+};
+use serde_json::{Value, json};
 
-#[derive(Debug, PartialEq)]
-pub(super) struct RecordedControl {
-    pub graph_id: String,
-    pub node_id: String,
-    pub request: NodeControlRequest,
-}
+use crate::{
+    CONTROL_SNAPSHOT_ROUTE, ControlOperations, router_with_backend,
+    test_support::{TestBackend, clock, response_json},
+};
+use mixrelay_control_protocol::NodeControlRequest;
 
-pub(super) fn discovery(graph_id: &str) -> GraphNodeControls {
-    GraphNodeControls {
-        graph_id: graph_id.into(),
-        revision: 7,
-        nodes: vec![NodeControlDescriptor {
-            node_id: "effect".into(),
-            label: None,
-            kind: "gain".into(),
-            control: NodeControl::default(),
-            gain_db: Some(0.0),
-            capabilities: NodeControlCapabilities {
-                power: true,
-                mute: true,
-                recorder: false,
-            },
-        }],
-    }
-}
-
-pub(super) fn snapshot() -> mixrelay_control_protocol::EngineControlSnapshot {
-    use mixrelay_control_protocol::{
-        EngineControlSnapshot, EnginePowerStatus, GraphControlSnapshot, NodeControlSnapshot,
-    };
-    EngineControlSnapshot {
-        revision: 8,
-        active_revision: 7,
-        structure_generation: 3,
-        engine_power: EnginePowerStatus {
-            enabled: true,
-            transitioning: false,
-            unsaved: false,
-            pause_reason: None,
-        },
-        graphs: vec![GraphControlSnapshot {
-            id: "graph B".into(),
-            name: "Stage".into(),
-            nodes: discovery("graph B")
-                .nodes
-                .into_iter()
-                .map(|descriptor| NodeControlSnapshot {
-                    descriptor,
-                    recorder: None,
-                })
-                .collect(),
-        }],
-    }
-}
+use crate::test_support::{RecordedControl, control_snapshot};
 
 #[tokio::test]
 async fn snapshot_returns_the_engine_observation_even_while_a_revision_is_pending() {
     let (status, body) = response_json(
-        router_with_backend(backend(), ControlOperations::new(crate::tests::clock())),
+        router_with_backend(backend(), ControlOperations::new(clock())),
         Request::get(CONTROL_SNAPSHOT_ROUTE)
             .body(Body::empty())
             .expect("request"),
     )
     .await;
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(body, serde_json::to_value(snapshot()).expect("snapshot"));
+    assert_eq!(
+        body,
+        serde_json::to_value(control_snapshot()).expect("snapshot")
+    );
     assert_eq!(body["graphs"][0]["nodes"][0]["nodeId"], "effect");
 }
 
@@ -96,7 +57,7 @@ fn request(method: &str, suffix: &str, body: &Value) -> Request<Body> {
 #[tokio::test]
 async fn discovery_is_graph_scoped_and_does_not_invent_recorder_actions() {
     let (status, body) = response_json(
-        router_with_backend(backend(), ControlOperations::new(crate::tests::clock())),
+        router_with_backend(backend(), ControlOperations::new(clock())),
         Request::get("/api/v1/graphs/graph%20B/nodes/controls")
             .body(Body::empty())
             .expect("request"),
@@ -115,10 +76,7 @@ async fn update_and_preview_forward_identical_explicit_targets() {
     ] {
         let backend = backend();
         let (status, body) = response_json(
-            router_with_backend(
-                backend.clone(),
-                ControlOperations::new(crate::tests::clock()),
-            ),
+            router_with_backend(backend.clone(), ControlOperations::new(clock())),
             request(
                 method,
                 suffix,
@@ -165,7 +123,7 @@ async fn stale_missing_disabled_and_failed_controls_are_definitive_typed_errors(
             parameters: json!({"nodeId":"effect 1"}),
         }));
         let (status, body) = response_json(
-            router_with_backend(backend, ControlOperations::new(crate::tests::clock())),
+            router_with_backend(backend, ControlOperations::new(clock())),
             request("PUT", "", &json!({"expectedRevision":7,"enabled":true})),
         )
         .await;
@@ -187,10 +145,7 @@ async fn malformed_controls_never_reach_backend() {
     ] {
         let backend = backend();
         let (status, body) = response_json(
-            router_with_backend(
-                backend.clone(),
-                ControlOperations::new(crate::tests::clock()),
-            ),
+            router_with_backend(backend.clone(), ControlOperations::new(clock())),
             request("PUT", "", &body),
         )
         .await;
@@ -216,7 +171,7 @@ async fn parameter_and_editor_writes_without_revision_are_rejected() {
         ("/api/v1/processors/effect/editor", json!({"open":true})),
     ] {
         let (status, body) = response_json(
-            router_with_backend(backend(), ControlOperations::new(crate::tests::clock())),
+            router_with_backend(backend(), ControlOperations::new(clock())),
             Request::put(path)
                 .header("content-type", "application/json")
                 .body(Body::from(body.to_string()))
