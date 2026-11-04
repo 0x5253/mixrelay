@@ -1,23 +1,4 @@
-#[cfg(any(target_os = "macos", target_os = "linux"))]
-use mixrelay_pcm_ring as _;
-
-#[cfg(target_os = "macos")]
-mod macos;
-#[cfg(test)]
-#[cfg(target_os = "macos")]
-mod macos_application_rate_tests;
-
-#[cfg(all(test, target_os = "macos"))]
-#[test]
-fn native_callback_and_hal_contracts() {
-    mixrelay_macos_test_support::assert_native_contracts();
-}
-
-#[cfg(target_os = "linux")]
-mod linux;
-
-#[cfg(any(target_os = "macos", target_os = "linux"))]
-mod shutdown;
+//! Engine service executable: the audio service, or a processor-host child mode.
 
 fn main() {
     if std::env::args().skip(1).eq(["--version"]) {
@@ -121,14 +102,14 @@ fn run_service(owner: Option<mixrelay_engine_supervisor::EngineOwner>) {
                 std::process::exit(1);
             }
         };
-        if let Err(error) = runtime.block_on(macos::run()) {
+        if let Err(error) = runtime.block_on(mixrelay_engine_service::macos::run()) {
             eprintln!("MixRelay engine service failed: {error}");
             std::process::exit(1);
         }
     }
     #[cfg(target_os = "linux")]
     {
-        if let Err(error) = linux::run(owner) {
+        if let Err(error) = mixrelay_engine_service::linux::run(owner) {
             eprintln!("MixRelay Linux engine service failed: {error}");
             std::process::exit(1);
         }
@@ -139,14 +120,3 @@ fn run_service(owner: Option<mixrelay_engine_supervisor::EngineOwner>) {
         std::process::exit(1);
     }
 }
-
-#[cfg(test)]
-#[cfg(all(feature = "native-lab", target_os = "macos"))]
-mod macos_installed_driver_tests;
-#[cfg(test)]
-#[cfg(all(feature = "native-lab", target_os = "macos"))]
-mod macos_live_application_tests;
-
-#[cfg(test)]
-#[cfg(target_os = "macos")]
-mod macos_devices_tests;

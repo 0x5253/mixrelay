@@ -6,6 +6,8 @@ mod connection;
 mod connection_failure;
 mod directories;
 mod dispatch;
+#[cfg(test)]
+mod fixture_pipe;
 mod process;
 use connection::EXCHANGE_TIMEOUT;
 pub(crate) use connection::{Connection, StartedTelemetrySubscription};

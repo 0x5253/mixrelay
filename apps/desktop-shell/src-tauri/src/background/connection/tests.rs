@@ -60,9 +60,10 @@ fn catalog_transport_classification_keeps_security_protocol_and_mutation_failure
 }
 
 fn fixture_connection(directory: &std::path::Path) -> Connection {
-    Connection::for_socket_fixture(
+    Connection::at_socket(
         directory.join("service.sock"),
         fs::metadata(directory).unwrap().uid(),
+        Arc::new(mixrelay_time::ManualClock::default()),
     )
 }
 
@@ -439,7 +440,10 @@ async fn a_missing_runtime_socket_fails_every_request_promptly() {
     let started = Instant::now();
     for _ in 0..3 {
         assert!(connection.invoke("hello", Value::Null).await.is_err());
-        assert!(!connection.running().await);
+        let hello = connection.invoke("hello", Value::Null).await;
+        assert!(
+            !hello.is_ok_and(|hello| crate::background::startup::compatibility().accepts(&hello))
+        );
     }
     assert!(connection.subscribe_telemetry().await.is_err());
     assert!(

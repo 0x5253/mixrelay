@@ -24,12 +24,13 @@ async fn a_cancel_behind_a_full_queue_is_sent_once_the_queue_drains() {
     saturate(&link).await;
     link.cancel(7, Duration::from_secs(5));
     assert!(!link.routes().closed());
+    // Only the cancel frame is kept; the queued padding frames are blank.
     let mut received = Vec::new();
     let mut chunk = vec![0; 1 << 16];
     while !String::from_utf8_lossy(&received).contains("\"subscription\":7") {
         let read = runtime.read(&mut chunk).await.unwrap();
         assert_ne!(read, 0, "the cancel must arrive before the link closes");
-        received.extend_from_slice(&chunk[..read]);
+        received.extend(chunk[..read].iter().filter(|byte| **byte != b' '));
     }
 }
 

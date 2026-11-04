@@ -1,11 +1,7 @@
 //! Destination preferences belong to the background controller, outside the audio plan.
 //! UI edits and hardware starts share the same serialized store and take preparation.
-#[cfg(test)]
-use std::fs;
 use std::path::PathBuf;
 
-#[cfg(test)]
-pub(crate) use mixrelay_desktop_core::recording::RecordingEncoding;
 use mixrelay_desktop_core::recording::{
     self, RecordingDirectories, RecordingError, TakeIdentities, TakeIdentity,
 };
@@ -170,6 +166,8 @@ impl ControlProxyClient {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use mixrelay_desktop_core::recording::RecordingEncoding;
+    use std::fs;
 
     fn fixture() -> (tempfile::TempDir, RecordingStore) {
         let directory = tempfile::tempdir().unwrap();

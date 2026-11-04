@@ -1,12 +1,10 @@
 //! Composes `PipeWire` native owners with engine, processor, recorder and control adapters.
+use crate::{EngineGraphController, EngineGraphControllerConfig, control_service::ControlService};
 use mixrelay_audio_graph::GraphDocument;
 use mixrelay_engine_core::default_peak_meter_bank;
 use mixrelay_engine_host::{
     ShutdownSignals, crash_guard::CrashGuard, persistence::config_directory,
     session_preferences::SessionPreferences,
-};
-use mixrelay_engine_service::{
-    EngineGraphController, EngineGraphControllerConfig, control_service::ControlService,
 };
 use mixrelay_linux_engine::{
     EndpointObservation, FormatMonitor, LinuxVirtualEndpointBackend, create_initial_processor,
@@ -16,7 +14,11 @@ use mixrelay_processor_host::ProcessorCatalog;
 use mixrelay_render::ProcessorExchange;
 use std::{sync::Arc, thread};
 mod driver;
-pub(super) fn run(owner: Option<mixrelay_engine_supervisor::EngineOwner>) -> Result<(), String> {
+/// Runs the Linux engine service, optionally owned by a supervising controller.
+///
+/// # Errors
+/// Returns admission, native startup, serving or retirement failure.
+pub fn run(owner: Option<mixrelay_engine_supervisor::EngineOwner>) -> Result<(), String> {
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()

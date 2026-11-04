@@ -68,7 +68,7 @@ fn removal_finalizes_recording_and_late_recorder_command_cannot_target_replaceme
         .core
         .test_recorder_session_id(&before.active_id, "record")
         .unwrap();
-    let tap = engine.recording_registry.prepare(&id, 2).unwrap();
+    let tap = engine.recorders.prepare(&id, 2).unwrap();
     tap.capture(&[0.25; 8], 48_000);
     let command = RecorderControlRequest {
         expected_recording: None,
@@ -86,7 +86,7 @@ fn removal_finalizes_recording_and_late_recorder_command_cannot_target_replaceme
     tap.capture(&[0.25; 8], 48_000);
     remove(&engine, &before.active_id).unwrap();
     assert_eq!(
-        engine.recording_registry.status(&id).state,
+        engine.recorders.status(&id).state,
         mixrelay_audio_io::recording::RecorderState::Stopped
     );
     settle(&engine);
