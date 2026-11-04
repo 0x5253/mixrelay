@@ -31,7 +31,7 @@ function tool(program, args) {
 function addEntry(files, path, mode, owner, line) {
   if (!path || path.startsWith('/') || files.has(path)) throw new Error(`Invalid package file entry: ${line.slice(0, 200)}`);
   if (mode[0] === 'd') return;
-  if (owner !== 'root:root') throw new Error(`Package file is not owned by root: ${path}`);
+  if (owner !== 'root:root' && owner !== '0:0') throw new Error(`Package file is not owned by root: ${path}`);
   files.set(path, mode);
 }
 
@@ -51,9 +51,10 @@ export function debModes(listing) {
   const files = new Map();
   for (const line of listing.split('\n')) {
     if (!line) continue;
-    const match = line.match(/^([-dl][rwxstST-]{9})\s+(\S+)\/(\S+)\s+\d+\s+\S+\s+\S+\s+\.\/(.*?)(?: -> .*)?$/);
+    // dpkg-deb shows names or numeric IDs, with or without a leading "./", per archive.
+    const match = line.match(/^([-dl][rwxstST-]{9})\s+(\S+)\/(\S+)\s+\d+\s+\S+\s+\S+\s+(?:\.\/)?(.*?)(?: -> .*)?$/);
     if (!match) throw new Error(`Unrecognized DEB listing entry: ${line.slice(0, 200)}`);
-    if (match[4] === '') continue;
+    if (match[4] === '' || match[4] === '.') continue;
     addEntry(files, match[4].replace(/\/$/, ''), match[1], `${match[2]}:${match[3]}`, line);
   }
   return files;

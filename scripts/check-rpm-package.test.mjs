@@ -94,6 +94,12 @@ test('RPM header and DEB listings yield root-owned file modes and skip directori
     '-rwxr-xr-x root/root  28000000 2026-11-04 01:00 ./usr/bin/mixrelay-desktop',
     'lrwxrwxrwx root/root         0 2026-11-04 01:00 ./usr/bin/mixrelay -> mixrelay-desktop',
   ].join('\n'))], [['usr/bin/mixrelay-desktop', '-rwxr-xr-x'], ['usr/bin/mixrelay', 'lrwxrwxrwx']]);
+  // Tauri's archives use numeric owners and no "./" prefix.
+  assert.deepEqual([...debModes([
+    'drwxr-xr-x 0/0               0 2026-11-04 03:29 etc',
+    '-rw-r--r-- 0/0              10 2026-11-04 03:29 etc/xdg/autostart/mixrelay-driver.desktop',
+  ].join('\n'))], [['etc/xdg/autostart/mixrelay-driver.desktop', '-rw-r--r--']]);
+  assert.throws(() => debModes('-rw-r--r-- 1000/1000 10 2026-11-04 03:29 etc/x'), /not owned by root/);
   assert.throws(() => debModes('garbage line'), /Unrecognized DEB listing entry/);
 });
 
