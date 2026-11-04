@@ -1,0 +1,7 @@
+# Hosted CI runners intermittently reset, truncate or mis-frame crates.io transfers.
+# Retry harder and download each crate over its own HTTP/1.1 connection.
+[net]
+retry = 10
+
+[http]
+multiplexing = false
