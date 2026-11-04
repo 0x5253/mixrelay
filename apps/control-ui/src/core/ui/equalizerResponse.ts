@@ -69,3 +69,67 @@ export function responsePath(bands: readonly EqualizerBandValue[], rate: number)
     return `${index ? 'L' : 'M'}${frequencyPosition(frequency).toFixed(3)} ${gainPosition(gain).toFixed(3)}`;
   }).join(' ');
 }
+
+/** The part of a parameter control the graph reads and edits. */
+export interface EqualizerControl {
+  id: string;
+  value: number;
+  step: number;
+  minimum: number;
+  maximum: number;
+}
+
+/** One band's three controls, found by the ids its contract names. */
+export interface EqualizerBand<C extends EqualizerControl> {
+  id: string;
+  label: string;
+  frequency: C;
+  gain: C;
+  q: C;
+}
+
+/** Bands whose three controls all exist; an incomplete band is omitted, not invented. */
+export function resolveEqualizerBands<C extends EqualizerControl>(
+  bands: readonly { id: string; label: string; frequencyId: string; gainId: string; qId: string }[],
+  controls: readonly C[],
+): EqualizerBand<C>[] {
+  return bands.flatMap((band) => {
+    const frequency = controls.find((control) => control.id === band.frequencyId);
+    const gain = controls.find((control) => control.id === band.gainId);
+    const q = controls.find((control) => control.id === band.qId);
+    return frequency && gain && q ? [{ id: band.id, label: band.label, frequency, gain, q }] : [];
+  });
+}
+
+/** Left/Right step frequency and Up/Down step gain by one control step, within range. */
+export function equalizerKeyChange(
+  key: string,
+  band: EqualizerBand<EqualizerControl>,
+): { id: string; value: number } | undefined {
+  const changes: Record<string, [EqualizerControl, number]> = {
+    ArrowLeft: [band.frequency, band.frequency.value - band.frequency.step],
+    ArrowRight: [band.frequency, band.frequency.value + band.frequency.step],
+    ArrowUp: [band.gain, band.gain.value + band.gain.step],
+    ArrowDown: [band.gain, band.gain.value - band.gain.step],
+  };
+  const change = changes[key];
+  if (!change) return undefined;
+  const [control, value] = change;
+  return {
+    id: control.id,
+    value: Math.max(control.minimum, Math.min(control.maximum, Number(value.toPrecision(12)))),
+  };
+}
+
+/** A handle dragged to a point given as fractions of the plot's width and height moves
+ * the band's frequency and gain together. */
+export function equalizerDragChange(
+  band: EqualizerBand<EqualizerControl>,
+  x: number,
+  y: number,
+): [{ id: string; value: number }, { id: string; value: number }] {
+  return [
+    { id: band.frequency.id, value: plotFrequency(x * equalizerPlot.width) },
+    { id: band.gain.id, value: plotGain(y * equalizerPlot.height) },
+  ];
+}
