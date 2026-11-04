@@ -81,11 +81,13 @@ jobs:
       - run: pnpm lab:test
       # Pull requests also build the unsigned universal app on the arm64 leg, so a pull
       # request holds two of the account's five macOS runners instead of three.
-      - name: Select Xcode 26 for Icon Composer assets
+      # Icon Composer (.icon) assets need the actool that ships with Xcode 26 or later.
+      # Releases pin Xcode 26 on macOS 26; this review build takes the newest Xcode it finds.
+      - name: Select Xcode 26 or later for Icon Composer assets
         if: github.event_name == 'pull_request' && matrix.arch == 'arm64'
         run: |
-          xcode="$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -n 1)"
-          [[ -n "$xcode" ]] || { ls -d /Applications/Xcode*.app; echo "Xcode 26 is required" >&2; exit 1; }
+          xcode="$(ls -d /Applications/Xcode_*.app 2>/dev/null | awk -F'[_.]' '$2 >= 26' | sort -V | tail -n 1)"
+          [[ -n "$xcode" ]] || { ls -d /Applications/Xcode*.app; echo "Xcode 26 or later is required" >&2; exit 1; }
           echo "DEVELOPER_DIR=$xcode/Contents/Developer" >> "$GITHUB_ENV"
           DEVELOPER_DIR="$xcode/Contents/Developer" xcodebuild -version
       - name: Build the universal app, remover and HAL driver ad-hoc signed

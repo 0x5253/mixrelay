@@ -137,8 +137,9 @@ test('macOS builds select Xcode 26 before compiling Icon Composer assets', () =>
   assert.ok(select < release.indexOf('Install the universal build toolchain'));
   assert.match(release, /runs-on: macos-26\n/);
   assert.doesNotMatch(release, /runs-on: macos-1[0-9]/);
+  // The review build accepts any Xcode from 26 on, whose actool reads Icon Composer files.
   const lab = workflow('native-lab');
-  const labSelect = lab.indexOf('ls -d /Applications/Xcode_26*.app');
+  const labSelect = lab.indexOf("awk -F'[_.]' '$2 >= 26'");
   assert.ok(labSelect > 0 && labSelect < lab.indexOf('- name: Build the universal app'));
 });
 
