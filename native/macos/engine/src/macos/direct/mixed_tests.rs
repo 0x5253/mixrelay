@@ -1,7 +1,8 @@
-use super::*;
+//! A driver duplex endpoint captured and rendered in the same callback.
+use super::{Binding, renderer::RenderSignals, tests};
 use mixrelay_audio_graph::{GraphDocument, NodeConfig, NodeControl};
-use mixrelay_render::{ProcessorExchange, RuntimeControlUpdate};
-use std::sync::Arc;
+use mixrelay_render::{BlockProcessor, ProcessorExchange, RenderPlan, RuntimeControlUpdate};
+use std::sync::{Arc, atomic::Ordering};
 
 fn processor() -> Box<BlockProcessor> {
     let mut document: GraphDocument = serde_json::from_value(serde_json::json!({
@@ -58,20 +59,7 @@ fn driver_duplex_client_reads_capture_and_writes_render_at_native_callback_bound
         std::sync::Arc::new(mixrelay_time::StdClock::new()),
     );
     let signals = RenderSignals::default();
-    let mut renderer = Renderer {
-        timebase: mixrelay_realtime::Timebase::current(),
-        processor: &mut processor,
-        activation: None,
-        bindings: &bindings,
-        clock_id: 7,
-        epoch: 1,
-        native_clock: None,
-        status: &status,
-        position: None,
-        progress: &signals.progress,
-        failed: &signals.failed,
-        invalid: &signals.invalid,
-    };
+    let mut renderer = tests::unclocked(&mut processor, &bindings, &status, &signals, 1);
     let exchange = ProcessorExchange::new(1);
     for (revision, enabled, muted) in [
         (2, true, false),
