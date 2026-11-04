@@ -17,8 +17,8 @@ pub(crate) mod workspace;
 
 /// Requests reach the engine over its user-owned Unix socket; this authority only names it.
 const CONTROL_ORIGIN: &str = mixrelay_local_socket::ENGINE_AUTHORITY;
-/// The engine's server-sent meter windows (`mixrelay_control_server::METER_TELEMETRY_ROUTE`).
-const METER_TELEMETRY_ROUTE: &str = "/api/v1/telemetry";
+/// The engine's server-sent meter windows (`mixrelay_control_server::CONTROL_TELEMETRY_ROUTE`).
+const CONTROL_TELEMETRY_ROUTE: &str = "/api/v1/telemetry";
 const PROCESSOR_RETRY_ROUTE: &str = "/api/v1/processors/retry";
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
@@ -230,7 +230,7 @@ impl ControlProxyClient {
         }
         let response = self
             .client
-            .get(format!("{CONTROL_ORIGIN}{METER_TELEMETRY_ROUTE}"))
+            .get(format!("{CONTROL_ORIGIN}{CONTROL_TELEMETRY_ROUTE}"))
             .send()
             .await
             .map_err(|error| error.to_string())?;
