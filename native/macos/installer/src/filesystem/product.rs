@@ -1,21 +1,21 @@
 //! Product-folder identity and empty-only cleanup; app bundles remain separate targets.
 
-use std::{
-    ffi::OsStr,
-    fs::{self, File},
-    io,
-    os::unix::fs::MetadataExt,
-    path::PathBuf,
-};
+use std::{ffi::OsStr, fs::File, os::unix::fs::MetadataExt, path::PathBuf};
 
 use rustix::fs::{AtFlags, unlinkat};
 
 use crate::directory::{create_private_child, open_child, open_directory, rename_exclusive};
 
 use super::{
-    FilesystemAdapter, FilesystemError, FilesystemIdentity, FilesystemSnapshot, MutationProgress,
-    PRODUCT_DIRECTORY, identity, io_failure,
+    FilesystemAdapter,
+    error::{FilesystemError, io_failure},
+    layout::in_product_directory,
+    paths::{ensure_no_symlink_components, metadata_if_present, rename_path},
+    receipt::{FilesystemStaged, InstalledTarget, MutationProgress},
+    rollback::remove_installed_path,
+    snapshot::{FilesystemIdentity, FilesystemSnapshot, fingerprint, identity},
 };
+use crate::contract::{OwnedTarget, PRODUCT_DIRECTORY};
 
 #[derive(Clone, Copy)]
 enum ProductMove {
@@ -27,8 +27,8 @@ impl FilesystemAdapter {
     pub(super) fn rollback_installed_product(
         &self,
         product: Option<&File>,
-        staged: &super::FilesystemStaged,
-        installed: &super::InstalledTarget,
+        staged: &FilesystemStaged,
+        installed: &InstalledTarget,
     ) -> Result<(), FilesystemError> {
         let destination = self.layout.target_path(installed.target);
         let directory = product.ok_or_else(|| FilesystemError::CreatedDirectoryChanged {
@@ -45,14 +45,14 @@ impl FilesystemAdapter {
         let metadata = file
             .metadata()
             .map_err(|error| io_failure("inspect installed product", &destination, error))?;
-        if super::fingerprint(&metadata) != installed.fingerprint {
+        if fingerprint(&metadata) != installed.fingerprint {
             return Err(FilesystemError::ConcurrentTargetChange {
                 target: installed.target,
             });
         }
         let payload = staged.payload_path(installed.target);
         self.move_target_to_private(product, installed.target, &payload)?;
-        super::remove_installed_path(&payload, installed)
+        remove_installed_path(&payload, installed)
     }
 
     pub(super) fn product_directory_path(&self) -> PathBuf {
@@ -61,23 +61,26 @@ impl FilesystemAdapter {
             .join(PRODUCT_DIRECTORY.trim_start_matches('/'))
     }
 
+    /// Production requires root; fixtures use the test process's own user.
+    fn product_owner(&self) -> u32 {
+        if self.layout.root() == std::path::Path::new("/") {
+            0
+        } else {
+            rustix::process::geteuid().as_raw()
+        }
+    }
+
     pub(super) fn observe_product_directory(
         &self,
     ) -> Result<Option<FilesystemIdentity>, FilesystemError> {
         let path = self.product_directory_path();
-        super::ensure_no_symlink_components(&path, true)?;
-        let metadata = match fs::symlink_metadata(&path) {
-            Ok(metadata) => metadata,
-            Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
-            Err(error) => return Err(io_failure("inspect product folder", &path, error)),
+        ensure_no_symlink_components(&path, true)?;
+        let Some(metadata) = metadata_if_present(&path, "inspect product folder")? else {
+            return Ok(None);
         };
-        // Fixtures use their normal owner; production requires root.
-        let owner = if self.layout.root() == std::path::Path::new("/") {
-            0
-        } else {
-            rustix::process::geteuid().as_raw()
-        };
-        if !metadata.is_dir() || !product_directory_policy(metadata.uid(), metadata.mode(), owner) {
+        if !metadata.is_dir()
+            || !product_directory_policy(metadata.uid(), metadata.mode(), self.product_owner())
+        {
             return Err(FilesystemError::UnsafePath {
                 path,
                 reason: "product folder must be a protected owned directory",
@@ -115,13 +118,8 @@ impl FilesystemAdapter {
         let metadata = directory
             .metadata()
             .map_err(|error| io_failure("inspect product descriptor", &path, error))?;
-        let owner = if self.layout.root() == std::path::Path::new("/") {
-            0
-        } else {
-            rustix::process::geteuid().as_raw()
-        };
         if identity(&metadata) != expected
-            || !product_directory_policy(metadata.uid(), metadata.mode(), owner)
+            || !product_directory_policy(metadata.uid(), metadata.mode(), self.product_owner())
         {
             return Err(FilesystemError::CreatedDirectoryChanged { path });
         }
@@ -224,7 +222,7 @@ impl FilesystemAdapter {
     pub(super) fn move_target_to_private(
         &self,
         product: Option<&File>,
-        target: crate::OwnedTarget,
+        target: OwnedTarget,
         private: &std::path::Path,
     ) -> Result<(), FilesystemError> {
         self.move_product_target(product, target, private, ProductMove::ToPrivate)
@@ -233,7 +231,7 @@ impl FilesystemAdapter {
     pub(super) fn move_private_to_target(
         &self,
         product: Option<&File>,
-        target: crate::OwnedTarget,
+        target: OwnedTarget,
         private: &std::path::Path,
     ) -> Result<(), FilesystemError> {
         self.move_product_target(product, target, private, ProductMove::FromPrivate)
@@ -242,18 +240,15 @@ impl FilesystemAdapter {
     fn move_product_target(
         &self,
         product: Option<&File>,
-        target: crate::OwnedTarget,
+        target: OwnedTarget,
         private: &std::path::Path,
         direction: ProductMove,
     ) -> Result<(), FilesystemError> {
         let destination = self.layout.target_path(target);
-        if !matches!(
-            target,
-            crate::OwnedTarget::App | crate::OwnedTarget::Uninstaller
-        ) {
+        if !in_product_directory(target) {
             return match direction {
-                ProductMove::ToPrivate => super::rename_path(&destination, private),
-                ProductMove::FromPrivate => super::rename_path(private, &destination),
+                ProductMove::ToPrivate => rename_path(&destination, private),
+                ProductMove::FromPrivate => rename_path(private, &destination),
             };
         }
         let product = product.ok_or_else(|| FilesystemError::CreatedDirectoryChanged {

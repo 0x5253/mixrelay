@@ -3,12 +3,16 @@
 use std::{fs, io, os::unix::fs::MetadataExt};
 
 use super::{
-    FilesystemError, FilesystemLayout, identity, io_failure, remove_staging_root_if_identity,
+    error::{FilesystemError, io_failure},
+    layout::FilesystemLayout,
+    paths::ensure_no_symlink_components,
+    snapshot::identity,
+    staging,
 };
 
 pub(super) fn cleanup(layout: &FilesystemLayout) -> Result<(), FilesystemError> {
     let path = layout.staging_root();
-    super::ensure_no_symlink_components(path, true)?;
+    ensure_no_symlink_components(path, true)?;
     let metadata = match fs::symlink_metadata(path) {
         Ok(metadata) => metadata,
         Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(()),
@@ -26,5 +30,5 @@ pub(super) fn cleanup(layout: &FilesystemLayout) -> Result<(), FilesystemError> 
     tracing::info!(path = %path.display(), "Cleaning abandoned MixRelay transaction files");
     // The whole private directory belongs to this transaction. Recursive removal
     // unlinks nested symlinks and hardlinks without following their external targets.
-    remove_staging_root_if_identity(path, identity(&metadata))
+    staging::remove_if_identity(path, identity(&metadata))
 }

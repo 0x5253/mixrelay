@@ -1,19 +1,21 @@
 //! The same Driver transaction registers, stops and restores its on-demand audio engine.
-use super::super::launchctl;
-use crate::RUNTIME_LAUNCHD_PATH;
+use super::super::{
+    command,
+    launchctl::{self, ENGINE, RegistrationState},
+};
 use anyhow::{Result, ensure};
-const TARGET: &str = "system/io.mixrelay.audio.engine";
 
 pub(super) fn registered() -> Result<bool> {
     Ok(matches!(
-        launchctl::inspect_engine_registration()?,
-        launchctl::RegistrationState::Loaded { .. }
+        launchctl::inspect(&ENGINE)?,
+        RegistrationState::Loaded { .. }
     ))
 }
 
+// Unlike the Driver job, engine bootstrap and bootout accept diagnostic output.
 pub(super) fn drain() -> Result<()> {
     if registered()? {
-        let output = launchctl::run_command("/bin/launchctl", &["bootout", TARGET])?;
+        let output = command::run_command(launchctl::PROGRAM, &["bootout", &ENGINE.target()])?;
         ensure!(output.status.success(), "audio engine bootout failed");
         ensure!(!registered()?, "audio engine remains registered");
     }
@@ -21,10 +23,8 @@ pub(super) fn drain() -> Result<()> {
 }
 
 pub(super) fn register() -> Result<()> {
-    let output = launchctl::run_command(
-        "/bin/launchctl",
-        &["bootstrap", "system", RUNTIME_LAUNCHD_PATH],
-    )?;
+    let output =
+        command::run_command(launchctl::PROGRAM, &["bootstrap", "system", ENGINE.plist()])?;
     ensure!(output.status.success(), "audio engine registration failed");
     ensure!(
         registered()?,

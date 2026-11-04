@@ -16,18 +16,21 @@ use super::{
     audio_probe::{check_coreaudio_response, wait_for_hal_absence, wait_for_hal_presence},
     hal_reload,
     launchctl::{self, RegistrationState},
-    trust::{require_lifecycle_storage, require_root, validate_destination_ancestors},
+    privilege::require_root,
+    trust::{
+        destination::{validate_destination_ancestors, validate_engine_directory},
+        lifecycle::require_lifecycle_storage,
+    },
 };
 
 mod engine;
 mod payload;
+mod plan;
 mod runtime;
 
 use payload::{installed_hal_version, read_bounded_file};
-use runtime::{
-    activate_driver, activate_restored_driver, capture_service_process, wait_for_driver_ready,
-    wait_for_service_exit,
-};
+use plan::{RegistrationRestore, recoverable_engine_registration};
+use runtime::{activate_driver, activate_restored_driver, stop_driver, wait_for_driver_ready};
 
 /// The actual macOS `ServiceLifecycle` boundary for the coordinated transaction.
 pub struct NativeServiceLifecycle {
@@ -102,11 +105,11 @@ impl NativeServiceLifecycle {
         // Even a failed reload command may have killed the old server. Recovery must
         // reload the restored HAL in that case, not only after command success.
         self.coreaudio_reload_attempted = true;
-        launchctl::reload_coreaudio()
+        hal_reload::reload_coreaudio()
     }
 
     fn current_registration() -> Result<RegistrationState, NativeError> {
-        launchctl::inspect_registration()
+        launchctl::inspect(&launchctl::DRIVER)
     }
 
     fn ensure_idle(state: &RegistrationState) -> Result<(), NativeError> {
@@ -146,7 +149,7 @@ impl NativeServiceLifecycle {
         let version = installed_hal_version()?;
         activate_restored_driver(
             &mut self.coreaudio_reload_attempted,
-            launchctl::bootstrap,
+            || launchctl::bootstrap(&launchctl::DRIVER),
             || {
                 hal_reload::reload_and_wait(
                     self.hal_hosts.as_ref(),
@@ -257,9 +260,7 @@ impl ServiceLifecycle for NativeServiceLifecycle {
             ));
         }
         if matches!(current, RegistrationState::Loaded { .. }) {
-            let process = capture_service_process(&current)?;
-            launchctl::bootout()?;
-            wait_for_service_exit(process)?;
+            stop_driver(&current)?;
             if Self::current_registration()? != RegistrationState::Absent {
                 return Err(NativeError::LaunchdState(
                     "Driver bootout returned but the verified service remains registered",
@@ -285,7 +286,7 @@ impl ServiceLifecycle for NativeServiceLifecycle {
         validate_destination_ancestors(layout.root())?;
         require_lifecycle_storage(&self.account)?;
         if matches!(request, TransactionRequest::Install(_)) {
-            super::trust::validate_engine_directory(layout.root(), true)?;
+            validate_engine_directory(layout.root(), true)?;
             self.verifier
                 .verify_installed(&layout, &OwnedTarget::all())?;
         }
@@ -330,7 +331,7 @@ impl ServiceLifecycle for NativeServiceLifecycle {
                 let version = installed_hal_version()?;
                 activate_driver(
                     &mut self.coreaudio_reload_attempted,
-                    launchctl::bootstrap,
+                    || launchctl::bootstrap(&launchctl::DRIVER),
                     || {
                         hal_reload::reload_and_wait(
                             self.hal_hosts.as_ref(),
@@ -388,9 +389,7 @@ impl ServiceLifecycle for NativeServiceLifecycle {
                     "cannot drain a registered Driver without its verified payload",
                 ));
             }
-            let process = capture_service_process(&current)?;
-            launchctl::bootout()?;
-            wait_for_service_exit(process)?;
+            stop_driver(&current)?;
         }
         if Self::current_registration()? != RegistrationState::Absent {
             return Err(NativeError::LaunchdState(
@@ -449,23 +448,22 @@ impl ServiceLifecycle for NativeServiceLifecycle {
         if snapshot.engine_was_registered {
             engine::register().map_err(NativeError::UserData)?;
         }
-        match &snapshot.registration {
-            RegistrationState::Absent => {
-                if self.coreaudio_reload_attempted {
-                    if snapshot.hal_was_present {
-                        hal_reload::reload_and_wait(
-                            self.hal_hosts.as_ref(),
-                            &self.hal_mapping_paths,
-                            wait_for_hal_presence,
-                        )?;
-                    } else {
-                        launchctl::reload_coreaudio()?;
-                        wait_for_hal_absence()?;
-                    }
-                }
-                Ok(())
+        match RegistrationRestore::plan(
+            &snapshot.registration,
+            self.coreaudio_reload_attempted,
+            snapshot.hal_was_present,
+        ) {
+            RegistrationRestore::Nothing => Ok(()),
+            RegistrationRestore::ReloadRestoredHal => hal_reload::reload_and_wait(
+                self.hal_hosts.as_ref(),
+                &self.hal_mapping_paths,
+                wait_for_hal_presence,
+            ),
+            RegistrationRestore::ReloadWithoutHal => {
+                hal_reload::reload_coreaudio()?;
+                wait_for_hal_absence()
             }
-            RegistrationState::Loaded { .. } => {
+            RegistrationRestore::BootstrapRestoredJob => {
                 let expected =
                     snapshot
                         .launchd_configuration
@@ -501,34 +499,4 @@ fn require_reload_approval(approved: bool) -> Result<(), NativeError> {
         return Err(NativeError::CoreAudioReloadApprovalRequired);
     }
     Ok(())
-}
-
-// Removal can drain an exact-identity job even after its definition was deleted.
-// Rollback can re-register it only when the original definition existed.
-fn recoverable_engine_registration(
-    operation: crate::OperationKind,
-    registered: bool,
-    definition_present: bool,
-) -> Result<bool, NativeError> {
-    if operation == crate::OperationKind::Install && registered && !definition_present {
-        return Err(NativeError::LaunchdState(
-            "audio engine registration has no validated owned definition",
-        ));
-    }
-    Ok(registered && definition_present)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn removal_accepts_a_deleted_engine_definition_without_inventing_rollback_payload() {
-        assert!(
-            !recoverable_engine_registration(crate::OperationKind::Remove, true, false).unwrap()
-        );
-        assert!(
-            recoverable_engine_registration(crate::OperationKind::Install, true, false).is_err()
-        );
-        assert!(recoverable_engine_registration(crate::OperationKind::Remove, true, true).unwrap());
-    }
 }

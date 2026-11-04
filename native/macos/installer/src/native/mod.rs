@@ -2,22 +2,22 @@
 
 mod account;
 mod audio_probe;
+mod command;
 mod hal_reload;
-mod launchctl;
+pub(crate) mod launchctl;
+mod privilege;
 mod service;
 mod trust;
 mod user_data;
 
 pub use account::{ResolvedServiceAccount, resolve_console_account};
 pub use audio_probe::{check_coreaudio_response, hal_is_loaded};
-pub(crate) use launchctl::{
-    bootout_removal_helper, bootstrap_removal_helper, removal_helper_is_registered,
-};
+pub use privilege::require_root;
 pub use service::{NativeServiceLifecycle, NativeServiceRegistration, NativeServiceSnapshot};
-pub(crate) use trust::{create_product_directory, validate_destination_ancestors};
+pub(crate) use trust::destination::{create_product_directory, validate_destination_ancestors};
 pub use trust::{
-    initialize_lifecycle_storage, prepare_install_directories, require_lifecycle_storage,
-    require_root,
+    destination::prepare_install_directories,
+    lifecycle::{initialize_lifecycle_storage, require_lifecycle_storage},
 };
 pub use user_data::cleanup_user_data;
 
@@ -30,7 +30,7 @@ use crate::LaunchdConfiguration;
 /// matching passwd/group/home record.
 pub fn resolve_install_account() -> Result<ResolvedServiceAccount, NativeError> {
     require_root()?;
-    match trust::read_installed_launchd_plist()? {
+    match trust::installed_plist::read_installed_launchd_plist()? {
         Some(bytes) => {
             let account = LaunchdConfiguration::installed_account(&bytes)?;
             account::resolve_service_account(&account)
@@ -46,11 +46,11 @@ pub fn resolve_install_account() -> Result<ResolvedServiceAccount, NativeError> 
 /// revalidated against the operating system.
 pub fn resolve_removal_account() -> Result<ResolvedServiceAccount, NativeError> {
     require_root()?;
-    if let Some(bytes) = trust::read_installed_launchd_plist()? {
+    if let Some(bytes) = trust::installed_plist::read_installed_launchd_plist()? {
         let account = LaunchdConfiguration::installed_account(&bytes)?;
         return account::resolve_service_account(&account);
     }
-    match trust::read_lifecycle_account()? {
+    match trust::lifecycle::read_lifecycle_account()? {
         Some(account) => Ok(account),
         None => resolve_console_account(),
     }
