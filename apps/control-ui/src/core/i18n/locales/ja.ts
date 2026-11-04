@@ -1,16 +1,18 @@
 import { effectTranslations } from '../effects';
 export const ja = {
   midi: {
-    mapMode: 'MIDIマップモード',
-    mapTarget: '{{name}}を割り当て: {{action}}',
-    selectTarget: '強調された操作を選び、MIDIフェーダーを動かすかボタンを押してください。',
-    waitingTarget: '{{name}} · {{action}} — MIDI操作を動かして割り当て、または置き換えてください。',
+    mapMode: 'MIDIマッピングモード',
+    mapTarget: '{{name}}をマッピング: {{action}}',
+    selectTarget:
+      '強調表示されたコントロールを選択し、MIDIフェーダーを動かすかボタンを押してください。',
+    waitingTarget:
+      '{{name}} · {{action}} — MIDIコントロールを動かして割り当てるか、置き換えてください。',
     done: 'マッピングを終了',
     selectMapping: '{{name}} · {{action}}を選択',
     recorderAction: 'レコーダー操作',
     min: '最小値',
     max: '最大値',
-    empty: 'MIDI割り当てはありません。強調表示された操作を選択して追加します。',
+    empty: 'MIDIマッピングはありません。強調表示されたコントロールを選択して追加してください。',
     targetUnavailable: '対象の状態を確認できません',
     title: 'MIDIコントロール',
     disconnected: 'デバイス未接続',
@@ -20,8 +22,8 @@ export const ja = {
     pickup: 'フェーダーを現在の音量まで動かすと操作が有効になります。',
     step: '変更幅',
     remove: '削除',
-    removeTarget: '{{name}}のMIDI割り当てを削除',
-    failed: 'MIDI設定を変更できませんでした。再試行してください。',
+    removeTarget: '{{name}}のMIDIコントロールを削除',
+    failed: 'MIDIコントロールを変更できませんでした。再試行してください。',
     control: '{{device}} · チャンネル{{channel}} · {{kind}} {{number}}',
     modes: {
       absolute: '絶対値（ピックアップ）',
@@ -71,9 +73,9 @@ export const ja = {
         'オーディオのルーティング、エフェクト、録音を使用するには、MixRelayをインストールしてから再接続してください。',
     },
     incompatible: {
-      title: 'MixRelayを更新してください',
+      title: 'MixRelayをアップデートしてください',
       description:
-        'インストール済みのMixRelayはこのアプリと互換性がありません。更新してから再接続してください。',
+        'インストール済みのMixRelayはこのアプリと互換性がありません。アップデートしてから再接続してください。',
     },
     unavailable: {
       title: 'MixRelayに接続できません',
@@ -81,7 +83,7 @@ export const ja = {
         'MixRelayが応答しないか、オーディオエンジンの準備ができていません。再接続してください。',
     },
     install: 'MixRelayをインストール',
-    update: 'MixRelayを更新',
+    update: 'MixRelayをアップデート',
     retry: '再接続',
   },
   workspaceFile: {
@@ -92,7 +94,7 @@ export const ja = {
     saveAs: '名前を付けて保存…',
   },
   driverManagement: {
-    mixed: '不一致',
+    mixed: '混在',
     channels: 'チャンネル',
     bitDepth: 'ビット深度',
     title: 'ドライバー設定',
@@ -177,8 +179,8 @@ export const ja = {
     blockSize: 'バッファーサイズ',
     apply: '適用',
     applying: '適用中…',
-    changeNotice: '設定の変更中は音声が一時的に途切れます。',
-    captureUnavailable: '現在のオーディオセッションではアプリの音声をキャプチャできません。',
+    changeNotice: '設定の変更中はオーディオが一時的に途切れます。',
+    captureUnavailable: '現在のオーディオセッションではアプリのオーディオをキャプチャできません。',
     changeFailed: 'オーディオセッションを変更できませんでした。エンジンの状態を確認してください。',
     errors: {
       audio_session_processor_state_unavailable:
@@ -216,11 +218,11 @@ export const ja = {
     },
     issues: {
       processing_failed:
-        'オーディオ処理に失敗しました。エンジンには接続できますが、音声は停止しています。',
+        'オーディオ処理に失敗しました。エンジンには接続できますが、オーディオは停止しています。',
       application_unavailable:
-        '選択したアプリケーションの音声ソースを利用できません。復帰を待っています。',
+        '選択したアプリのオーディオソースを利用できません。復帰を待っています。',
       application_ambiguous:
-        '選択したアプリケーションに一致する音声ソースが複数あります。使用するソースを選択してください。',
+        '選択したアプリに一致するオーディオソースが複数あります。使用するソースを選択してください。',
       preferences_unavailable:
         '保存済みのオーディオ設定を読み書きできませんでした。エンジンは引き続き利用できます。対応する形式を適用して、保存をやり直してください。',
       endpoint_preferences_unavailable:
@@ -228,7 +230,7 @@ export const ja = {
       stored_format_unavailable:
         '起動時にデバイスが保存済みの設定を受け入れませんでした。対応するサンプルレートとバッファーサイズを再適用してください。',
       reconfiguration_failed:
-        'デバイス設定を元に戻せませんでした。音声は中断したままです。対応する形式を再適用して復旧してください。',
+        'デバイス設定を元に戻せませんでした。オーディオは中断したままです。対応する形式を再適用して復旧してください。',
       device_unavailable:
         'オーディオデバイスを利用できないか、そのストリームが停止しました。エンジンには引き続き接続できます。',
       sample_rate_mismatch:
@@ -262,11 +264,11 @@ export const ja = {
     audioPaused: 'オーディオ一時停止中',
     deleteGraph: 'グラフを削除',
     deleteGraphNotice:
-      '「{{name}}」を削除しますか？音声処理と録音が停止します。グラフ一覧でmacOSのCommand+Z、LinuxのCtrl+Zで取り消し、Shiftを加えるとやり直せます。保存済みファイルは残ります。',
+      '「{{name}}」を削除しますか？オーディオ処理と録音が停止します。グラフ一覧でmacOSのCommand+Z、LinuxのCtrl+Zで取り消し、Shiftを加えるとやり直せます。保存済みのワークスペースファイルは残ります。',
     catalogUnavailable: '保存済みのグラフを利用できません。既存のグラフは置き換えられていません。',
     reloadGraphs: 'グラフを再読み込み',
     graphSaveFailed:
-      '音声は動作していますが、グラフを保存できませんでした。再起動すると、この変更が失われる可能性があります。',
+      'オーディオは動作していますが、グラフを保存できませんでした。再起動すると、この変更が失われる可能性があります。',
     graphs: 'グラフ',
     newGraph: '新規グラフ',
     graphName: 'グラフ名',
@@ -277,7 +279,7 @@ export const ja = {
     workspace: 'ルーティングワークスペース',
     signalPathLabel: 'MixRelay の信号経路',
     capture: 'キャプチャ',
-    captureDescription: 'アプリケーションやシステムの音声はここに入力されます。',
+    captureDescription: 'アプリやシステムのオーディオはここに入力されます。',
     stream: '配信',
     streamDescription: 'OBS はこのデバイスから最終ミックスを受け取ります。',
     remote: 'リモート操作',
@@ -307,16 +309,16 @@ export const ja = {
     },
     nodeStatus: {
       offline: 'オフライン',
-      reselectApplication: 'アプリケーションを再選択',
-      unknown: '音声の状態が不明',
+      reselectApplication: 'アプリを再選択',
+      unknown: 'オーディオの状態が不明',
       running: 'オーディオセッション動作中',
       idle: 'オーディオ準備完了',
       stopped: 'オーディオ処理停止中',
       failed: 'オーディオ処理に失敗',
       issues: {
         processing_failed: 'オーディオ処理に失敗',
-        application_unavailable: 'セッション: アプリケーションを利用できません',
-        application_ambiguous: 'セッション: アプリケーションを特定できません',
+        application_unavailable: 'セッション: アプリを利用できません',
+        application_ambiguous: 'セッション: アプリを特定できません',
         device_unavailable: 'セッション: デバイスを利用できません',
         sample_rate_mismatch: 'セッション: サンプルレートが一致していません',
         block_size_mismatch: 'セッション: バッファーサイズが一致していません',
@@ -371,7 +373,7 @@ export const ja = {
     },
     addNode: 'ノードを追加',
     emptyCanvas: 'アプリ、デバイス、エフェクトなどを追加してください。',
-    noApplications: '実行中のアプリケーションはありません',
+    noApplications: '実行中のアプリはありません',
     noInputDevices: '入力デバイスはありません',
     noOutputDevices: '出力デバイスはありません',
     noProcessors: 'インストール済みのオーディオエフェクトはありません',
@@ -384,7 +386,7 @@ export const ja = {
       output: '出力',
       processor: 'プロセッサー',
       routing: 'ルーティング',
-      runningApplications: '実行中のアプリケーション',
+      runningApplications: '実行中のアプリ',
       source: 'ソース',
       utility: 'ユーティリティ',
       au: 'AU',
@@ -415,7 +417,7 @@ export const ja = {
     },
     title: '仮想入出力ルーティング',
     description:
-      'macOS アプリケーションが MixRelay に送る音声を、OBS や DAW が使用するデバイス入力に戻します。',
+      'macOS アプリが MixRelay に送るオーディオを、OBS や DAW が使用するデバイス入力に戻します。',
     canvasLabel: 'MixRelay の仮想入出力ルーティンググラフ',
     ports: {
       application: 'アプリのオーディオ',
@@ -448,7 +450,7 @@ export const ja = {
     toggleGain: 'ゲイン −6 dB',
     apply: '適用',
     nodes: {
-      application: 'アプリケーション',
+      application: 'アプリ',
       attack: 'アタック',
       audioInput: '既定の入力',
       audioOutput: '既定の出力',
@@ -463,14 +465,14 @@ export const ja = {
       newVirtualDevice: '新規仮想デバイス',
       virtualAvailable: '接続',
       virtualAttached: '接続済み',
-      virtualSourcePort: 'デバイスからの音声',
+      virtualSourcePort: 'デバイスからのオーディオ',
       gain: 'ゲイン',
       limiter: 'リミッター',
       limiterDescription: '出力ピークが上限を超えないように制御',
       makeupGain: 'メイクアップゲイン',
       mixer: 'ミキサー',
       options: 'オプション',
-      virtualSinkPort: 'デバイスへの音声',
+      virtualSinkPort: 'デバイスへのオーディオ',
       processor: 'プロセッサー',
       processorLayoutUnavailable: 'プロセッサーの入出力構成を利用できません',
       outputGain: '出力ゲイン',
@@ -498,7 +500,7 @@ export const ja = {
         'マイクへのアクセスが拒否されています。macOSのプライバシーとセキュリティで許可してから、もう一度お試しください。',
       audio_device_disconnected: '仮想オーディオデバイスの設定を適用できませんでした。',
       audio_source_unavailable:
-        'アプリケーションの音声をキャプチャできません。アプリケーションと音声キャプチャの権限を確認してください。',
+        'アプリのオーディオをキャプチャできません。アプリとオーディオキャプチャの権限を確認してください。',
       control_unavailable: 'ローカルのオーディオエンジンを利用できません。',
       control_request_failed: 'オーディオ制御の要求に失敗しました。',
       engine_replaced:
@@ -524,11 +526,11 @@ export const ja = {
     },
     inventory: {
       failed:
-        'アプリケーションとオーディオデバイスの一覧を更新できませんでした。前回取得した一覧を表示しています。',
+        'アプリとオーディオデバイスの一覧を更新できませんでした。前回取得した一覧を表示しています。',
       retry: '再試行',
     },
     persistenceWarning:
-      '音声は動作していますが、グラフの変更を保存できませんでした。MixRelay を閉じると、変更が失われる可能性があります。',
+      'オーディオは動作していますが、グラフの変更を保存できませんでした。MixRelay を閉じると、変更が失われる可能性があります。',
     layout: {
       failed:
         'ノード配置と表示状態を保存または読み込めませんでした。現在の編集内容は保持されています。',
@@ -610,7 +612,7 @@ export const ja = {
       healthy: '音切れ 0 回 · 正常',
     },
     details: {
-      chrome: 'Chrome · タブの音声',
+      chrome: 'Chrome · タブのオーディオ',
       microphone: 'Scarlett 2i2 · 入力 1',
       twoSources: 'Chrome + マイク',
       streamControl: 'スレッショルド −12 dB',
@@ -632,12 +634,12 @@ export const ja = {
     },
     nodes: {
       application: {
-        name: 'アプリケーション',
-        description: 'Chrome、Firefox、ゲームなどのプロセスの音声を個別にキャプチャ',
+        name: 'アプリ',
+        description: 'Chrome、Firefox、ゲームなどのプロセスのオーディオを個別にキャプチャ',
       },
       systemAudio: {
-        name: 'システム音声',
-        description: 'macOS のすべての出力音声と効果音をキャプチャ',
+        name: 'システムオーディオ',
+        description: 'macOS の出力全体と効果音をキャプチャ',
       },
       inputDevice: {
         name: '入力デバイス',
@@ -649,11 +651,11 @@ export const ja = {
       },
       audioFile: {
         name: 'オーディオファイル',
-        description: 'ファイルやプレイリストを音声ソースとして再生',
+        description: 'ファイルやプレイリストをオーディオソースとして再生',
       },
       browserRemote: {
         name: 'リモート入力',
-        description: 'ペアリング済みの LAN クライアントからの音声',
+        description: 'ペアリング済みの LAN クライアントからのオーディオ',
       },
       mixer: {
         name: 'ミキサー',
@@ -733,7 +735,7 @@ export const ja = {
       installing: 'インストール中',
       restartRequired: '再起動が必要',
       installedNotLoaded: 'インストール済み、未読み込み',
-      blocked: 'オペレーティングシステムによってブロックされています',
+      blocked: 'OS によってブロックされています',
       unavailable: 'オーディオデバイスを利用できません',
       invalidPermissions: '権限が無効',
       versionMismatch: 'バージョンが一致していません',

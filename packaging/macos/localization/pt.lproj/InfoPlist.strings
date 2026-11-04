@@ -1,2 +1,2 @@
-NSAudioCaptureUsageDescription = "O MixRelay captura o áudio das aplicações selecionadas para o encaminhar para os seus dispositivos de áudio e transmissões.";
-NSMicrophoneUsageDescription = "O MixRelay acede aos microfones e a outros dispositivos de entrada de áudio selecionados quando os encaminha ou grava.";
+NSAudioCaptureUsageDescription = "O MixRelay captura o áudio dos aplicativos selecionados para encaminhá-lo aos seus dispositivos de áudio e transmissões.";
+NSMicrophoneUsageDescription = "O MixRelay acessa os microfones e outros dispositivos de entrada de áudio selecionados quando você os encaminha ou grava.";

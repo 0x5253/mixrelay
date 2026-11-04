@@ -15,7 +15,7 @@ export const fr = {
     empty: 'Aucune affectation MIDI. Sélectionnez un contrôle surligné pour en ajouter une.',
     targetUnavailable: 'État des cibles indisponible',
     title: 'Commandes MIDI',
-    disconnected: 'Appareil déconnecté',
+    disconnected: 'Périphérique déconnecté',
     targetMissing: 'Cible introuvable',
     unavailable: 'MIDI indisponible',
     mode: 'Mode de volume',
@@ -95,7 +95,7 @@ export const fr = {
     saveAs: 'Enregistrer sous…',
   },
   driverManagement: {
-    mixed: 'Différent',
+    mixed: 'Mixte',
     channels: 'Canaux',
     bitDepth: 'Profondeur de bits',
     title: 'Paramètres du pilote',
@@ -179,7 +179,7 @@ export const fr = {
     blockSize: 'Taille du tampon',
     apply: 'Appliquer',
     applying: 'Application…',
-    changeNotice: 'La modification de ce réglage interrompt brièvement l’audio.',
+    changeNotice: 'La modification de ce paramètre interrompt brièvement l’audio.',
     captureUnavailable:
       'La capture audio des applications n’est pas disponible dans la session audio actuelle.',
     changeFailed: 'Impossible de modifier la session audio. Vérifiez l’état du moteur.',
@@ -194,7 +194,7 @@ export const fr = {
     },
     unavailable: 'Session audio indisponible',
     attention: 'Vérification nécessaire',
-    backend: 'Moteur audio',
+    backend: 'Back-end',
     clock: 'Horloge',
     deviceRate: 'Fréquence du périphérique',
     unknown: 'Non observé',
@@ -265,12 +265,12 @@ export const fr = {
     audioPaused: 'Audio en pause',
     deleteGraph: 'Supprimer le graphe',
     deleteGraphNotice:
-      'Supprimer « {{name}} » ? Le traitement audio et les enregistrements s’arrêtent. Dans la liste des graphes, Command+Z sur macOS ou Ctrl+Z sur Linux annule la suppression ; ajoutez Shift pour la rétablir. Les fichiers enregistrés sont conservés.',
+      'Supprimer « {{name}} » ? Le traitement audio et les enregistrements s’arrêtent. Dans la liste des graphes, Command+Z sur macOS ou Ctrl+Z sur Linux annule la suppression ; ajoutez Shift pour la rétablir. Les fichiers d’espace de travail enregistrés sont conservés.',
     catalogUnavailable:
       'Les graphes enregistrés sont indisponibles. Votre graphe existant n’a pas été remplacé.',
     reloadGraphs: 'Recharger les graphes',
     graphSaveFailed:
-      'L’audio est actif, mais le graphe n’a pas pu être enregistré. Un redémarrage pourrait perdre ces modifications.',
+      'L’audio est actif, mais le graphe n’a pas pu être enregistré. Ces modifications pourraient être perdues au redémarrage.',
     graphs: 'Graphes',
     newGraph: 'Nouveau graphe',
     graphName: 'Nom du graphe',
@@ -333,7 +333,7 @@ export const fr = {
       },
     },
     nodeName: {
-      title: 'Renommer l’affichage',
+      title: 'Modifier le nom affiché',
       label: 'Nom affiché',
       save: 'Enregistrer',
     },
@@ -370,7 +370,7 @@ export const fr = {
       reasons: {
         'out-of-range': 'Aucun canal d’entrée correspondant',
         existing: 'Déjà connecté',
-        cycle: 'Créerait une boucle de retour',
+        cycle: 'Créerait une boucle de réinjection',
         invalid: 'Canal indisponible',
       },
     },
@@ -423,9 +423,9 @@ export const fr = {
       'Renvoyez l’audio écrit dans MixRelay par les applications macOS vers l’entrée du périphérique utilisée par OBS et les stations audio numériques.',
     canvasLabel: 'Graphe de routage des E/S virtuelles MixRelay',
     ports: {
-      application: "Audio de l'application",
-      deviceInput: "Entrée de l'appareil",
-      deviceOutput: "Sortie de l'appareil",
+      application: 'Audio de l’application',
+      deviceInput: 'Entrée du périphérique',
+      deviceOutput: 'Sortie du périphérique',
       effectInput: 'Entrée {{name}}',
       effectOutput: 'Sortie {{name}}',
       gainInput: 'Entrée du gain',

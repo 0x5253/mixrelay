@@ -16,18 +16,18 @@
     "removeDescription": "MixRelay를 제거하고 가상 장치와 루프백을 중지합니다.",
     "deleteSettingsTitle": "저장된 설정 삭제",
     "deleteSettingsDescription": "제거할 때만 저장된 MixRelay 설정도 삭제합니다. 기본적으로 선택되어 있지 않습니다.",
-    "operationRequired": "설치·업데이트 또는 제거 중 하나만 선택하십시오.",
-    "operationGuide": "설치·업데이트가 기본으로 선택됩니다. 제거하려면 ‘MixRelay 제거’를 선택하십시오. 제거 선택을 해제하면 설치·업데이트로 돌아갑니다.\n\n제거하면 가상 장치와 루프백이 중지되며 시스템 오디오가 잠시 끊깁니다.\n\n저장된 MixRelay 설정은 기본적으로 보존합니다. 설정 삭제 옵션은 제거할 때만 사용할 수 있으며 기본적으로 선택되어 있지 않습니다."
+    "operationRequired": "설치·업데이트와 제거 중 하나만 선택하세요.",
+    "operationGuide": "기본으로 설치·업데이트가 선택되어 있습니다. 대신 제거하려면 ‘MixRelay 제거’를 선택하세요. 이 선택을 해제하면 설치·업데이트로 돌아갑니다.\n\n제거하면 가상 장치와 루프백이 중지되고 시스템 오디오가 잠시 끊깁니다.\n\n저장된 MixRelay 설정은 기본적으로 유지됩니다. 설정 삭제 옵션은 제거할 때만 사용할 수 있으며 처음에는 선택되어 있지 않습니다."
   },
   "ja": {
-    "installTitle": "インストール / 更新",
-    "installDescription": "MixRelayをインストールするか、インストール済みのバージョンを更新します。削除を選択しない場合は自動的に選択されます。",
+    "installTitle": "インストール / アップデート",
+    "installDescription": "MixRelayをインストールするか、インストール済みのバージョンをアップデートします。削除を選択しない場合は自動的に選択されます。",
     "removeTitle": "MixRelayを削除",
     "removeDescription": "MixRelayを削除し、仮想デバイスとループバックを停止します。",
     "deleteSettingsTitle": "保存済み設定を削除",
     "deleteSettingsDescription": "削除時のみ、MixRelayの保存済み設定も削除します。初期状態では選択されていません。",
-    "operationRequired": "インストール・更新または削除のどちらか一方を選択してください。",
-    "operationGuide": "初期状態では「インストール / 更新」が選択されています。削除する場合は「MixRelayを削除」を選択してください。その選択を解除すると、インストール・更新に戻ります。\n\n削除すると仮想デバイスとループバックが停止し、システム音声が一時的に中断します。\n\nMixRelayの保存済み設定は既定で保持されます。設定を削除するオプションは削除時のみ利用でき、初期状態では選択されていません。"
+    "operationRequired": "「インストール / アップデート」と「削除」のどちらか一方を選択してください。",
+    "operationGuide": "初期状態では「インストール / アップデート」が選択されています。代わりに削除する場合は「MixRelayを削除」を選択してください。その選択を解除すると、インストール / アップデートに戻ります。\n\n削除すると仮想デバイスとループバックが停止し、システムオーディオが一時的に途切れます。\n\nMixRelayの保存済み設定は既定で保持されます。設定を削除するオプションは削除時のみ利用でき、初期状態では選択されていません。"
   },
   "zh-Hans": {
     "installTitle": "安装 / 更新",
@@ -54,10 +54,10 @@
     "installDescription": "Installe MixRelay ou met à jour la version installée. Cette option est sélectionnée automatiquement si la suppression n’est pas sélectionnée.",
     "removeTitle": "Supprimer MixRelay",
     "removeDescription": "Supprime MixRelay et arrête ses périphériques virtuels et son bouclage audio.",
-    "deleteSettingsTitle": "Supprimer les réglages enregistrés",
-    "deleteSettingsDescription": "Uniquement lors de la suppression : supprime aussi les réglages enregistrés de MixRelay. Option décochée par défaut.",
+    "deleteSettingsTitle": "Supprimer les paramètres enregistrés",
+    "deleteSettingsDescription": "Uniquement lors de la suppression : supprime aussi les paramètres enregistrés de MixRelay. Option décochée par défaut.",
     "operationRequired": "Choisissez une seule opération : installation/mise à jour ou suppression.",
-    "operationGuide": "« Installer / Mettre à jour » est sélectionné par défaut. Pour supprimer MixRelay à la place, cochez « Supprimer MixRelay ». Décochez cette option pour revenir à l’installation/mise à jour.\n\nLa suppression arrête ses périphériques virtuels et son bouclage audio, et interrompt brièvement l’audio du système.\n\nLes réglages enregistrés de MixRelay sont conservés par défaut. L’option permettant de les supprimer est disponible uniquement lors de la suppression et est initialement décochée."
+    "operationGuide": "« Installer / Mettre à jour » est sélectionné par défaut. Pour supprimer MixRelay à la place, cochez « Supprimer MixRelay ». Décochez cette option pour revenir à l’installation/mise à jour.\n\nLa suppression arrête ses périphériques virtuels et son bouclage audio, et interrompt brièvement l’audio du système.\n\nLes paramètres enregistrés de MixRelay sont conservés par défaut. L’option permettant de les supprimer est disponible uniquement lors de la suppression et est initialement décochée."
   },
   "de": {
     "installTitle": "Installieren / Aktualisieren",
@@ -67,17 +67,17 @@
     "deleteSettingsTitle": "Gespeicherte Einstellungen löschen",
     "deleteSettingsDescription": "Nur beim Entfernen: Auch gespeicherte Einstellungen von MixRelay löschen. Standardmäßig nicht ausgewählt.",
     "operationRequired": "Wählen Sie genau einen Vorgang: Installieren/Aktualisieren oder Entfernen.",
-    "operationGuide": "„Installieren / Aktualisieren“ ist standardmäßig ausgewählt. Wählen Sie stattdessen „MixRelay entfernen“, um ihn zu entfernen. Deaktivieren Sie diese Auswahl, um zur Installation/Aktualisierung zurückzukehren.\n\nBeim Entfernen werden seine virtuellen Geräte und das Loopback beendet, und das Systemaudio wird kurz unterbrochen.\n\nGespeicherte Einstellungen von MixRelay bleiben standardmäßig erhalten. Die Option, sie zu löschen, ist nur beim Entfernen verfügbar und zunächst nicht ausgewählt."
+    "operationGuide": "„Installieren / Aktualisieren“ ist standardmäßig ausgewählt. Um MixRelay stattdessen zu entfernen, wählen Sie „MixRelay entfernen“. Deaktivieren Sie diese Auswahl, um zur Installation/Aktualisierung zurückzukehren.\n\nBeim Entfernen werden seine virtuellen Geräte und das Loopback beendet, und das Systemaudio wird kurz unterbrochen.\n\nGespeicherte Einstellungen von MixRelay bleiben standardmäßig erhalten. Die Option, sie zu löschen, ist nur beim Entfernen verfügbar und zunächst nicht ausgewählt."
   },
   "es": {
     "installTitle": "Instalar / Actualizar",
     "installDescription": "Instala MixRelay o actualiza la versión instalada. Se selecciona automáticamente si no se elige la eliminación.",
     "removeTitle": "Eliminar MixRelay",
     "removeDescription": "Elimina MixRelay y detiene sus dispositivos virtuales y el bucle de audio.",
-    "deleteSettingsTitle": "Eliminar la configuración guardada",
-    "deleteSettingsDescription": "Solo durante la eliminación: elimina también la configuración guardada de MixRelay. Opción desmarcada de forma predeterminada.",
+    "deleteSettingsTitle": "Eliminar los ajustes guardados",
+    "deleteSettingsDescription": "Solo durante la eliminación: elimina también los ajustes guardados de MixRelay. Opción desmarcada de forma predeterminada.",
     "operationRequired": "Elija exactamente una operación: instalación/actualización o eliminación.",
-    "operationGuide": "«Instalar / Actualizar» está seleccionado de forma predeterminada. Para eliminar MixRelay en su lugar, marque «Eliminar MixRelay». Desmarque esa opción para volver a la instalación/actualización.\n\nLa eliminación detiene sus dispositivos virtuales y el bucle de audio e interrumpe brevemente el audio del sistema.\n\nLa configuración guardada de MixRelay se conserva de forma predeterminada. La opción para eliminarla solo está disponible durante la eliminación y está inicialmente desmarcada."
+    "operationGuide": "«Instalar / Actualizar» está seleccionado de forma predeterminada. Para eliminar MixRelay en su lugar, marque «Eliminar MixRelay». Desmarque esa opción para volver a la instalación/actualización.\n\nLa eliminación detiene sus dispositivos virtuales y el bucle de audio e interrumpe brevemente el audio del sistema.\n\nLos ajustes guardados de MixRelay se conservan de forma predeterminada. La opción para eliminarlos solo está disponible durante la eliminación y está inicialmente desmarcada."
   },
   "pt": {
     "installTitle": "Instalar / Atualizar",
@@ -96,8 +96,8 @@
     "removeDescription": "Rimuove MixRelay e arresta i suoi dispositivi virtuali e il loopback.",
     "deleteSettingsTitle": "Elimina le impostazioni salvate",
     "deleteSettingsDescription": "Solo durante la rimozione: elimina anche le impostazioni salvate di MixRelay. Opzione non selezionata per impostazione predefinita.",
-    "operationRequired": "Scegliete una sola operazione: installazione/aggiornamento o rimozione.",
-    "operationGuide": "«Installa / Aggiorna» è selezionato per impostazione predefinita. Per rimuovere MixRelay, selezionate «Rimuovi MixRelay». Deselezionate questa opzione per tornare all’installazione/aggiornamento.\n\nLa rimozione arresta i suoi dispositivi virtuali e il loopback e interrompe brevemente l’audio del sistema.\n\nLe impostazioni salvate di MixRelay vengono conservate per impostazione predefinita. L’opzione per eliminarle è disponibile solo durante la rimozione e inizialmente non è selezionata."
+    "operationRequired": "Scegli una sola operazione: installazione/aggiornamento o rimozione.",
+    "operationGuide": "«Installa / Aggiorna» è selezionato per impostazione predefinita. Per rimuovere MixRelay, seleziona «Rimuovi MixRelay». Deseleziona questa opzione per tornare all’installazione/aggiornamento.\n\nLa rimozione arresta i suoi dispositivi virtuali e il loopback e interrompe brevemente l’audio del sistema.\n\nLe impostazioni salvate di MixRelay vengono conservate per impostazione predefinita. L’opzione per eliminarle è disponibile solo durante la rimozione e inizialmente non è selezionata."
   },
   "ru": {
     "installTitle": "Установить / Обновить",

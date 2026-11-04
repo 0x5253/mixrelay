@@ -11,7 +11,7 @@ case "${LC_ALL:-${LC_MESSAGES:-${LANG:-}}}" in
   fr*) instruction='Arrêtez tout l’audio depuis le menu d’état de MixRelay, fermez l’éditeur MixRelay et MixRelay, puis réessayez.' ;;
   de*) instruction='Stoppen Sie alle Audiovorgänge im MixRelay-Statusmenü, schließen Sie den MixRelay-Editor und MixRelay und versuchen Sie es erneut.' ;;
   es*) instruction='Detenga todo el audio desde el menú de estado de MixRelay, cierre el editor de MixRelay y MixRelay y vuelva a intentarlo.' ;;
-  pt*) instruction='Pare todo o áudio pelo menu de estado do MixRelay, feche o editor do MixRelay e o MixRelay e tente novamente.' ;;
+  pt*) instruction='Pare todo o áudio pelo menu de status do MixRelay, feche o editor do MixRelay e o MixRelay e tente novamente.' ;;
   it*) instruction='Interrompi tutto l’audio dal menu di stato di MixRelay, chiudi l’editor MixRelay e MixRelay e riprova.' ;;
   ru*) instruction='Остановите всё аудио через меню состояния MixRelay, закройте редактор MixRelay и MixRelay, затем повторите попытку.' ;;
   *) instruction='Stop all audio from the MixRelay status menu, close the MixRelay editor and MixRelay, then retry.' ;;

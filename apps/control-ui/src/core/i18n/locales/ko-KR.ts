@@ -3,17 +3,17 @@ export const koKR = {
   midi: {
     mapMode: 'MIDI 매핑 모드',
     mapTarget: '{{name}}: {{action}} 매핑',
-    selectTarget: '강조된 조작을 선택한 뒤 MIDI 페이더나 버튼을 움직이세요.',
-    waitingTarget: '{{name}} · {{action}} — MIDI 조작을 움직여 지정하거나 교체하세요.',
+    selectTarget: '강조 표시된 컨트롤을 선택한 뒤 MIDI 페이더를 움직이거나 버튼을 누르세요.',
+    waitingTarget: '{{name}} · {{action}} — MIDI 컨트롤을 움직여 지정하거나 교체하세요.',
     done: '매핑 마치기',
     selectMapping: '{{name}} · {{action}} 선택',
     recorderAction: '녹음기 동작',
     min: '최솟값',
     max: '최댓값',
-    empty: 'MIDI 매핑이 없습니다. 강조된 조작을 선택해 추가하세요.',
+    empty: 'MIDI 매핑이 없습니다. 강조 표시된 컨트롤을 선택해 추가하세요.',
     targetUnavailable: '대상 상태 확인 불가',
     title: 'MIDI 컨트롤',
-    disconnected: '장치 연결 해제',
+    disconnected: '장치 연결 끊김',
     targetMissing: '대상 없음',
     unavailable: 'MIDI 사용 불가',
     mode: '볼륨 모드',
@@ -91,7 +91,7 @@ export const koKR = {
     saveAs: '다른 이름으로 저장…',
   },
   driverManagement: {
-    mixed: '불일치',
+    mixed: '혼합',
     channels: '채널 수',
     bitDepth: '비트 심도',
     title: '드라이버 설정',
@@ -166,7 +166,7 @@ export const koKR = {
       '처리 버퍼 한 개의 시간(샘플 수 ÷ 샘플레이트)입니다. 전체 입출력 지연은 아닙니다.',
     frames: '프레임',
     sampleRate: '샘플레이트',
-    blockSize: '버퍼 사이즈',
+    blockSize: '버퍼 크기',
     apply: '적용',
     applying: '적용 중…',
     changeNotice: '설정을 변경하는 동안 오디오가 잠시 중단됩니다.',
@@ -174,7 +174,7 @@ export const koKR = {
     changeFailed: '오디오 세션을 변경하지 못했습니다. 엔진 상태를 확인해 주세요.',
     errors: {
       audio_session_processor_state_unavailable:
-        'AU/VST/LV2가 있는 세션의 포맷 변경에는 아직 구현되지 않은 네이티브 프리셋 상태 이전이 필요합니다. 현재 세션은 변경하지 않았습니다.',
+        'AU/VST/LV2 플러그인을 쓰는 중에 포맷을 바꾸려면 네이티브 프리셋 상태 이전이 필요하지만 아직 구현되지 않았습니다. 현재 세션은 그대로 유지했습니다.',
       audio_session_unsupported:
         '지원하지 않는 포맷이거나, 캡처 소스 때문에 샘플레이트를 변경할 수 없습니다.',
       audio_session_reconfigure_failed: '오디오 설정을 변경하지 못했습니다.',
@@ -191,7 +191,7 @@ export const koKR = {
     supported: '지원',
     unsupported: '미구현',
     locked:
-      '현재 어댑터는 샘플레이트와 버퍼 사이즈가 고정되어 있습니다. 실행 중 변경은 아직 구현되지 않았습니다.',
+      '현재 어댑터는 샘플레이트와 버퍼 크기가 고정되어 있습니다. 실행 중 변경은 아직 구현되지 않았습니다.',
     syncNotice:
       '여러 장치를 함께 사용할 때는 샘플레이트 변환과 장치 간 클록 동기화가 필요할 수 있습니다.',
     backends: {
@@ -219,7 +219,7 @@ export const koKR = {
       endpoint_preferences_unavailable:
         '가상 장치 설정을 복원하거나 저장하지 못했습니다. 현재 그래프는 사용할 수 있습니다. 장치 설정을 변경하면 저장을 다시 시도합니다.',
       reconfiguration_failed:
-        '장치를 이전 설정으로 복구하지 못해 오디오를 일시정지했습니다. 지원하는 포맷을 다시 적용해 주세요.',
+        '장치를 이전 설정으로 되돌리지 못했습니다. 오디오는 중단된 상태이며, 지원하는 포맷을 다시 적용하면 복구됩니다.',
       device_unavailable:
         '오디오 장치를 사용할 수 없거나 스트림이 중단됐습니다. 엔진 연결은 유지되어 있습니다.',
       sample_rate_mismatch:
@@ -253,7 +253,7 @@ export const koKR = {
     audioPaused: '오디오 일시정지됨',
     deleteGraph: '그래프 삭제',
     deleteGraphNotice:
-      '“{{name}}” 그래프를 삭제할까요? 오디오 처리와 녹음이 멈춥니다. 그래프 목록에서 macOS Command+Z·Linux Ctrl+Z로 실행 취소하고 Shift를 더해 다시 실행합니다. 저장한 작업 공간 파일은 남습니다.',
+      '“{{name}}” 그래프를 삭제할까요? 오디오 처리와 녹음이 멈춥니다. 그래프 목록에서 macOS는 Command+Z, Linux는 Ctrl+Z로 실행 취소하고, Shift를 함께 누르면 다시 실행합니다. 저장한 작업 공간 파일은 남습니다.',
     catalogUnavailable: '저장된 그래프를 불러올 수 없습니다. 기존 그래프는 유지됩니다.',
     reloadGraphs: '그래프 다시 불러오기',
     graphSaveFailed:
@@ -261,10 +261,10 @@ export const koKR = {
     graphs: '그래프',
     newGraph: '새 그래프',
     graphName: '그래프 이름',
-    untitledGraph: 'Untitled Graph',
-    untitledGraphNumbered: 'Untitled Graph {{count}}',
+    untitledGraph: '제목 없는 그래프',
+    untitledGraphNumbered: '제목 없는 그래프 {{count}}',
     audioEngine: '오디오 엔진',
-    engineShort: 'Engine',
+    engineShort: '엔진',
     workspace: '라우팅 작업 영역',
     signalPathLabel: 'MixRelay 신호 경로',
     capture: '캡처',
@@ -312,10 +312,10 @@ export const koKR = {
         sample_rate_mismatch: '세션: 샘플레이트 불일치',
         block_size_mismatch: '세션: 버퍼 크기 불일치',
         clock_not_synchronized: '세션: 클록 동기화 안 됨',
-        invalid_format: '세션: 잘못된 형식',
+        invalid_format: '세션: 잘못된 포맷',
         reconfiguration_failed: '세션: 재설정 실패',
         preferences_unavailable: '세션: 설정 저장 안 됨',
-        stored_format_unavailable: '세션: 저장된 형식 사용 불가',
+        stored_format_unavailable: '세션: 저장된 포맷 사용 불가',
       },
     },
     nodeName: {
@@ -361,7 +361,7 @@ export const koKR = {
       },
     },
     addNode: '노드 추가',
-    emptyCanvas: '앱, 장치, 효과 등을 추가하세요.',
+    emptyCanvas: '앱, 장치, 이펙트 등을 추가하세요.',
     noApplications: '실행 중인 앱 없음',
     noInputDevices: '입력 장치 없음',
     noOutputDevices: '출력 장치 없음',
@@ -466,9 +466,9 @@ export const koKR = {
       processorLayoutUnavailable: '프로세서 레이아웃을 사용할 수 없음',
       outputGain: '출력 게인',
       renderChannels: '입력',
-      ratio: '레이시오',
+      ratio: '비율',
       release: '릴리스',
-      sourceGain: '입력 레벨',
+      sourceGain: '소스 게인',
       threshold: '스레숄드',
       unsupported: '지원되지 않음',
     },
@@ -543,7 +543,7 @@ export const koKR = {
     },
     processorRecovery: {
       failed: '플러그인 처리 중단',
-      retryFailed: '중단된 플러그인 다시 시도: {{name}}',
+      retryFailed: '충돌한 플러그인 다시 시도: {{name}}',
     },
     processorEditor: {
       open: '열기',
@@ -552,7 +552,8 @@ export const koKR = {
         opening: '여는 중',
       },
       failures: {
-        displayUnavailable: '현재 Linux 세션에서는 X11/XWayland 편집기를 사용할 수 없습니다.',
+        displayUnavailable:
+          '이 Linux 세션에서 네이티브 편집기를 열려면 X11 또는 XWayland가 필요합니다.',
         hostWindowFailed: '네이티브 편집기 창을 만들지 못했습니다.',
         noEditor: '이 플러그인은 네이티브 편집기를 제공하지 않습니다.',
         pluginRejected: '플러그인이 현재 플랫폼의 편집기 창을 거부했습니다.',
@@ -584,7 +585,7 @@ export const koKR = {
       chrome: 'Chrome · 탭 오디오',
       microphone: 'Scarlett 2i2 · 입력 1',
       twoSources: 'Chrome + 마이크',
-      streamControl: 'Threshold −12 dB',
+      streamControl: '스레숄드 −12 dB',
       voiceContour: '4 밴드 · 보컬 선명도',
       stereo48k: 'MixRelay Stream · 48 kHz',
       headphones: 'MacBook Pro 스피커',
