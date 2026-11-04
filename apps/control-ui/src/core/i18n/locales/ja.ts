@@ -227,8 +227,6 @@ export const ja = {
         '保存済みのオーディオ設定を読み書きできませんでした。エンジンは引き続き利用できます。対応する形式を適用して、保存をやり直してください。',
       endpoint_preferences_unavailable:
         '仮想デバイスの設定を復元または保存できませんでした。現在のグラフは引き続き利用できます。デバイス設定を変更して、保存をやり直してください。',
-      stored_format_unavailable:
-        '起動時にデバイスが保存済みの設定を受け入れませんでした。対応するサンプルレートとバッファーサイズを再適用してください。',
       reconfiguration_failed:
         'デバイス設定を元に戻せませんでした。オーディオは中断したままです。対応する形式を再適用して復旧してください。',
       device_unavailable:
@@ -326,7 +324,6 @@ export const ja = {
         invalid_format: 'セッション: 無効な形式',
         reconfiguration_failed: 'セッション: 設定変更に失敗',
         preferences_unavailable: 'セッション: 設定が保存されていません',
-        stored_format_unavailable: 'セッション: 保存済みの形式を利用できません',
       },
     },
     nodeName: {

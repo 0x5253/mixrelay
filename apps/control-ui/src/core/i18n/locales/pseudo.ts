@@ -148,8 +148,6 @@ const overrides = {
       application_ambiguous: '[Multiple matching audio sources. Select intended source.]',
       preferences_unavailable:
         '[Could not read or write saved audio settings. Engine remains available.]',
-      stored_format_unavailable:
-        '[Device rejected saved settings at startup. Reapply a supported sample rate and buffer size.]',
       endpoint_preferences_unavailable:
         '[Virtual-device settings could not be restored or saved. Change device settings to retry.]',
       reconfiguration_failed:
@@ -221,7 +219,6 @@ const overrides = {
         invalid_format: '[Session: invalid format]',
         reconfiguration_failed: '[Session: reconfiguration failed]',
         preferences_unavailable: '[Session: settings not saved]',
-        stored_format_unavailable: '[Session: saved format unavailable]',
       },
     },
     nodeName: {

@@ -77,7 +77,6 @@ export interface AudioSessionStatus {
     | 'invalid_format'
     | 'reconfiguration_failed'
     | 'preferences_unavailable'
-    | 'stored_format_unavailable'
     | null;
   transportLatencyFrames: number | null;
   capabilities: {

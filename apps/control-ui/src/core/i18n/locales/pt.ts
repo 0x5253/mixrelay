@@ -226,8 +226,6 @@ export const pt = {
         'Não foi possível ler ou gravar as configurações de áudio salvas. O motor continua disponível; aplique um formato compatível para salvar novamente.',
       endpoint_preferences_unavailable:
         'Não foi possível restaurar ou salvar as configurações do dispositivo virtual. O grafo atual continua disponível; altere as configurações do dispositivo para tentar salvar novamente.',
-      stored_format_unavailable:
-        'O dispositivo não aceitou as configurações salvas ao iniciar. Aplique novamente uma taxa de amostragem e um tamanho de buffer compatíveis.',
       reconfiguration_failed:
         'Não foi possível restaurar as configurações anteriores do dispositivo. O áudio continua suspenso; aplique novamente um formato compatível para recuperá-lo.',
       device_unavailable:
@@ -328,7 +326,6 @@ export const pt = {
         invalid_format: 'Sessão: formato inválido',
         reconfiguration_failed: 'Sessão: falha na reconfiguração',
         preferences_unavailable: 'Sessão: configurações não salvas',
-        stored_format_unavailable: 'Sessão: formato salvo indisponível',
       },
     },
     nodeName: {

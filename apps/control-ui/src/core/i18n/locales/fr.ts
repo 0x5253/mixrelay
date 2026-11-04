@@ -228,8 +228,6 @@ export const fr = {
         'Impossible de lire ou d’écrire les paramètres audio enregistrés. Le moteur reste disponible ; appliquez un format pris en charge pour les enregistrer à nouveau.',
       endpoint_preferences_unavailable:
         'Impossible de restaurer ou d’enregistrer les paramètres du périphérique virtuel. Le graphe actuel reste disponible ; modifiez les paramètres du périphérique pour réessayer l’enregistrement.',
-      stored_format_unavailable:
-        'Le périphérique a refusé les paramètres enregistrés au démarrage. Réappliquez une fréquence d’échantillonnage et une taille de tampon prises en charge.',
       reconfiguration_failed:
         'La restauration du périphérique a échoué. L’audio reste suspendu ; réappliquez un format pris en charge pour le rétablir.',
       device_unavailable:
@@ -329,7 +327,6 @@ export const fr = {
         invalid_format: 'Session : format invalide',
         reconfiguration_failed: 'Session : échec de la reconfiguration',
         preferences_unavailable: 'Session : paramètres non enregistrés',
-        stored_format_unavailable: 'Session : format enregistré indisponible',
       },
     },
     nodeName: {

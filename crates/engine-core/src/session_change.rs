@@ -190,10 +190,10 @@ impl EngineGraphController {
         if matches!(origin, SessionChangeOrigin::Observed) {
             return self.runtime_status.adopt_external_format(next);
         }
-        self.runtime_status.reconfigure(current, next)?;
+        self.runtime_status.reconfigure(next)?;
         if let Err(error) = resources.configure_native() {
             self.runtime_status
-                .reconfigure(next, current)
+                .reconfigure(current)
                 .map_err(|rollback| HostAudioBackendError::BackendFailure {
                     message: format!("{error}; session rollback failed: {rollback}"),
                 })?;
@@ -211,7 +211,7 @@ impl EngineGraphController {
     ) -> Result<GraphApplyResponse, ProtocolError> {
         // Saving/recovering the same format must not recreate plug-ins or invalidate history.
         if origin == SessionChangeOrigin::User {
-            let result = self.runtime_status.reconfigure(format, format);
+            let result = self.runtime_status.reconfigure(format);
             self.resume_session(pause_owner);
             result.map_err(|error| session_error(&error.to_string()))?;
         }

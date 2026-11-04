@@ -225,8 +225,6 @@ export const es = {
         'No se pudieron leer o escribir los ajustes de audio guardados. El motor sigue disponible; aplique un formato compatible para volver a guardar.',
       endpoint_preferences_unavailable:
         'No se pudieron restaurar o guardar los ajustes del dispositivo virtual. El grafo actual sigue disponible; cambie los ajustes del dispositivo para volver a intentar guardarlos.',
-      stored_format_unavailable:
-        'El dispositivo no aceptó los ajustes guardados al iniciar. Vuelva a aplicar una frecuencia de muestreo y un tamaño de búfer compatibles.',
       reconfiguration_failed:
         'No se pudieron restaurar los ajustes anteriores del dispositivo. El audio sigue suspendido; vuelva a aplicar un formato compatible para recuperarlo.',
       device_unavailable:
@@ -327,7 +325,6 @@ export const es = {
         invalid_format: 'Sesión: formato no válido',
         reconfiguration_failed: 'Sesión: error de reconfiguración',
         preferences_unavailable: 'Sesión: ajustes no guardados',
-        stored_format_unavailable: 'Sesión: formato guardado no disponible',
       },
     },
     nodeName: {

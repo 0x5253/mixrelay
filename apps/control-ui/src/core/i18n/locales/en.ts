@@ -217,8 +217,6 @@ export const en = {
         'Saved audio settings could not be read or written. The engine remains available; apply a supported format to save again.',
       endpoint_preferences_unavailable:
         'Virtual-device settings could not be restored or saved. The current graph remains available; change the device settings to retry saving.',
-      stored_format_unavailable:
-        'The device did not accept the saved settings at startup. Reapply a supported sample rate and buffer size.',
       reconfiguration_failed:
         'Device rollback failed. Audio remains suspended; reapply a supported format to recover.',
       device_unavailable:
@@ -316,7 +314,6 @@ export const en = {
         invalid_format: 'Session: invalid format',
         reconfiguration_failed: 'Session: reconfiguration failed',
         preferences_unavailable: 'Session: settings not saved',
-        stored_format_unavailable: 'Session: saved format unavailable',
       },
     },
     nodeName: {

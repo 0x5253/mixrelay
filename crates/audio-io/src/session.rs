@@ -75,7 +75,6 @@ pub enum SessionIssue {
     InvalidFormat,
     ReconfigurationFailed,
     PreferencesUnavailable,
-    StoredFormatUnavailable,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

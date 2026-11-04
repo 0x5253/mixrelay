@@ -12,7 +12,7 @@ fn runtime() -> AdapterRuntimeStatus {
     profile.capabilities.can_reconfigure_live = true;
     profile.requires_observed_device_rate = true;
     AdapterRuntimeStatus::new(profile, std::sync::Arc::new(mixrelay_time::StdClock::new()))
-        .with_format_control(|_| panic!("routing operation must not set HAL rate"))
+        .with_graph_format_control()
 }
 
 fn worker(status: &Arc<AdapterRuntimeStatus>) -> AudioWorker {
@@ -231,7 +231,6 @@ fn startup_follows_current_daw_rate_and_persists_it_without_a_device_write() {
         }
     );
     assert!(status.device_matches(96_000));
-    assert!(!status.test_restore_failed());
     assert!(!status.test_preferences_error());
     let stored = status
         .test_preferences()
@@ -258,7 +257,6 @@ fn startup_storage_failure_does_not_retune_or_mislabel_the_live_device() {
     let actual = status.test_restore_saved_format(saved, saved);
     assert_eq!(actual.sample_rate, 96_000);
     assert_eq!(actual.block_frames, 256);
-    assert!(!status.test_restore_failed());
     assert!(status.test_preferences_error());
     assert_eq!(
         status.status(actual).audio_session.unwrap().issue,

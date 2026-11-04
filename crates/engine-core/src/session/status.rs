@@ -22,9 +22,6 @@ impl AdapterRuntimeStatus {
             Some(SessionIssue::ApplicationAmbiguous)
         } else if self.application_state.load(Ordering::Acquire) == 1 {
             Some(SessionIssue::ApplicationUnavailable)
-        } else if self.restore_failed.load(Ordering::Acquire) && self.routing_clock_rate().is_none()
-        {
-            Some(SessionIssue::StoredFormatUnavailable)
         } else if self.preferences_error.load(Ordering::Acquire) {
             Some(SessionIssue::PreferencesUnavailable)
         } else if self.profile.requires_observed_device_rate {

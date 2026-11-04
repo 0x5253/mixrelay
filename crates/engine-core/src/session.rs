@@ -73,7 +73,6 @@ pub struct AdapterRuntimeStatus {
     processing_time: Arc<dyn ProcessingTime>,
     preferred_format: AtomicU64,
     preferences_error: AtomicBool,
-    restore_failed: AtomicBool,
 }
 
 impl AdapterRuntimeStatus {
@@ -104,7 +103,6 @@ impl AdapterRuntimeStatus {
             processing_time,
             preferred_format: AtomicU64::new(0),
             preferences_error: AtomicBool::new(false),
-            restore_failed: AtomicBool::new(false),
         }
     }
 
@@ -166,19 +164,11 @@ impl AdapterRuntimeStatus {
         (value != 0).then(|| split_words(value).1)
     }
 
-    /// Cached own-endpoint settings for the device UI. Reading these fields does
-    /// not query `CoreAudio` and never substitutes the hardware routing rate.
-    #[must_use]
-    pub fn endpoint_format_settings(&self) -> (Option<u32>, Vec<u32>, bool) {
+    /// The own endpoint's last observed nominal rate. Reading it does not query the
+    /// platform and never substitutes the hardware routing rate.
+    fn observed_endpoint_rate(&self) -> Option<u32> {
         let rate = unpack_format(self.observed_device_format.load(Ordering::Acquire)).sample_rate;
-        let rates = self.supported_sample_rates();
-        let observed = (rate != 0).then_some(rate);
-        let writable = observed.is_some()
-            && !rates.is_empty()
-            && self.profile.capabilities.can_reconfigure_live
-            && self.native.has_rate_control()
-            && self.native.follows_rate();
-        (observed, rates, writable)
+        (rate != 0).then_some(rate)
     }
 
     /// Publishes actual native pacing and synchronization evidence together. A device
@@ -270,34 +260,6 @@ impl AdapterRuntimeStatus {
     pub fn device_matches(&self, sample_rate: u32) -> bool {
         unpack_format(self.observed_device_format.load(Ordering::Acquire)).sample_rate
             == sample_rate
-    }
-
-    #[must_use]
-    pub fn with_format_control(mut self, setter: fn(u32) -> Result<(), String>) -> Self {
-        self.native.set_rate_control(setter);
-        self
-    }
-
-    /// Full native pair control. The callback confirms both fields before success;
-    /// rollback uses the actual pre-write pair from the observed-format reader.
-    #[must_use]
-    pub fn with_native_format_control(
-        mut self,
-        setter: impl Fn(RenderFormat) -> Result<(), String> + Send + Sync + 'static,
-    ) -> Self {
-        self.native.set_pair_control(Arc::new(setter));
-        self
-    }
-
-    /// Follows this adapter's own endpoint, never an unrelated hardware/server clock.
-    /// The callback runs only on control threads and may capture owned/weak backend state.
-    #[must_use]
-    pub fn with_observed_format_following(
-        mut self,
-        reader: impl Fn() -> Option<RenderFormat> + Send + Sync + 'static,
-    ) -> Self {
-        self.native.follow_pair(Arc::new(reader));
-        self
     }
 
     /// Explicit engine-format control for adapters whose native streams negotiate their
@@ -478,10 +440,6 @@ impl AdapterRuntimeStatus {
         self.preferences.clone()
     }
     #[must_use]
-    pub fn test_restore_failed(&self) -> bool {
-        self.restore_failed.load(Ordering::Acquire)
-    }
-    #[must_use]
     pub fn test_preferences_error(&self) -> bool {
         self.preferences_error.load(Ordering::Acquire)
     }
@@ -489,15 +447,6 @@ impl AdapterRuntimeStatus {
 
 #[cfg(feature = "test-util")]
 impl AdapterRuntimeStatus {
-    /// # Errors
-    /// Reports the original native restoration failure.
-    pub fn test_restore_native_format(
-        &self,
-        requested: RenderFormat,
-        fallback: RenderFormat,
-    ) -> Result<(), String> {
-        self.restore_native_format(requested, fallback)
-    }
     #[must_use]
     pub fn test_active_format(&self) -> RenderFormat {
         unpack_format(self.active_format.load(Ordering::Acquire))

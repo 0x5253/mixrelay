@@ -231,8 +231,6 @@ export const de = {
         'Gespeicherte Audioeinstellungen konnten nicht gelesen oder geschrieben werden. Die Engine bleibt verfügbar. Wenden Sie ein unterstütztes Format an, um erneut zu speichern.',
       endpoint_preferences_unavailable:
         'Einstellungen des virtuellen Geräts konnten nicht wiederhergestellt oder gespeichert werden. Der aktuelle Graph bleibt verfügbar. Ändern Sie die Geräteeinstellungen, um das Speichern erneut zu versuchen.',
-      stored_format_unavailable:
-        'Das Gerät hat die gespeicherten Einstellungen beim Start nicht akzeptiert. Wenden Sie eine unterstützte Abtastrate und Puffergröße erneut an.',
       reconfiguration_failed:
         'Das Zurücksetzen des Geräts ist fehlgeschlagen. Audio bleibt unterbrochen. Wenden Sie ein unterstütztes Format erneut an, um es wiederherzustellen.',
       device_unavailable:
@@ -333,7 +331,6 @@ export const de = {
         invalid_format: 'Sitzung: ungültiges Format',
         reconfiguration_failed: 'Sitzung: Änderung fehlgeschlagen',
         preferences_unavailable: 'Sitzung: Einstellungen nicht gespeichert',
-        stored_format_unavailable: 'Sitzung: gespeichertes Format nicht verfügbar',
       },
     },
     nodeName: {

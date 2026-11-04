@@ -214,8 +214,6 @@ export const koKR = {
         '선택한 앱에 해당하는 오디오 소스가 여러 개입니다. 사용할 소스를 선택하세요.',
       preferences_unavailable:
         '오디오 설정을 읽거나 저장하지 못했습니다. 엔진 연결은 유지됩니다. 지원하는 포맷을 적용해 다시 저장할 수 있습니다.',
-      stored_format_unavailable:
-        '시작 시 장치가 저장된 설정을 수락하지 않았습니다. 지원하는 샘플레이트와 버퍼 크기를 다시 적용해 주세요.',
       endpoint_preferences_unavailable:
         '가상 장치 설정을 복원하거나 저장하지 못했습니다. 현재 그래프는 사용할 수 있습니다. 장치 설정을 변경하면 저장을 다시 시도합니다.',
       reconfiguration_failed:
@@ -315,7 +313,6 @@ export const koKR = {
         invalid_format: '세션: 잘못된 포맷',
         reconfiguration_failed: '세션: 재설정 실패',
         preferences_unavailable: '세션: 설정 저장 안 됨',
-        stored_format_unavailable: '세션: 저장된 포맷 사용 불가',
       },
     },
     nodeName: {

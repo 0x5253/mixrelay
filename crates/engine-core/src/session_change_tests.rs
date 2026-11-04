@@ -12,7 +12,7 @@ struct Runtime {
     endpoint_changes: AtomicU32,
     adoptions: AtomicU32,
     fail: AtomicBool,
-    negotiated: Mutex<Vec<(RenderFormat, RenderFormat)>>,
+    negotiated: Mutex<Vec<RenderFormat>>,
 }
 impl RuntimeStatusBackend for Runtime {
     fn status(&self, format: RenderFormat) -> AppStatus {
@@ -49,13 +49,9 @@ impl SessionFormatBackend for Runtime {
         }
         Ok(())
     }
-    fn reconfigure(
-        &self,
-        current: RenderFormat,
-        requested: RenderFormat,
-    ) -> Result<(), HostAudioBackendError> {
+    fn reconfigure(&self, requested: RenderFormat) -> Result<(), HostAudioBackendError> {
         self.changes.fetch_add(1, Ordering::Relaxed);
-        self.negotiated.lock().push((current, requested));
+        self.negotiated.lock().push(requested);
         Ok(())
     }
 }
@@ -391,10 +387,7 @@ fn resource_buffer_failure_rolls_back_session_without_committing_plan_or_resourc
             })
             .is_err()
     );
-    assert_eq!(
-        *runtime.negotiated.lock(),
-        [(current, requested), (requested, current)]
-    );
+    assert_eq!(*runtime.negotiated.lock(), [requested, current]);
     assert_eq!(controller.graph(), before);
     assert_eq!(controller.context.read().format, current);
     assert_eq!(committed.load(Ordering::Acquire), 0);

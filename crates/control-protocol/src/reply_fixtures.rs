@@ -394,7 +394,6 @@ fn status_variants() -> BTreeMap<String, Value> {
                 InvalidFormat,
                 ReconfigurationFailed,
                 PreferencesUnavailable,
-                StoredFormatUnavailable,
             })),
         ),
         (

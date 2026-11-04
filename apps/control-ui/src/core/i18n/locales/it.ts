@@ -226,8 +226,6 @@ export const it = {
         'Impossibile leggere o scrivere le impostazioni audio salvate. Il motore resta disponibile; applica un formato supportato per salvare di nuovo.',
       endpoint_preferences_unavailable:
         'Impossibile ripristinare o salvare le impostazioni del dispositivo virtuale. Il grafo attuale resta disponibile; modifica le impostazioni del dispositivo per riprovare a salvare.',
-      stored_format_unavailable:
-        'Il dispositivo non ha accettato le impostazioni salvate all’avvio. Riapplica frequenza di campionamento e dimensione del buffer supportate.',
       reconfiguration_failed:
         'Ripristino del dispositivo non riuscito. L’audio resta sospeso; riapplica un formato supportato per ripristinarlo.',
       device_unavailable:
@@ -327,7 +325,6 @@ export const it = {
         invalid_format: 'Sessione: formato non valido',
         reconfiguration_failed: 'Sessione: riconfigurazione non riuscita',
         preferences_unavailable: 'Sessione: impostazioni non salvate',
-        stored_format_unavailable: 'Sessione: formato salvato non disponibile',
       },
     },
     nodeName: {

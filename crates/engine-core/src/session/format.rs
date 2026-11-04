@@ -40,39 +40,16 @@ impl AdapterRuntimeStatus {
     ) -> RenderFormat {
         self.preferred_format
             .store(pack_format(requested), Ordering::Release);
-        if self.native.follows_rate()
-            && !self.native.has_pair_control()
-            && self.supports_routing_format(requested)
-        {
+        if self.native.follows_rate() && self.supports_routing_format(requested) {
             return self.restore_followed_rate(requested, fallback);
         }
-        // A rate-only own endpoint does not own the DSP buffer preference.
-        // Retain that validated buffer when hardware can run without this HAL.
-        let independent_buffer = self.native.has_rate_control() && !self.native.has_pair_control();
-        let fallback = if independent_buffer && self.supports_routing_format(requested) {
-            RenderFormat {
-                block_frames: requested.block_frames,
-                ..fallback
-            }
-        } else {
-            fallback
-        };
-        self.activate_format(fallback);
         if !self.supports_format(requested) {
-            if independent_buffer && self.supports_routing_format(requested) {
-                self.restore_failed.store(true, Ordering::Release);
-            } else {
-                self.preferences_error.store(true, Ordering::Release);
-            }
+            self.activate_format(fallback);
+            self.preferences_error.store(true, Ordering::Release);
             tracing::warn!(
                 ?requested,
                 "stored session format is unsupported by this adapter"
             );
-            return fallback;
-        }
-        if let Err(error) = self.restore_native_format(requested, fallback) {
-            self.restore_failed.store(true, Ordering::Release);
-            tracing::warn!(%error, ?requested, "stored native format could not be restored");
             return fallback;
         }
         self.activate_format(requested);
@@ -110,34 +87,6 @@ impl AdapterRuntimeStatus {
         }
         self.activate_format(actual);
         actual
-    }
-
-    pub(super) fn write_native_format(&self, requested: RenderFormat) -> Result<(), String> {
-        self.native
-            .write(requested, |actual| self.observe_device_format(actual))
-    }
-
-    pub(super) fn native_rollback_format(
-        &self,
-        fallback: RenderFormat,
-    ) -> Result<RenderFormat, String> {
-        self.native.rollback_format(fallback)
-    }
-
-    pub(super) fn restore_native_format(
-        &self,
-        requested: RenderFormat,
-        fallback: RenderFormat,
-    ) -> Result<(), String> {
-        let previous = self.native_rollback_format(fallback)?;
-        if let Err(error) = self.write_native_format(requested) {
-            if let Err(rollback) = self.write_native_format(previous) {
-                self.failed.store(true, Ordering::Release);
-                return Err(format!("{error}; rollback failed: {rollback}"));
-            }
-            return Err(error);
-        }
-        Ok(())
     }
 
     pub(super) fn supports_format(&self, format: RenderFormat) -> bool {
@@ -221,8 +170,7 @@ impl AdapterRuntimeStatus {
         let saved = RenderFormat {
             sample_rate: self.preferred_format().map_or_else(
                 || {
-                    self.endpoint_format_settings()
-                        .0
+                    self.observed_endpoint_rate()
                         .unwrap_or(self.profile.initial_format.sample_rate)
                 },
                 |format| format.sample_rate,
@@ -265,11 +213,6 @@ impl AdapterRuntimeStatus {
 }
 impl SessionFormatBackend for AdapterRuntimeStatus {
     fn external_sample_rate(&self) -> Option<u32> {
-        if self.native.follows_pair() {
-            let format = self.native.read_pair();
-            self.observe_device_format(format);
-            return format.map(|format| format.sample_rate);
-        }
         let rate = self.native.read_rate();
         if self.native.follows_rate() {
             self.observe_device_rate(rate);
@@ -277,25 +220,17 @@ impl SessionFormatBackend for AdapterRuntimeStatus {
         rate
     }
     fn external_format(&self, current: RenderFormat) -> Option<RenderFormat> {
-        if self.native.follows_pair() {
-            let format = self.native.read_pair();
-            self.observe_device_format(format);
-            format
-        } else {
-            self.external_sample_rate().map(|sample_rate| RenderFormat {
-                sample_rate,
-                ..current
-            })
-        }
+        self.external_sample_rate().map(|sample_rate| RenderFormat {
+            sample_rate,
+            ..current
+        })
     }
     fn adopt_external_format(
         &self,
         requested: RenderFormat,
     ) -> Result<(), mixrelay_audio_io::HostAudioBackendError> {
         use mixrelay_audio_io::HostAudioBackendError;
-        if !self.supports_format(requested)
-            || (!self.native.follows_rate() && !self.native.follows_pair())
-        {
+        if !self.supports_format(requested) || !self.native.follows_rate() {
             return Err(HostAudioBackendError::CapabilityUnavailable {
                 capability: "external format following".into(),
             });
@@ -328,7 +263,6 @@ impl SessionFormatBackend for AdapterRuntimeStatus {
             self.preferred_format
                 .store(pack_format(requested), Ordering::Release);
         }
-        self.restore_failed.store(false, Ordering::Release);
         // Never call the native setter here. The caller publishes the prepared DSP plan
         // before resuming; the saved last-accepted format prevents restart undoing the DAW.
         self.failed.store(false, Ordering::Release);
@@ -336,7 +270,6 @@ impl SessionFormatBackend for AdapterRuntimeStatus {
     }
     fn reconfigure(
         &self,
-        current: RenderFormat,
         requested: RenderFormat,
     ) -> Result<(), mixrelay_audio_io::HostAudioBackendError> {
         use mixrelay_audio_io::HostAudioBackendError;
@@ -350,47 +283,26 @@ impl SessionFormatBackend for AdapterRuntimeStatus {
                 capability: "live format reconfiguration".into(),
             });
         }
-        // Serialize and sync the new preference before suspending audio. The rename is
-        // committed only after the native device has confirmed the requested format.
+        // Serialize and sync the new preference before suspending audio; the graph
+        // format changes when the caller publishes the prepared plan, not here.
         let staged = self.stage_preferences(requested).map_err(|message| {
             self.preferences_error.store(true, Ordering::Release);
             HostAudioBackendError::BackendFailure { message }
         })?;
         self.pause_at_boundary()?;
-        let previous_native = self
-            .native_rollback_format(current)
-            .map_err(|message| HostAudioBackendError::BackendFailure { message })?;
-        let negotiated = self.write_native_format(requested).and_then(|()| {
-            if let Some(staged) = staged {
-                staged.commit().map_err(|error| {
-                    self.preferences_error.store(true, Ordering::Release);
-                    format!("session preferences could not be committed: {error}")
-                })?;
-            }
-            Ok(())
-        });
-        if let Err(error) = negotiated {
-            if let Err(rollback) = self.write_native_format(previous_native) {
-                self.failed.store(true, Ordering::Release);
-                return Err(HostAudioBackendError::BackendFailure {
-                    message: format!(
-                        "{error}; rollback failed: {rollback}; audio remains suspended"
-                    ),
-                });
-            }
-            return Err(HostAudioBackendError::BackendFailure { message: error });
-        }
-        if self.native.has_pair_control() {
-            self.observe_device_format(Some(requested));
-        } else if self.native.has_rate_control() {
-            self.observe_device_rate(Some(requested.sample_rate));
+        if let Some(staged) = staged {
+            staged.commit().map_err(|error| {
+                self.preferences_error.store(true, Ordering::Release);
+                HostAudioBackendError::BackendFailure {
+                    message: format!("session preferences could not be committed: {error}"),
+                }
+            })?;
         }
         if self.preferences.is_some() {
             self.preferred_format
                 .store(pack_format(requested), Ordering::Release);
         }
         self.preferences_error.store(false, Ordering::Release);
-        self.restore_failed.store(false, Ordering::Release);
         self.failed.store(false, Ordering::Release);
         Ok(())
     }
