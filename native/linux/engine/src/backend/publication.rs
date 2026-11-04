@@ -12,6 +12,7 @@ use mixrelay_audio_io::HostAudioBackendError;
 use mixrelay_engine_core::resource_requirements::{DeviceRequirements, ResourceRequirements};
 use mixrelay_linux_pipewire::GraphInputs;
 use std::{
+    marker::PhantomData,
     ptr,
     sync::atomic::{AtomicPtr, Ordering},
 };
@@ -111,13 +112,22 @@ impl ResourceUpdate {
 pub(super) struct UpdateMailbox<T> {
     pending: AtomicPtr<T>,
     retired: AtomicPtr<T>,
+    // The slots own boxed updates; without this, `AtomicPtr` would make the mailbox
+    // `Send` and `Sync` for any `T`.
+    _owned: PhantomData<Box<T>>,
 }
+
+// SAFETY: the mailbox moves each boxed `T` between threads but never shares one: only
+// the thread that took a pointer out of a slot dereferences it. That needs `T: Send`
+// only, as for a channel.
+unsafe impl<T: Send> Sync for UpdateMailbox<T> {}
 
 impl<T> Default for UpdateMailbox<T> {
     fn default() -> Self {
         Self {
             pending: AtomicPtr::new(ptr::null_mut()),
             retired: AtomicPtr::new(ptr::null_mut()),
+            _owned: PhantomData,
         }
     }
 }
@@ -146,7 +156,11 @@ impl<T> UpdateMailbox<T> {
     /// Stores an update whose publication the caller reserved exclusively, after
     /// checking that nothing was pending.
     pub(super) fn publish_reserved(&self, update: Box<T>) {
-        self.pending.store(Box::into_raw(update), Ordering::Release);
+        let previous = self.pending.swap(Box::into_raw(update), Ordering::AcqRel);
+        debug_assert!(
+            previous.is_null(),
+            "reserved publication replaced a pending update"
+        );
     }
 
     /// Runs `edit` on the pending update, for binding inputs before the audio thread
@@ -162,6 +176,9 @@ impl<T> UpdateMailbox<T> {
     /// Audio thread: applies the pending update through `transfer`. A failed transfer
     /// leaves it pending; a successful one parks it as retired until control reclaims it.
     /// A retired update not yet reclaimed is bounded backpressure, not a failed cycle.
+    ///
+    /// The update stays in `pending` while `transfer` runs, so a concurrent `publish`
+    /// is rejected rather than overwritten when a failed transfer leaves it there.
     pub(super) fn activate(
         &self,
         transfer: impl FnOnce(&mut T) -> Result<(), Failure>,
@@ -169,21 +186,19 @@ impl<T> UpdateMailbox<T> {
         if !self.retired.load(Ordering::Acquire).is_null() {
             return Err(Failure::RetirementPending);
         }
-        let pending = self.pending.swap(ptr::null_mut(), Ordering::AcqRel);
-        if pending.is_null() {
+        let pending = self.pending.load(Ordering::Acquire);
+        // SAFETY: a publish method boxed this pointer. Only this single audio consumer
+        // removes or dereferences a pending update; control replaces only a null slot,
+        // and `edit_pending` never runs alongside activation.
+        let Some(update) = (unsafe { pending.as_mut() }) else {
             return Ok(());
-        }
-        // SAFETY: `publish` created this pointer and this swap removed the only stored
-        // owner. The envelope is reused as the retirement record, so nothing is freed here.
-        let mut update = unsafe { Box::from_raw(pending) };
-        let result = transfer(&mut *update);
-        let slot = if result.is_ok() {
-            &self.retired
-        } else {
-            &self.pending
         };
-        slot.store(Box::into_raw(update), Ordering::Release);
-        result
+        transfer(update)?;
+        let taken = self.pending.swap(ptr::null_mut(), Ordering::AcqRel);
+        debug_assert_eq!(taken, pending, "a non-null pending update was replaced");
+        // The envelope is reused as the retirement record, so nothing is freed here.
+        self.retired.store(taken, Ordering::Release);
+        Ok(())
     }
 
     /// Control: drops the update the audio thread retired, if any.

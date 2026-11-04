@@ -56,6 +56,45 @@ fn rejected_transfer_stays_pending_for_the_next_cycle() {
 }
 
 #[test]
+fn publish_racing_a_failed_transfer_is_rejected_not_overwritten() {
+    let drops = Arc::default();
+    let mailbox = UpdateMailbox::default();
+    assert!(mailbox.publish(update(1, &drops)).is_ok());
+    // Control publishes while the audio thread is still validating update 1.
+    let mut competing = None;
+    assert_eq!(
+        mailbox.activate(|_| {
+            competing = Some(mailbox.publish(update(2, &drops)));
+            Err(Failure::ResourceRevision)
+        }),
+        Err(Failure::ResourceRevision)
+    );
+    let rejected = competing.expect("transfer ran").unwrap_err();
+    assert_eq!(
+        rejected.id, 2,
+        "the competing update returns to its publisher"
+    );
+    drop(rejected);
+    assert_eq!(*drops.lock().unwrap(), [2]);
+
+    let mut offered = None;
+    assert_eq!(
+        mailbox.activate(|update| {
+            offered = Some(update.id);
+            Ok(())
+        }),
+        Ok(())
+    );
+    assert_eq!(offered, Some(1));
+    drop(mailbox);
+    assert_eq!(
+        *drops.lock().unwrap(),
+        [2, 1],
+        "every update is dropped once"
+    );
+}
+
+#[test]
 fn activation_retires_without_freeing_and_waits_for_reclamation() {
     let drops = Arc::default();
     let mailbox = UpdateMailbox::default();
