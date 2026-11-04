@@ -16,5 +16,6 @@ tracing = "0.1.41"
 mixrelay-time = { path = "../time" }
 
 [dev-dependencies]
+mixrelay-test-support = { path = "../test-support" }
 mixrelay-time = { path = "../time", features = ["test-util"] }
 tempfile = "3.27.0"

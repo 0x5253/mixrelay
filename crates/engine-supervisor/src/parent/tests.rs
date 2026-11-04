@@ -11,7 +11,6 @@ mod unix_processes {
     use super::*;
     use std::{
         fs,
-        os::unix::fs::PermissionsExt,
         path::{Path, PathBuf},
     };
     use tempfile::{TempDir, tempdir};
@@ -174,12 +173,7 @@ mod unix_processes {
         let executable = directory.path().join("engine.sh");
         let script =
             format!("#!/bin/sh\nset -eu\ntrap 'printf done > \"$0.marker\"' EXIT\n{body}\n");
-        fs::write(&executable, script).expect("fixture script");
-        let mut permissions = fs::metadata(&executable)
-            .expect("fixture metadata")
-            .permissions();
-        permissions.set_mode(0o700);
-        fs::set_permissions(&executable, permissions).expect("fixture permissions");
+        mixrelay_test_support::write_executable(&executable, &script).expect("fixture script");
         (directory, executable)
     }
 

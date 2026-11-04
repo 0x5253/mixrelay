@@ -147,6 +147,32 @@ impl Drop for FixtureDir {
     }
 }
 
+/// Writes an executable script fixture that this process never holds open for writing.
+/// Tests run in parallel, and a fork in another test inherits every open descriptor until it
+/// executes; a script still open for writing in that child makes `exec` fail with ETXTBSY.
+/// # Errors
+/// Reports a writer process that cannot start or does not complete.
+#[cfg(unix)]
+pub fn write_executable(path: &Path, contents: &str) -> io::Result<()> {
+    use std::{
+        io::Write,
+        process::{Command, Stdio},
+    };
+    let mut writer = Command::new("/bin/sh")
+        .args(["-c", "cat > \"$1\" && chmod 700 \"$1\"", "sh"])
+        .arg(path)
+        .stdin(Stdio::piped())
+        .spawn()?;
+    if let Some(mut input) = writer.stdin.take() {
+        input.write_all(contents.as_bytes())?;
+    }
+    if writer.wait()?.success() {
+        Ok(())
+    } else {
+        Err(io::Error::other("executable fixture writer failed"))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
