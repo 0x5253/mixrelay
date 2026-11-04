@@ -23,7 +23,12 @@ case "$ID" in
       librsvg2-dev libx11-dev libxrandr-dev libxi-dev \
       pipewire pipewire-bin wireplumber dbus-user-session dbus-x11 xvfb xauth
     ;;
-  arch)
+  arch|archarm)
+    # The Arch Linux ARM lab rootfs ships no keyring, so no master key is shared.
+    if [[ ! -e /etc/pacman.d/gnupg/trustdb.gpg ]]; then
+      pacman-key --init
+      pacman-key --populate
+    fi
     pacman -Syu --noconfirm --needed \
       base-devel ca-certificates clang compiler-rt cmake curl git pkgconf openssl rsync ripgrep \
       alsa-lib lilv lv2 pipewire wireplumber gtk3 webkit2gtk-4.1 \

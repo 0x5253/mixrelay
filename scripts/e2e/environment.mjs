@@ -34,7 +34,7 @@ export function observeEnvironment() {
       wireplumber: version(run('wireplumber', ['--version'])),
       glibc: version(run('getconf', ['GNU_LIBC_VERSION'])),
     };
-    const packages = observed.distro === 'arch' ? run('pacman', ['-Q'])
+    const packages = ['arch', 'archarm'].includes(observed.distro) ? run('pacman', ['-Q'])
       : observed.distro === 'fedora' ? run('rpm', ['-qa', '--queryformat', '%{NAME}\t%{VERSION}-%{RELEASE}\t%{ARCH}\n'])
         : run('dpkg-query', ['-W', '-f=${Package}\t${Version}\t${Architecture}\n']);
     observed.packageInventorySha256 = digest(packages);

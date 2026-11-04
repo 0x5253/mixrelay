@@ -1,0 +1,2 @@
+PARTUUID=@ROOT_UUID@ / ext4 rw,relatime 0 1
+PARTUUID=@ESP_UUID@ /boot vfat rw,relatime,fmask=0022,dmask=0022 0 2

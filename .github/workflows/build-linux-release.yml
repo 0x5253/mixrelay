@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       matrix: ${{ steps.matrix.outputs.linuxBuild }}
+      arch: ${{ steps.matrix.outputs.archBuild }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -46,11 +47,11 @@ jobs:
       - run: docker compose -f infra/lab/compose.yaml build ${{ matrix.distro }}
       - name: Build the final packages once on their native CPU
         env:
-          RELEASE_ARCH: ${{ matrix.arch }}
+          ARCH_PACKAGE: ${{ matrix.archPackage }}
           BUNDLES: ${{ matrix.bundles }}
         run: >-
           docker compose -f infra/lab/compose.yaml run --name mixrelay-release-build
-          -e RELEASE_ARCH="$RELEASE_ARCH" -e BUNDLES="$BUNDLES"
+          -e ARCH_PACKAGE="$ARCH_PACKAGE" -e BUNDLES="$BUNDLES"
           --entrypoint bash ${{ matrix.distro }}
           -c 'set -euo pipefail; pnpm desktop:build --bundles "$BUNDLES";
           version=$(node --input-type=module -e "import {checkVersion} from \"./scripts/product-version.mjs\"; console.log(checkVersion())");
@@ -60,7 +61,7 @@ jobs:
           for package in target/release/bundle/rpm/*.rpm; do
           test "$(rpm -qp --queryformat %{VERSION} "$package")" = "$version";
           done;
-          if [ "$RELEASE_ARCH" = x64 ]; then
+          if [ -n "$ARCH_PACKAGE" ]; then
           node scripts/prepare-arch-driver-package.mjs target/release/bundle/deb/*.deb target/arch-recipe;
           fi'
       - name: Collect inspected final packages
@@ -77,16 +78,16 @@ jobs:
             cp candidate/source-revision.txt candidate-rpm/
             (cd candidate-rpm && sha256sum *.rpm > "SHA256SUMS-$RPM_ID")
           fi
-      - name: Prepare Arch wrapper from the same x64 DEB payload
-        if: matrix.arch == 'x64'
+      - name: Prepare Arch wrapper from the same DEB payload
+        if: matrix.archPackage != ''
         run: |
           mkdir arch-recipe
           docker cp mixrelay-release-build:/workspace/target/arch-recipe/. arch-recipe/
-      - if: matrix.arch == 'x64'
+      - if: matrix.archPackage != ''
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           overwrite: true
-          name: arch-recipe
+          name: arch-recipe-${{ matrix.archPackage }}
           path: arch-recipe/
           if-no-files-found: error
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -103,8 +104,11 @@ jobs:
           path: candidate-rpm/
           if-no-files-found: error
   arch:
-    needs: deb
-    runs-on: ubuntu-24.04
+    needs: [support, deb]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.support.outputs.arch) }}
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -117,26 +121,31 @@ jobs:
           package-manager-cache: false
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: arch-recipe
+          name: arch-recipe-${{ matrix.id }}
           path: packaging/linux/candidate-input
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libarchive-tools
-      - run: docker compose -f infra/lab/compose.yaml build arch
+      - run: node scripts/lab/distro-image.mjs ${{ matrix.distro }}
+      - run: docker compose -f infra/lab/compose.yaml build ${{ matrix.distro }}
+      # Arch Linux ARM's makepkg.conf still defaults to xz; the release asset name is zstd.
       - name: Wrap the checked DEB payload without compiling or stripping
-        run: docker compose -f infra/lab/compose.yaml run --name mixrelay-arch-wrap --entrypoint bash arch -c 'cd packaging/linux/candidate-input && makepkg --nodeps --noconfirm'
-      - run: |
+        run: docker compose -f infra/lab/compose.yaml run --name mixrelay-arch-wrap --entrypoint bash ${{ matrix.distro }} -c 'cd packaging/linux/candidate-input && PKGEXT=.pkg.tar.zst makepkg --nodeps --noconfirm'
+      - env:
+          PKGARCH: ${{ matrix.pkgarch }}
+          ARTIFACT: ${{ matrix.id }}
+        run: |
           mkdir candidate
           docker cp mixrelay-arch-wrap:/workspace/packaging/linux/candidate-input/. candidate/
           version="$(node --input-type=module -e 'import {checkVersion} from "./scripts/product-version.mjs"; console.log(checkVersion())')"
           for package in candidate/*.pkg.tar.zst; do
             bsdtar -xOf "$package" .PKGINFO | grep -Fx "pkgver = $version-1"
-            bsdtar -xOf "$package" .PKGINFO | grep -Fx 'arch = x86_64'
+            bsdtar -xOf "$package" .PKGINFO | grep -Fx "arch = $PKGARCH"
           done
-          (cd candidate && sha256sum *.pkg.tar.zst > SHA256SUMS-linux-x64-arch)
+          (cd candidate && sha256sum *.pkg.tar.zst > "SHA256SUMS-$ARTIFACT")
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           overwrite: true
-          name: candidate-linux-x64-arch
+          name: candidate-${{ matrix.id }}
           path: |
             candidate/*.pkg.tar.zst
-            candidate/SHA256SUMS-linux-x64-arch
+            candidate/SHA256SUMS-${{ matrix.id }}
           if-no-files-found: error

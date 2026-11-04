@@ -11,6 +11,7 @@
     "lab:build": "node scripts/lab/native-check.mjs build",
     "lab:test": "node scripts/lab/native-check.mjs test",
     "lab:vm": "node scripts/lab/vm.mjs",
+    "lab:distro-image": "node scripts/lab/distro-image.mjs",
     "build": "pnpm --filter @mixrelay/control-ui build",
     "check": "pnpm check:audio-formats && pnpm check:ui-quality && pnpm --filter @mixrelay/control-ui check && pnpm check:native && pnpm check:rust",
     "check:audio-formats": "cargo test -p mixrelay-audio-io --lib format_contract::tests",

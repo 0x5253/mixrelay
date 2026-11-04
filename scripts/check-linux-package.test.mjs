@@ -249,7 +249,7 @@ test('graphical uninstall deletes only selected app data after successful packag
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   const source = readFileSync(new URL('../packaging/linux/uninstall.sh', import.meta.url), 'utf8');
   const scenarios = ['preserve', 'delete', 'failure', 'cancel', 'auth-cancel',
-    'root', 'symlink', 'unsafe-root', 'rpm', 'relative-xdg', 'korean'];
+    'root', 'symlink', 'unsafe-root', 'rpm', 'arch', 'relative-xdg', 'korean'];
   for (const scenario of scenarios) {
     const fixtureDirectory = join(directory, scenario);
     const userDirectory = join(fixtureDirectory, 'home');
@@ -276,6 +276,7 @@ test('graphical uninstall deletes only selected app data after successful packag
       id: 'printf "%s\\n" "$TEST_UID"',
       'dpkg-query': '[ "$TEST_PACKAGE" = deb ] || exit 1\nprintf installed',
       rpm: '[ "$TEST_PACKAGE" = rpm ]',
+      pacman: '[ "$TEST_PACKAGE" = arch ]',
       apt: 'exit 99',
       dnf: 'exit 99',
       zenity: `printf '%s\\n' "$@" >> "$TEST_LOG"
@@ -316,13 +317,13 @@ rm -f -- "$TEST_SCRIPT" "$TEST_DESKTOP"`,
       TEST_SCRIPT: script,
       TEST_DESKTOP: join(fixtureDirectory, 'mixrelay-desktop'),
       TEST_UID: scenario === 'root' ? '0' : '1000',
-      TEST_PACKAGE: scenario === 'rpm' ? 'rpm' : 'deb',
+      TEST_PACKAGE: ['rpm', 'arch'].includes(scenario) ? scenario : 'deb',
       TEST_SELECT: scenario === 'preserve' ? '0' : '1',
       TEST_CANCEL: scenario === 'cancel' ? '1' : '0',
       TEST_FAIL: scenario === 'failure' ? '1' : '0',
       TEST_CANCEL_AUTH: scenario === 'auth-cancel' ? '1' : '0',
     } });
-    const deleting = ['delete', 'rpm', 'relative-xdg', 'korean'].includes(scenario);
+    const deleting = ['delete', 'rpm', 'arch', 'relative-xdg', 'korean'].includes(scenario);
     const successful = scenario === 'preserve' || deleting;
     const removed = successful;
     assert.equal(result.status, successful || scenario === 'cancel' ? 0 : 1, result.stderr);
@@ -335,8 +336,8 @@ rm -f -- "$TEST_SCRIPT" "$TEST_DESKTOP"`,
       ? /FALSE\n저장된 그래프와 설정 삭제/ : /FALSE\nDelete saved graphs and settings/);
     if (removed || scenario === 'failure' || scenario === 'auth-cancel') {
       assert.match(calls, /--disable-internal-agent/);
-      assert.match(calls, /-y\nremove\nmix-relay/);
-      assert.ok(calls.includes(join(fixtureDirectory, scenario === 'rpm' ? 'dnf' : 'apt')));
+      assert.match(calls, scenario === 'arch' ? /-R\n--noconfirm\nmix-relay/ : /-y\nremove\nmix-relay/);
+      assert.ok(calls.includes(join(fixtureDirectory, { rpm: 'dnf', arch: 'pacman' }[scenario] ?? 'apt')));
       if (scenario === 'rpm') assert.match(calls, /clean_requirements_on_remove=False/);
     } else assert.doesNotMatch(calls, /--disable-internal-agent/);
     if (removed) {

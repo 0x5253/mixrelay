@@ -33,7 +33,7 @@ test("one product produces the exact publisher schema and preserve installer inp
   }
   assert.deepEqual(readFileSync(join(directory, file)), original);
   assert.equal(readFileSync(join(directory, "Uninstall MixRelay.pkg"), "utf8"), "Uninstaller is not selected\n");
-  assert.equal(readdirSync(directory).length, 11);
+  assert.equal(readdirSync(directory).length, 12);
 });
 
 test("the CLI publishes the complete qualified artifact selection and an explicit public notes URL", t => {

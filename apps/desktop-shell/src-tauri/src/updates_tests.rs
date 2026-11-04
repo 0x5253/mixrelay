@@ -54,7 +54,7 @@ fn github_release() -> serde_json::Value {
     let assets = [
         "MixRelay-Installer-1.2.10.pkg", "MixRelay_1.2.10_amd64.deb",
         "MixRelay_1.2.10_arm64.deb", "mix-relay-1.2.10-1-x86_64.pkg.tar.zst",
-        "MixRelay-1.2.10-1.x86_64.rpm", "MixRelay-1.2.10-1.aarch64.rpm",
+        "mix-relay-1.2.10-1-aarch64.pkg.tar.zst", "MixRelay-1.2.10-1.x86_64.rpm", "MixRelay-1.2.10-1.aarch64.rpm",
         "MixRelay-StreamDeck-1.2.10.streamDeckPlugin", "SHA256SUMS",
     ].map(|name| serde_json::json!({
         "name": name, "state": "uploaded", "size": 1024,
@@ -89,6 +89,12 @@ fn github_publication_selects_the_native_package_and_preserves_its_github_digest
             "x86_64",
             Some("ID=arch\n"),
             "mix-relay-1.2.10-1-x86_64.pkg.tar.zst",
+        ),
+        (
+            "linux",
+            "aarch64",
+            Some("ID=archarm\nID_LIKE=arch\n"),
+            "mix-relay-1.2.10-1-aarch64.pkg.tar.zst",
         ),
         (
             "linux",

@@ -42,6 +42,13 @@
       "asset": "mix-relay-{version}-1-x86_64.pkg.tar.zst"
     },
     {
+      "id": "linux-arm64-arch",
+      "os": "linux",
+      "arch": "arm64",
+      "format": "arch",
+      "asset": "mix-relay-{version}-1-aarch64.pkg.tar.zst"
+    },
+    {
       "id": "linux-x64-rpm",
       "os": "linux",
       "arch": "x64",
@@ -140,6 +147,19 @@
         "image": "archlinux:base@sha256:82b1b08faae9d61e3e7e13d562f4d09114d939105b0d59ff34140f3bd418593a",
         "architectures": [
           "x64"
+        ],
+        "artifactFormat": "arch"
+      },
+      {
+        "id": "archarm",
+        "version": "rolling",
+        "rootfs": {
+          "url": "https://github.com/0x5253/mixrelay/releases/download/archlinuxarm-20261104/archlinuxarm-container-20261104.tar.zst",
+          "algorithm": "sha256",
+          "digest": "a8a55ecff61c772811ac6dc5ad62a84f4b6e0aa7014b5e7a9f1bd8d37d0864f0"
+        },
+        "architectures": [
+          "arm64"
         ],
         "artifactFormat": "arch"
       },
@@ -315,6 +335,20 @@
       }
     },
     {
+      "id": "archarm-rolling-arm64",
+      "os": "linux",
+      "distro": "archarm",
+      "version": "rolling",
+      "versionMatch": "rolling",
+      "arch": "arm64",
+      "artifact": "linux-arm64-arch",
+      "execution": {
+        "kind": "linux-vm",
+        "runner": "ubuntu-24.04-arm",
+        "image": "archarm-arm64"
+      }
+    },
+    {
       "id": "fedora-45-x64",
       "os": "linux",
       "distro": "fedora",
@@ -472,6 +506,12 @@
       "url": "https://mirror.pkgbuild.com/images/v20261015.611680/Arch-Linux-x86_64-cloudimg-20261015.611680.qcow2",
       "algorithm": "sha256",
       "digest": "08754e28d91b1680086c6211ef4df13559e766fff7cdb4006489b14b5d281f08",
+      "format": "qcow2"
+    },
+    "archarm-arm64": {
+      "url": "https://github.com/0x5253/mixrelay/releases/download/archlinuxarm-20261104/archlinuxarm-cloudimg-20261104.qcow2",
+      "algorithm": "sha256",
+      "digest": "0df02642c1b33035f0d6a63a38c7986b89cf8474bff2d2a92781f089aa3ffa5f",
       "format": "qcow2"
     },
     "fedora-x64": {

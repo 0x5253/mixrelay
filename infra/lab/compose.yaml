@@ -33,6 +33,13 @@ services:
       <<: *build
       args:
         DISTRO_IMAGE: archlinux:base@sha256:82b1b08faae9d61e3e7e13d562f4d09114d939105b0d59ff34140f3bd418593a
+  archarm:
+    <<: *runtime
+    platform: linux/arm64
+    build:
+      <<: *build
+      args:
+        DISTRO_IMAGE: mixrelay-lab/archarm:a8a55ecff61c7728
   fedora:
     <<: *runtime
     build:

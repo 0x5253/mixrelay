@@ -19,6 +19,7 @@ function fixture(t) {
   writeFileSync(join(inputs, 'macos/MixRelay.pkg'), 'Synthetic macOS package fixture');
   writeFileSync(join(inputs, 'macos/MixRelay-StreamDeck-0.1.0.streamDeckPlugin'), 'plugin fixture');
   for (const [id, file] of [['linux-x64-deb', 'x64.deb'], ['linux-arm64-deb', 'arm64.deb'], ['linux-x64-arch', 'x64.pkg.tar.zst'],
+    ['linux-arm64-arch', 'arm64.pkg.tar.zst'],
     ['linux-x64-rpm', 'x64.rpm'], ['linux-arm64-rpm', 'arm64.rpm']]) {
     const dir = join(inputs, 'linux', `candidate-${id}`); mkdirSync(dir, { recursive: true });
     writeFileSync(join(dir, file), `Synthetic ${id} package fixture`);
@@ -32,9 +33,9 @@ test('selects the same final bytes and source for every hosted target', t => {
   const matrix = selectCandidate(inputs, output);
   const candidate = JSON.parse(readFileSync(join(output, 'mix-relay.candidate.json')));
   assert.equal(candidate.sourceRevision, source);
-  assert.equal(candidate.artifacts.length, 7);
+  assert.equal(candidate.artifacts.length, 8);
   validateCandidate(candidate, output);
-  assert.equal(matrix.include.length, 14);
+  assert.equal(matrix.include.length, 15);
   writeFileSync(join(output, 'x64.deb'), 'modified after build');
   assert.throws(() => validateCandidate(candidate, output), /bytes changed/);
 });
