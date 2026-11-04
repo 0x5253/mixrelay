@@ -1,15 +1,8 @@
+use mixrelay_desktop_core::engine_control::routes;
 use reqwest::Method;
 use serde_json::Value;
 
-use super::{ControlProxyClient, ControlProxyResponse, percent_encode_path_segment};
-
-pub(super) fn route(graph_id: &str, node_id: &str) -> String {
-    format!(
-        "/api/v1/graphs/{}/recorders/{}",
-        percent_encode_path_segment(graph_id),
-        percent_encode_path_segment(node_id)
-    )
-}
+use super::{ControlProxyClient, ControlProxyResponse};
 
 #[tauri::command]
 pub(crate) async fn control_get_recorder_status(
@@ -18,7 +11,7 @@ pub(crate) async fn control_get_recorder_status(
     node_id: String,
 ) -> Result<ControlProxyResponse, String> {
     client
-        .request(Method::GET, &route(&graph_id, &node_id), None)
+        .request(Method::GET, &routes::recorder(&graph_id, &node_id), None)
         .await
 }
 
@@ -40,40 +33,52 @@ impl ControlProxyClient {
         node_id: &str,
         mut request: Value,
     ) -> Result<ControlProxyResponse, String> {
-        let _guard = self.recording_gate.lock().await;
+        let _commits = self.recordings.lock_commits().await;
         let status = self.recording_status(graph_id, node_id).await?;
         request["request"] = mixrelay_desktop_core::recording::prepare_transport(
             &request["request"],
             &status,
-            &self.recording_preferences(graph_id, node_id)?,
-            self.take_identities.as_ref(),
+            &self.recordings.preferences(graph_id, node_id)?,
+            self.recordings.take_identities(),
         )
         .map_err(|error| error.to_string())?;
         if request["expectedRecording"].is_null() {
             request["expectedRecording"] =
                 serde_json::json!({"state":status["state"],"path":status["path"]});
         }
-        self.request(Method::PUT, &route(graph_id, node_id), Some(request))
-            .await
+        self.request(
+            Method::PUT,
+            &routes::recorder(graph_id, node_id),
+            Some(request),
+        )
+        .await
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::super::recording_settings::RecordingSettings;
     use super::*;
-    use mixrelay_desktop_core::recording::RecordingEncoding;
+    use mixrelay_desktop_core::recording::{
+        RecordingEncoding, RecordingError, RecordingSettings, TakeIdentities, TakeIdentity,
+    };
+
+    struct FixedTake;
+    impl TakeIdentities for FixedTake {
+        fn next(&self) -> Result<TakeIdentity, RecordingError> {
+            Ok(TakeIdentity {
+                nanos: 1,
+                owner: 2,
+                sequence: 3,
+            })
+        }
+    }
+
     fn prepare_transport(
         action: &Value,
         status: &Value,
         settings: &RecordingSettings,
-    ) -> Result<Value, mixrelay_desktop_core::recording::RecordingError> {
-        mixrelay_desktop_core::recording::prepare_transport(
-            action,
-            status,
-            settings,
-            &super::super::recording_settings::NativeTakeIdentities::new(),
-        )
+    ) -> Result<Value, RecordingError> {
+        mixrelay_desktop_core::recording::prepare_transport(action, status, settings, &FixedTake)
     }
 
     #[test]
@@ -107,13 +112,6 @@ mod tests {
                 &settings
             )
             .is_err()
-        );
-    }
-    #[test]
-    fn route_preserves_graph_and_node_segments() {
-        assert_eq!(
-            super::route("a/b", "c?d"),
-            "/api/v1/graphs/a%2Fb/recorders/c%3Fd"
         );
     }
 }

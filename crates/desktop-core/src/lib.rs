@@ -1,6 +1,7 @@
 //! Desktop application policies and the ports used by the editor and runtime.
 pub mod devices;
 pub mod diagnostics;
+pub mod engine_control;
 pub mod lifecycle;
 pub mod log_retention;
 pub mod playback;

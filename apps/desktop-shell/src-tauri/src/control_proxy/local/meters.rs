@@ -8,10 +8,9 @@ use std::time::Duration;
 use mixrelay_control_protocol::ControlTelemetry;
 use tokio::sync::watch;
 
-use crate::{
-    control_channel::{Mailbox, SILENCE_LIMIT},
-    control_proxy::telemetry::EventParser,
-};
+use mixrelay_desktop_core::engine_control::event_stream::EventParser;
+
+use crate::control_channel::{Mailbox, SILENCE_LIMIT};
 
 /// Bounds opening the engine stream, which the shared HTTP client does not.
 pub(crate) const OPEN_TIMEOUT: Duration = Duration::from_secs(5);
@@ -68,7 +67,7 @@ impl TelemetrySource for Arc<super::LocalControl> {
 impl TelemetryChunks for reqwest::Response {
     fn incarnation(&self) -> Option<String> {
         self.headers()
-            .get("X-MixRelay-Engine")
+            .get(mixrelay_desktop_core::engine_control::receipt::ENGINE_HEADER)
             .and_then(|header| header.to_str().ok())
             .map(str::to_owned)
     }

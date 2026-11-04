@@ -1,9 +1,9 @@
-//! HTTP control failures retain the procedure that failed and request delivery uncertainty.
+//! A reqwest failure with the exchange stage it interrupted, translated into the
+//! platform-neutral failure report.
 use std::error::Error as _;
 
-use mixrelay_control_protocol::{
-    ControlBoundary, ControlFailureCode, ControlFailureContext, ControlStage, FailureDelivery,
-};
+use mixrelay_control_protocol::ControlStage;
+use mixrelay_desktop_core::engine_control::failure::{ExchangeFailure, TransportFault};
 
 #[derive(Debug, thiserror::Error)]
 #[error("{source}")]
@@ -14,12 +14,9 @@ pub(super) struct TransportFailure {
 }
 
 impl TransportFailure {
+    /// A failure while sending the request itself.
     pub(super) fn request(source: reqwest::Error) -> Self {
-        let stage = if source.is_connect() {
-            ControlStage::Connect
-        } else {
-            ControlStage::Request
-        };
+        let stage = fault(&source).request_stage();
         Self { stage, source }
     }
 
@@ -27,44 +24,39 @@ impl TransportFailure {
         Self { stage, source }
     }
 
-    pub(super) fn is_connect(&self) -> bool {
-        self.source.is_connect()
+    pub(super) fn report<'a>(
+        &self,
+        path: &'a str,
+        may_have_been_delivered: bool,
+    ) -> ExchangeFailure<'a> {
+        ExchangeFailure {
+            path,
+            reason: self.to_string(),
+            fault: fault(&self.source),
+            stage: self.stage,
+            platform: crate::control_channel::failure_platform(),
+            os_error: self.os_error(),
+            may_have_been_delivered,
+        }
     }
 
-    pub(super) fn unavailable(&self) -> bool {
-        self.source.is_connect() || self.source.is_timeout()
-    }
-
-    pub(super) fn diagnostic(&self, may_have_been_delivered: bool) -> ControlFailureContext {
-        let failure = if self.source.is_timeout() {
-            ControlFailureCode::Timeout
-        } else if self.source.is_connect() {
-            ControlFailureCode::ConnectIo
-        } else if self.source.is_body() {
-            ControlFailureCode::BodyIo
-        } else {
-            ControlFailureCode::TransportIo
-        };
+    /// The first OS error in the cause chain.
+    fn os_error(&self) -> Option<i32> {
         let mut cause = self.source.source();
-        let mut os_error = None;
         while let Some(error) = cause {
             if let Some(error) = error.downcast_ref::<std::io::Error>() {
-                os_error = error.raw_os_error();
-                break;
+                return error.raw_os_error();
             }
             cause = error.source();
         }
-        ControlFailureContext {
-            platform: crate::control_channel::failure_platform(),
-            boundary: ControlBoundary::RuntimeEngine,
-            stage: self.stage,
-            failure,
-            delivery: if !may_have_been_delivered && self.is_connect() {
-                FailureDelivery::NotSent
-            } else {
-                FailureDelivery::Uncertain
-            },
-            os_error,
-        }
+        None
+    }
+}
+
+fn fault(error: &reqwest::Error) -> TransportFault {
+    TransportFault {
+        connect: error.is_connect(),
+        timeout: error.is_timeout(),
+        body: error.is_body(),
     }
 }
