@@ -3,7 +3,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-// Only approved graphics enter this portable kit. Wordmark studies stay separate.
+// Only approved graphics enter this portable kit.
 const root = path.dirname(fileURLToPath(import.meta.url));
 const identity = path.join(root, 'identity');
 const kit = path.join(identity, 'kit');
@@ -37,7 +37,6 @@ fs.mkdirSync(path.join(kit, 'source'), { recursive: true });
 fs.copyFileSync(path.join(identity, 'source/symbol.json'), path.join(kit, 'source/symbol.json'));
 const manifest = JSON.parse(fs.readFileSync(path.join(identity, 'manifest.json'), 'utf8'));
 manifest.colors = 'colorValues';
-delete manifest.research;
 fs.writeFileSync(path.join(kit, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
 fs.writeFileSync(path.join(kit, 'README.md'), `# MixRelay approved graphic kit v1.1
 

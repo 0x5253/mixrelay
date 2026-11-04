@@ -4,7 +4,7 @@
   "approvedAt": "2026-10-12",
   "geometry": "../source/wordmark.json",
   "symbol": "../source/symbol.json",
-  "illustrator": "../../wordmark-study/plex/mixrelay-plex-wordmark.ai",
+  "illustrator": "../source/wordmark.ai",
   "illustratorSha256": "36174152ec108bb539fbb13361542472110252a88911c4e68ff9045af5bfb553",
   "colors": "apps/control-ui/src/core/theme/tokens.ts#brandColors",
   "colorValues": {
