@@ -107,17 +107,27 @@ async fn all_shutdown_boundary_failures_are_preserved() {
 }
 
 #[test]
-fn cleanup_collects_every_failed_owner_in_retirement_order() {
-    let errors = collect([
-        ("control", Err("listener failed".into())),
-        ("observers", Ok(())),
-        ("worker", Err("render failed".into())),
-        ("recorder", Err("finalization failed".into())),
-    ])
-    .unwrap_err();
+fn only_a_clean_run_is_recorded_as_stopped() {
+    assert_eq!(exit_record(&Ok(())), "stopped");
     assert_eq!(
-        errors,
-        "control: listener failed\nworker: render failed\nrecorder: finalization failed"
+        exit_record(&Err(
+            "control: listener failed\naudio_join: worker panicked".into()
+        )),
+        "failed\ncontrol: listener failed\naudio_join: worker panicked"
     );
-    assert!(collect([("control", Ok(())), ("worker", Ok(()))]).is_ok());
+}
+
+#[tokio::test]
+async fn controller_release_stops_the_service_without_a_signal() {
+    let stop = first_stop(std::future::pending(), std::future::ready(()));
+    assert!(stop.await.is_ok());
+}
+
+#[tokio::test]
+async fn a_failed_signal_observer_stops_the_service_with_its_error() {
+    let stop = first_stop(
+        std::future::ready(Err(io::Error::other("signal stream closed"))),
+        std::future::pending(),
+    );
+    assert_eq!(stop.await.unwrap_err().to_string(), "signal stream closed");
 }
