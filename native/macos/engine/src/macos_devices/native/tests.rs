@@ -31,11 +31,13 @@ fn native_owner_allocation_retirement_stress() {
     // Lazily registered diagnostics callsites allocate once, outside the measurement.
     drop(synthetic_output(1, 48_000, 48_000));
     // All 260 owners exceed the 256-owner admission bound: every create below succeeds
-    // only because each retirement returned its slot. Allocation is counted on this one
-    // thread, which creates and destroys every owner, so concurrent tests cannot perturb it.
+    // only because each retirement returned its slot. Wide owners cost proportionally more
+    // queue storage, so most cycles use one channel and each width still cycles twice.
+    // Allocation is counted on this one thread, which creates and destroys every owner, so
+    // concurrent tests cannot perturb it.
     let allocation = allocation_counter::measure(|| {
-        for channels in [1, 2, 8, 64] {
-            for _ in 0..65 {
+        for (channels, cycles) in [(1, 254), (2, 2), (8, 2), (64, 2)] {
+            for _ in 0..cycles {
                 let (device, context) = synthetic_output(channels, 48_000, 48_000);
                 let native = Arc::downgrade(&device.native);
                 drop(device);
