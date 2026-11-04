@@ -159,7 +159,8 @@ mod tests {
         let path = root.join("created");
         let (mut created, mut unidentified) = (Vec::new(), Vec::new());
         create_missing_directories(&path, &mut created, &mut unidentified).expect("create");
-        fs::remove_dir(&path).expect("remove original");
+        // The original stays alive, so the replacement cannot reuse its inode number.
+        fs::rename(&path, root.join("original")).expect("move original aside");
         fs::create_dir(&path).expect("replacement");
         assert!(matches!(
             remove_created_directory(&created[0]),
