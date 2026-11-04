@@ -15,8 +15,8 @@ fn locator_at(format: RackFormat, id: &str, path: &str) -> RackLocator {
     locator
 }
 
-fn record(locator: &RackLocator) -> rack_formats::RackProbeRecord {
-    rack_formats::RackProbeRecord {
+fn record(locator: &RackLocator) -> rack_formats::probe::RackProbeRecord {
+    rack_formats::probe::RackProbeRecord {
         descriptor: mixrelay_control_protocol::ExternalProcessorDescriptor {
             type_id: format!("{}:{}", locator.format.argument(), locator.unique_id),
             display_name: locator.unique_id.clone(),
@@ -34,8 +34,8 @@ fn record(locator: &RackLocator) -> rack_formats::RackProbeRecord {
     }
 }
 
-fn scan_ok(locators: Vec<RackLocator>) -> rack_formats::RackScanReport {
-    rack_formats::RackScanReport {
+fn scan_ok(locators: Vec<RackLocator>) -> rack_formats::scan::RackScanReport {
+    rack_formats::scan::RackScanReport {
         locators,
         path_failures: Vec::new(),
     }
@@ -90,9 +90,9 @@ fn assert_locator_path(catalog: &ProcessorCatalog, id: &str, expected: &str) {
 
 #[test]
 fn scan_child_protocol_requires_structured_results_and_path_failures() {
-    let report = rack_formats::RackScanReport {
+    let report = rack_formats::scan::RackScanReport {
         locators: vec![locator(RackFormat::Clap, "default")],
-        path_failures: vec![rack_formats::ScanPathFailure {
+        path_failures: vec![rack_formats::scan::ScanPathFailure {
             path: PathBuf::from("/bad"),
             message: "permission denied".into(),
         }],
@@ -100,10 +100,13 @@ fn scan_child_protocol_requires_structured_results_and_path_failures() {
     let encoded = serde_json::to_value(&report).unwrap();
     assert!(encoded["locators"].is_array());
     assert_eq!(encoded["pathFailures"][0]["path"], "/bad");
-    let decoded: rack_formats::RackScanReport = serde_json::from_value(encoded).unwrap();
+    let decoded: rack_formats::scan::RackScanReport = serde_json::from_value(encoded).unwrap();
     assert_eq!(decoded.locators.len(), 1);
     assert_eq!(decoded.path_failures.len(), 1);
-    assert!(serde_json::from_value::<rack_formats::RackScanReport>(serde_json::json!([])).is_err());
+    assert!(
+        serde_json::from_value::<rack_formats::scan::RackScanReport>(serde_json::json!([]))
+            .is_err()
+    );
 }
 
 #[test]
@@ -115,9 +118,9 @@ fn partial_path_failure_publishes_successful_candidates_and_scan_diagnostic() {
         &catalog,
         &[RackFormat::Clap],
         |_| {
-            Ok(rack_formats::RackScanReport {
+            Ok(rack_formats::scan::RackScanReport {
                 locators: vec![default.clone(), custom.clone()],
-                path_failures: vec![rack_formats::ScanPathFailure {
+                path_failures: vec![rack_formats::scan::ScanPathFailure {
                     path: PathBuf::from("/bad"),
                     message: "permission denied".into(),
                 }],
@@ -174,9 +177,9 @@ fn partial_path_failure_retains_only_failed_subtree_and_retry_refreshes_it() {
         &[RackFormat::Clap, RackFormat::Vst3],
         |format| {
             if format == RackFormat::Clap {
-                Ok(rack_formats::RackScanReport {
+                Ok(rack_formats::scan::RackScanReport {
                     locators: vec![fresh_duplicate.clone()],
-                    path_failures: vec![rack_formats::ScanPathFailure {
+                    path_failures: vec![rack_formats::scan::ScanPathFailure {
                         path: PathBuf::from("/private"),
                         message: "permission denied".into(),
                     }],
@@ -240,9 +243,9 @@ fn partial_path_failure_drops_a_successfully_reclassified_non_effect() {
         &catalog,
         &[RackFormat::Clap],
         |_| {
-            Ok(rack_formats::RackScanReport {
+            Ok(rack_formats::scan::RackScanReport {
                 locators: vec![non_effect.clone()],
-                path_failures: vec![rack_formats::ScanPathFailure {
+                path_failures: vec![rack_formats::scan::ScanPathFailure {
                     path: PathBuf::from("/private"),
                     message: "permission denied for a sibling".into(),
                 }],

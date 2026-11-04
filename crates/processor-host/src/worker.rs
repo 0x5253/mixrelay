@@ -69,7 +69,7 @@ pub fn run_plugin_worker(arguments: &[String]) -> Result<(), String> {
             .header()
             .native_operation
             .enter(crate::native_operation::Stage::Load);
-        rack_formats::RackWorkerPlugin::load(
+        rack_formats::worker::RackWorkerPlugin::load(
             &locator,
             &prepared.ports,
             prepared.sample_rate,

@@ -3,7 +3,7 @@ use crate::shared_transport::WorkerControl;
 use crate::{
     ProcessorStateError,
     editor_surface::{EDITOR_FRAME, PointerEvent},
-    rack_formats::{EditorSnapshot, RackWorkerPlugin},
+    rack_formats::worker::{EditorSnapshot, RackWorkerPlugin},
 };
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use block2::RcBlock;
