@@ -60,7 +60,7 @@ fn external_adoption_saves_the_shared_format() {
         sample_rate: 48_000,
         ..old
     };
-    status.reconfigure(requested).unwrap();
+    status.prepare_format(requested).unwrap().commit();
     status.activate_format(requested);
     status.resume();
     let saved = std::fs::read(&path).unwrap();
@@ -200,7 +200,7 @@ fn graph_only_control_does_not_invent_a_native_rate_change() {
         sample_rate: 96_000,
         block_frames: 128,
     };
-    status.reconfigure(next).unwrap();
+    status.prepare_format(next).unwrap().commit();
     status.activate_format(next);
     status.resume();
     let session = status.status(next).audio_session.unwrap();
@@ -210,7 +210,7 @@ fn graph_only_control_does_not_invent_a_native_rate_change() {
 }
 
 #[test]
-fn a_failed_preference_save_rejects_the_change_and_keeps_the_stored_destination() {
+fn a_preference_that_fails_to_save_after_the_change_is_reported_without_reverting_audio() {
     let rate = endpoint(48_000);
     let directory = mixrelay_test_support::FixtureDir::new("rate-commit-failure").unwrap();
     let path = directory.join("session.json");
@@ -227,7 +227,8 @@ fn a_failed_preference_save_rejects_the_change_and_keeps_the_stored_destination(
         sample_rate: 48_000,
         block_frames: 256,
     };
-    assert!(status.reconfigure(next).is_err());
+    // Staging succeeds; publishing onto the directory fails after the native change.
+    status.prepare_format(next).unwrap().commit();
     status.resume();
     assert!(path.is_dir());
     let session = status.status(next).audio_session.unwrap();

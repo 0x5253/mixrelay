@@ -43,8 +43,8 @@ use handoff::{Publication, ResourceConsumer, ResourceHandoff};
 use mixrelay_audio_graph::{GraphDocument, RenderFormat};
 use mixrelay_audio_io::{HostAudioBackendError, process::TransferOutcome};
 use mixrelay_engine_core::{
-    GraphResourceBackend, PreparedGraphFormat, ProcessingControlBackend, RuntimeStatusBackend,
-    SessionFormatBackend, session::AdapterRuntimeStatus,
+    GraphResourceBackend, PreparedGraphFormat, PreparedSessionFormat, ProcessingControlBackend,
+    RuntimeStatusBackend, SessionFormatBackend, session::AdapterRuntimeStatus,
 };
 use spec::{Spec, aggregate_members, specs};
 use std::{
@@ -674,16 +674,19 @@ impl SessionFormatBackend for MacDevices {
         }
         self.status.adopt_external_format(requested)
     }
-    fn reconfigure(&self, requested: RenderFormat) -> Result<(), HostAudioBackendError> {
+    fn prepare_format(
+        &self,
+        requested: RenderFormat,
+    ) -> Result<Box<dyn PreparedSessionFormat + '_>, HostAudioBackendError> {
         if self.follows_hardware() {
             if self.routing_rate() != Some(requested.sample_rate) {
                 return Err(backend_error(
                     "hardware routing follows its device sample rate; change the selected device format, not the unrelated virtual endpoint",
                 ));
             }
-            return self.status.reconfigure_routing_buffer(requested);
+            return self.status.prepare_routing_buffer(requested);
         }
-        self.status.reconfigure(requested)
+        self.status.prepare_format(requested)
     }
 }
 

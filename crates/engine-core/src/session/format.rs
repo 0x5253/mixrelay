@@ -4,6 +4,39 @@ use super::{
     AdapterRuntimeStatus, Ordering, RenderFormat, SessionFormat, SessionFormatBackend,
     SessionPreferences, StagedSessionPreferences, pack_format, unpack_format,
 };
+use crate::PreparedSessionFormat;
+use mixrelay_audio_io::HostAudioBackendError;
+
+/// A staged session format: its preference is written but not yet published, and
+/// processing is suspended. Dropping it cancels the staged preference.
+struct PreparedFormat<'a> {
+    status: &'a AdapterRuntimeStatus,
+    staged: Option<Box<dyn StagedSessionPreferences>>,
+    saved: RenderFormat,
+    /// The hardware routing clock this change adopts, when routing follows hardware.
+    routing_rate: Option<u32>,
+}
+
+impl PreparedSessionFormat for PreparedFormat<'_> {
+    fn commit(self: Box<Self>) {
+        let status = self.status;
+        let saved = self.staged.map_or(Ok(()), StagedSessionPreferences::commit);
+        if let Err(error) = &saved {
+            tracing::warn!(%error, format = ?self.saved, "session preferences could not be committed");
+        } else if status.preferences.is_some() {
+            status
+                .preferred_format
+                .store(pack_format(self.saved), Ordering::Release);
+        }
+        status
+            .preferences_error
+            .store(saved.is_err(), Ordering::Release);
+        if let Some(rate) = self.routing_rate {
+            status.observe_routing_clock(true, Some(rate));
+        }
+        status.failed.store(false, Ordering::Release);
+    }
+}
 
 impl AdapterRuntimeStatus {
     /// Startup/control thread only, before creating the DSP worker. Bad or unsupported
@@ -151,17 +184,16 @@ impl AdapterRuntimeStatus {
         Ok(())
     }
 
-    /// Saves a user-selected DSP buffer while retaining the virtual endpoint's
-    /// own nominal-rate preference. Native hardware buffer negotiation remains
-    /// the prepared device transaction's responsibility; no HAL setter runs here.
+    /// Stages a user-selected DSP buffer while retaining the virtual endpoint's own
+    /// nominal-rate preference. Native hardware buffer negotiation remains the prepared
+    /// device transaction's responsibility; no HAL setter runs here.
     /// # Errors
-    /// Rejects unsupported geometry, preference staging/commit failures, or a
-    /// processing owner that does not acknowledge suspension.
-    pub fn reconfigure_routing_buffer(
+    /// Rejects unsupported geometry, a preference that cannot be staged, or a processing
+    /// owner that does not acknowledge suspension.
+    pub fn prepare_routing_buffer(
         &self,
         requested: RenderFormat,
-    ) -> Result<(), mixrelay_audio_io::HostAudioBackendError> {
-        use mixrelay_audio_io::HostAudioBackendError;
+    ) -> Result<Box<dyn PreparedSessionFormat + '_>, HostAudioBackendError> {
         if !self.supports_routing_format(requested) {
             return Err(HostAudioBackendError::CapabilityUnavailable {
                 capability: "routing buffer format".into(),
@@ -177,27 +209,27 @@ impl AdapterRuntimeStatus {
             ),
             block_frames: requested.block_frames,
         };
+        self.prepare(saved, Some(requested.sample_rate))
+    }
+
+    /// Stages `saved` before suspending, so a preference that cannot even be written is
+    /// rejected while audio still runs.
+    fn prepare(
+        &self,
+        saved: RenderFormat,
+        routing_rate: Option<u32>,
+    ) -> Result<Box<dyn PreparedSessionFormat + '_>, HostAudioBackendError> {
         let staged = self.stage_preferences(saved).map_err(|message| {
             self.preferences_error.store(true, Ordering::Release);
             HostAudioBackendError::BackendFailure { message }
         })?;
         self.pause_at_boundary()?;
-        if let Some(staged) = staged {
-            staged.commit().map_err(|error| {
-                self.preferences_error.store(true, Ordering::Release);
-                HostAudioBackendError::BackendFailure {
-                    message: error.to_string(),
-                }
-            })?;
-        }
-        if self.preferences.is_some() {
-            self.preferred_format
-                .store(pack_format(saved), Ordering::Release);
-        }
-        self.observe_routing_clock(true, Some(requested.sample_rate));
-        self.preferences_error.store(false, Ordering::Release);
-        self.failed.store(false, Ordering::Release);
-        Ok(())
+        Ok(Box::new(PreparedFormat {
+            status: self,
+            staged,
+            saved,
+            routing_rate,
+        }))
     }
 
     pub(super) fn preferred_format(&self) -> Option<SessionFormat> {
@@ -229,7 +261,6 @@ impl SessionFormatBackend for AdapterRuntimeStatus {
         &self,
         requested: RenderFormat,
     ) -> Result<(), mixrelay_audio_io::HostAudioBackendError> {
-        use mixrelay_audio_io::HostAudioBackendError;
         if !self.supports_format(requested) || !self.native.follows_rate() {
             return Err(HostAudioBackendError::CapabilityUnavailable {
                 capability: "external format following".into(),
@@ -268,11 +299,10 @@ impl SessionFormatBackend for AdapterRuntimeStatus {
         self.failed.store(false, Ordering::Release);
         Ok(())
     }
-    fn reconfigure(
+    fn prepare_format(
         &self,
         requested: RenderFormat,
-    ) -> Result<(), mixrelay_audio_io::HostAudioBackendError> {
-        use mixrelay_audio_io::HostAudioBackendError;
+    ) -> Result<Box<dyn PreparedSessionFormat + '_>, HostAudioBackendError> {
         if !self.supports_format(requested) || !self.profile.capabilities.can_reconfigure_live {
             return Err(HostAudioBackendError::CapabilityUnavailable {
                 capability: "requested native session format".into(),
@@ -283,27 +313,7 @@ impl SessionFormatBackend for AdapterRuntimeStatus {
                 capability: "live format reconfiguration".into(),
             });
         }
-        // Serialize and sync the new preference before suspending audio; the graph
-        // format changes when the caller publishes the prepared plan, not here.
-        let staged = self.stage_preferences(requested).map_err(|message| {
-            self.preferences_error.store(true, Ordering::Release);
-            HostAudioBackendError::BackendFailure { message }
-        })?;
-        self.pause_at_boundary()?;
-        if let Some(staged) = staged {
-            staged.commit().map_err(|error| {
-                self.preferences_error.store(true, Ordering::Release);
-                HostAudioBackendError::BackendFailure {
-                    message: format!("session preferences could not be committed: {error}"),
-                }
-            })?;
-        }
-        if self.preferences.is_some() {
-            self.preferred_format
-                .store(pack_format(requested), Ordering::Release);
-        }
-        self.preferences_error.store(false, Ordering::Release);
-        self.failed.store(false, Ordering::Release);
-        Ok(())
+        // The graph format changes when the caller publishes the prepared plan, not here.
+        self.prepare(requested, None)
     }
 }

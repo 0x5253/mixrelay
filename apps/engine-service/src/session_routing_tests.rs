@@ -101,7 +101,7 @@ fn hardware_buffer_persists_without_rewriting_virtual_rate_preference() {
             sample_rate: 96_000,
             block_frames: frames,
         };
-        status.reconfigure_routing_buffer(requested).unwrap();
+        status.prepare_routing_buffer(requested).unwrap().commit();
         status.activate_format(requested);
         status.resume();
         let saved = status
@@ -141,12 +141,12 @@ fn routing_buffer_persistence_error_is_not_reported_as_success() {
         sample_rate: 96_000,
         block_frames: 64,
     };
-    assert!(status.reconfigure_routing_buffer(requested).is_err());
+    assert!(status.prepare_routing_buffer(requested).is_err());
     assert!(!status.pause_requested());
     assert_eq!(status.test_preferred_format(), None);
     assert!(
         status
-            .reconfigure_routing_buffer(RenderFormat {
+            .prepare_routing_buffer(RenderFormat {
                 block_frames: 33,
                 ..requested
             })
