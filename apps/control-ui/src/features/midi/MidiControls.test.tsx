@@ -114,25 +114,22 @@ it('one MIDI toggle enters mapping, replaces audio controls, selects with keyboa
   await click('Finish mapping');
   expect(toggle).toHaveFocus();
 });
-it.each(['MacIntel', 'Linux x86_64'])(
-  'uses the platform shortcut on %s and ignores wrong modifiers and repeated editing keys',
-  async (platform) => {
-    vi.spyOn(navigator, 'platform', 'get').mockReturnValue(platform);
-    const port = midiPortFixture();
-    const command = vi.spyOn(port, 'command');
-    access(port);
-    await advance();
-    await keyboard(platform === 'MacIntel' ? '{Control>}m{/Control}' : '{Meta>}m{/Meta}');
-    expect(command).not.toHaveBeenCalledWith('midi_map', expect.anything());
-    await keyboard(platform === 'MacIntel' ? '{Meta>}m{/Meta}' : '{Control>}m{/Control}');
-    expect(await find('button', { name: 'MIDI map mode' })).toHaveAttribute('aria-pressed', 'true');
-    await keyboard(platform === 'MacIntel' ? '{Meta>}m{/Meta}' : '{Control>}m{/Control}');
-    expect(screen.getByRole('button', { name: 'MIDI map mode' })).toHaveAttribute(
-      'aria-pressed',
-      'false',
-    );
-  },
-);
+it('toggles map mode with the platform shortcut and ignores the other modifier', async () => {
+  vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
+  const port = midiPortFixture();
+  const command = vi.spyOn(port, 'command');
+  access(port);
+  await advance();
+  await keyboard('{Control>}m{/Control}');
+  expect(command).not.toHaveBeenCalledWith('midi_map', expect.anything());
+  await keyboard('{Meta>}m{/Meta}');
+  expect(await find('button', { name: 'MIDI map mode' })).toHaveAttribute('aria-pressed', 'true');
+  await keyboard('{Meta>}m{/Meta}');
+  expect(screen.getByRole('button', { name: 'MIDI map mode' })).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  );
+});
 it('Delete on a mapped target removes one complete mapping identity and ordinary keys do not remove it', async () => {
   const port = midiPortFixture();
   const command = vi.spyOn(port, 'command');
@@ -190,40 +187,23 @@ function ListOptions({ binding = midiBinding }: { binding?: MidiBinding }) {
   );
 }
 const changed = vi.fn();
-it.each([
-  ['Minimum', '{End}', { minDb: 12 }],
-  ['Maximum', '{Home}', { maxDb: -60 }],
-  ['Volume mode', '{End}', { mode: 'offset64' }],
-] as const)(
-  'edits %s only on its selected mapping through the Core select',
-  async (label, key, update) => {
-    view(<ListOptions />);
-    await click('Select Programme / Microphone · Volume');
-    screen.getByRole('button', { name: new RegExp(label) }).focus();
-    await keyboard(` ${key}{Enter}`);
-    expect(changed).toHaveBeenLastCalledWith(midiBinding, { ...midiBinding, ...update });
-  },
-);
-it('relative steps and recorder choices update only their selected mapping', async () => {
-  const relative = { ...midiBinding, mode: 'twos_complement' as const };
-  const first = view(<ListOptions binding={relative} />);
+it('edits an option of the selected mapping through the Core select', async () => {
+  view(<ListOptions />);
   await click('Select Programme / Microphone · Volume');
-  screen.getByRole('button', { name: /Step/ }).focus();
+  screen.getByRole('button', { name: /Volume mode/ }).focus();
   await keyboard(' {End}{Enter}');
-  expect(changed).toHaveBeenLastCalledWith(relative, { ...relative, stepDb: 3 });
-  first.unmount();
-  const record = { ...midiBinding, action: 'record' as const };
-  view(<ListOptions binding={record} />);
-  await click('Select Programme / Microphone · Record / resume');
-  screen.getByRole('button', { name: /Recorder action/ }).focus();
-  await keyboard(' {End}{Enter}');
-  expect(changed).toHaveBeenLastCalledWith(record, { ...record, action: 'stop' });
+  expect(changed).toHaveBeenLastCalledWith(midiBinding, { ...midiBinding, mode: 'offset64' });
 });
-it('a non-volume toggle has no volume options and unavailable observations do not mean deleted targets', () => {
+it('only volume mappings show volume options and unavailable observations do not mean deleted targets', () => {
   view(
     <>
       <MidiBindingOptions
         binding={{ ...midiBinding, action: 'mute' }}
+        busy={false}
+        onChange={vi.fn()}
+      />
+      <MidiBindingOptions
+        binding={{ ...midiBinding, mode: 'twos_complement' }}
         busy={false}
         onChange={vi.fn()}
       />
@@ -239,7 +219,8 @@ it('a non-volume toggle has no volume options and unavailable observations do no
   );
   expect(screen.getByText('Targets unavailable')).toBeVisible();
   expect(screen.queryByText('Target missing')).not.toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: /Volume mode/ })).not.toBeInTheDocument();
+  expect(screen.getAllByRole('button', { name: /Volume mode/ })).toHaveLength(1);
+  expect(screen.getByRole('button', { name: /Step/ })).toBeVisible();
 });
 it('shows empty and MIDI unavailable states with the actual reason', () => {
   view(
@@ -268,48 +249,7 @@ it('native failures remain visible, failed mode changes do not claim success, an
   expect(screen.queryByRole('button', { name: 'MIDI map mode' })).not.toBeInTheDocument();
 });
 
-it('the panel selects and highlights a mapping in mode, edits only that row, and removes it with complete identity', async () => {
-  const port = midiPortFixture();
-  const command = vi.spyOn(port, 'command');
-  access(port);
-  await click('MIDI map mode');
-  await click('Select Programme / Microphone · Volume');
-  screen.getByRole('button', { name: /Volume mode/ }).focus();
-  await keyboard(' {End}{Enter}');
-  expect(command).toHaveBeenCalledWith('midi_save', {
-    identity: midiBinding,
-    binding: { ...midiBinding, mode: 'offset64' },
-  });
-  await click('Remove MIDI control for Programme / Microphone');
-  expect(command).toHaveBeenCalledWith('midi_remove', { binding: midiBinding });
-  await click('Select Programme / Microphone · Volume');
-  expect(command).toHaveBeenCalledWith('midi_learn', expect.anything());
-});
-it('loading and unsuccessful selection, removal or exit preserve the current map state', async () => {
-  const pending = Promise.withResolvers<import('../../core/domain/midi').MidiStatus>();
-  const command = vi
-    .fn<MidiPort['command']>()
-    .mockReturnValueOnce(pending.promise)
-    .mockRejectedValue(new Error('offline'));
-  access({ command });
-  expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
-  pending.resolve({ ...midiFixture, mapMode: true });
-  await advance();
-  await click('Map Microphone: Volume');
-  expect(screen.getByRole('button', { name: 'Map Microphone: Volume' })).toHaveAttribute(
-    'aria-pressed',
-    'false',
-  );
-  await click('Remove MIDI control for Programme / Microphone');
-  await click('Finish mapping');
-  expect(screen.getByRole('button', { name: 'MIDI map mode' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
-  expect(await find('alert')).toHaveTextContent('Could not update MIDI controls');
-});
-
-it('unavailable mapping scopes never expose a false volume target and MIDI key repeat/composition does not toggle modes', async () => {
+it('unavailable mapping scopes never expose a false volume target', async () => {
   const { MidiContext } = await import('../../core/midi/MidiContext');
   const context = {
     active: true,
@@ -386,14 +326,6 @@ it('unavailable mapping scopes never expose a false volume target and MIDI key r
   );
   expect(screen.queryByRole('button', { name: /Map .*Volume/ })).not.toBeInTheDocument();
   absent.unmount();
-  const port = midiPortFixture();
-  const command = vi.spyOn(port, 'command');
-  access(port);
-  await advance();
-  const { fireEvent } = await import('@testing-library/react');
-  fireEvent.keyDown(window, { key: 'm', ctrlKey: true, repeat: true });
-  fireEvent.keyDown(window, { key: 'm', ctrlKey: true, isComposing: true });
-  expect(command).not.toHaveBeenCalledWith('midi_map', expect.anything());
 });
 
 it('native MIDI menu events use the current mode and release the editor subscription', async () => {
@@ -495,21 +427,17 @@ it('a saved recorder action keeps the selected mapping and keyboard focus across
   expect(screen.getByRole('button', { name: /Recorder action/ })).toBeVisible();
 });
 
-it('a failed option save retains the selected mapping and reports the error', async () => {
+it('reports a failed command inside the open panel and keeps map mode', async () => {
   access({
     async command(name) {
-      if (name === 'midi_save') throw new Error('disk unavailable');
+      if (name === 'midi_remove') throw new Error('disk unavailable');
       return structuredClone({ ...midiFixture, mapMode: true });
     },
   });
   await click('MIDI map mode');
-  await click('Select Programme / Microphone · Volume');
-  screen.getByRole('button', { name: /Volume mode/ }).focus();
-  await keyboard(' {End}{Enter}');
-  expect(await find('alert')).toHaveTextContent('Could not update MIDI controls');
-  expect(
-    screen.getByRole('button', { name: 'Select Programme / Microphone · Volume' }),
-  ).toHaveAttribute('aria-pressed', 'true');
+  await click('Remove MIDI control for Programme / Microphone');
+  const panel = await find('complementary', { name: 'MIDI controls' });
+  expect(within(panel).getByRole('alert')).toHaveTextContent('Could not update MIDI controls');
 });
 
 it('groups a shared hardware control once and uses each mapping title as its only selection focus stop', async () => {

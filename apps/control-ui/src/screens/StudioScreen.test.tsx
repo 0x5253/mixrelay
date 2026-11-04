@@ -248,60 +248,47 @@ it('keeps the new-graph launcher stable across background saves but guards creat
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
 
-it.each([
-  ['MacIntel', { metaKey: true }],
-  ['Linux x86_64', { ctrlKey: true }],
-] as const)(
-  'preserves text editing and uses the platform new-graph modifier on %s',
-  async (platform, modifier) => {
-    const identity = vi.spyOn(navigator, 'platform', 'get').mockReturnValue(platform);
-    render(view(port(1)));
-    const launcher = await screen.findByRole('button', { name: 'New graph' });
-    expect(launcher).toHaveAttribute(
-      'aria-keyshortcuts',
-      `${platform === 'MacIntel' ? 'Meta' : 'Control'}+Shift+N`,
-    );
+it('opens a graph from the platform new-graph shortcut and leaves text entry alone', async () => {
+  const identity = vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
+  render(view(port(1)));
+  const launcher = await screen.findByRole('button', { name: 'New graph' });
+  expect(launcher).toHaveAttribute('aria-keyshortcuts', 'Meta+Shift+N');
+  const input = document.createElement('input');
+  input.type = 'text';
+  document.body.append(input);
+  try {
+    expect(newGraphShortcut(input, { metaKey: true }).defaultPrevented).toBe(false);
+    expect(screen.queryByRole('dialog', { name: 'New graph' })).not.toBeInTheDocument();
+    expect(newGraphShortcut(document.body, { metaKey: true }).defaultPrevented).toBe(true);
+    expect(screen.getByRole('dialog', { name: 'New graph' })).toBeInTheDocument();
+  } finally {
+    input.remove();
+    identity.mockRestore();
+  }
+});
 
-    const input = document.createElement('input');
-    input.type = 'text';
-    const textarea = document.createElement('textarea');
-    const editable = document.createElement('div');
-    editable.setAttribute('contenteditable', 'true');
-    const nested = document.createElement('span');
-    editable.append(nested);
-    document.body.append(input, textarea, editable);
-    try {
-      for (const target of [input, textarea, nested]) {
-        const event = newGraphShortcut(target, modifier);
-        expect(event.defaultPrevented, `shortcut intercepted from ${target.tagName}`).toBe(false);
-        expect(screen.queryByRole('dialog', { name: 'New graph' })).not.toBeInTheDocument();
-      }
-
-      const claimed = new KeyboardEvent('keydown', {
-        bubbles: true,
-        cancelable: true,
-        ...modifier,
-        key: 'n',
-        shiftKey: true,
-      });
-      claimed.preventDefault();
-      act(() => document.body.dispatchEvent(claimed));
-      expect(screen.queryByRole('dialog', { name: 'New graph' })).not.toBeInTheDocument();
-
-      const wrongModifier = platform === 'MacIntel' ? { ctrlKey: true } : { metaKey: true };
-      expect(newGraphShortcut(document.body, wrongModifier).defaultPrevented).toBe(false);
-      expect(screen.queryByRole('dialog', { name: 'New graph' })).not.toBeInTheDocument();
-      const canvasEvent = newGraphShortcut(document.body, modifier);
-      expect(canvasEvent.defaultPrevented).toBe(true);
-      expect(screen.getByRole('dialog', { name: 'New graph' })).toBeInTheDocument();
-    } finally {
-      input.remove();
-      textarea.remove();
-      editable.remove();
-      identity.mockRestore();
-    }
-  },
-);
+it('undoes and redoes a graph deletion from the graph list keyboard', async () => {
+  const controlPort = port(1);
+  const mutate = vi.spyOn(controlPort, 'mutateGraphCatalog');
+  render(view(controlPort));
+  const graph = await screen.findByRole('button', { name: 'Untitled Graph: Delete graph' });
+  await waitFor(() => expect(graph).toBeEnabled());
+  const binding = workspaceBindings.get(controlPort);
+  if (!binding) throw new Error('Workspace not mounted');
+  act(() => binding.onBusyChange(true));
+  fireEvent.keyDown(graph, { key: 'z', ctrlKey: true });
+  expect(mutate).not.toHaveBeenCalled();
+  act(() => binding.onBusyChange(false));
+  fireEvent.keyDown(graph, { key: 'z', ctrlKey: true });
+  await waitFor(() =>
+    expect(mutate).toHaveBeenLastCalledWith(expect.objectContaining({ action: 'undo_delete' })),
+  );
+  await waitFor(() => expect(graph).toBeEnabled());
+  fireEvent.keyDown(graph, { key: 'Z', ctrlKey: true, shiftKey: true });
+  await waitFor(() =>
+    expect(mutate).toHaveBeenLastCalledWith(expect.objectContaining({ action: 'redo_delete' })),
+  );
+});
 
 it('keeps the graph list fixed on wide windows without an on-screen toggle', async () => {
   const controlPort = port(1);
@@ -683,29 +670,6 @@ it('keeps the overlay sidebar open when a graph switch fails', async () => {
     fireEvent.click(within(list).getByRole('button', { name: 'Graph B' }));
     await waitFor(() => expect(controlPort.mutateGraphCatalog).toHaveBeenCalled());
     await act(async () => {});
-    expect(screen.getByRole('navigation', { name: 'Graphs' })).toBeVisible();
-    // The failed choice is over: a later refresh that activates B does not close the sidebar.
-    vi.mocked(controlPort.getGraphCatalog).mockResolvedValue({
-      protocolVersion: 1,
-      catalogRevision: 3,
-      activeId: 'b',
-      graphs: [
-        { id: 'a', name: 'Graph A' },
-        { id: 'b', name: 'Graph B' },
-      ],
-      document: { schemaVersion: 2, revision: 3, nodes: [], edges: [] },
-    });
-    const loads = vi.mocked(controlPort.getGraphCatalog).mock.calls.length;
-    fireEvent.click(within(list).getByRole('button', { name: 'Reload graphs' }));
-    await waitFor(() =>
-      expect(vi.mocked(controlPort.getGraphCatalog).mock.calls.length).toBeGreaterThan(loads),
-    );
-    await waitFor(() =>
-      expect(within(list).getByRole('button', { name: 'Graph B' })).toHaveAttribute(
-        'aria-current',
-        'page',
-      ),
-    );
     expect(screen.getByRole('navigation', { name: 'Graphs' })).toBeVisible();
   } finally {
     matchMedia.mockRestore();

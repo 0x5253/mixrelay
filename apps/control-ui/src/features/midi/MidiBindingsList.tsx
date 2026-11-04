@@ -4,19 +4,18 @@ import {
   bindingKey,
   bindingLabel,
   bindingTarget,
-  controlKey,
   disconnected,
   type MidiAssignment,
   type MidiBinding,
   type MidiControl,
   type MidiStatus,
-  sameTarget,
 } from '../../core/domain/midi';
 import { ActionButton } from '../../core/ui/ActionButton';
 import { ContentSection } from '../../core/ui/ContentSection';
 import { InlineNotice } from '../../core/ui/InlineNotice';
 import { Stack } from '../../core/ui/Stack';
 import { Text } from '../../core/ui/Text';
+import { groupBindings, isChosenBinding } from './domain/midiBindingGroups';
 import { MidiBindingOptions } from './MidiBindingOptions';
 
 export function MidiBindingsList({
@@ -52,14 +51,7 @@ export function MidiBindingsList({
               binding={binding}
               status={status}
               busy={busy}
-              chosen={
-                selectedKey === bindingKey(binding) &&
-                Boolean(
-                  selected &&
-                    sameTarget(selected.target, binding.target) &&
-                    selected.action === binding.action,
-                )
-              }
+              chosen={isChosenBinding(binding, selectedKey, selected)}
               onSelect={() => {
                 setSelectedKey(bindingKey(binding));
                 onSelect({ ...binding, label: bindingLabel(binding) });
@@ -155,15 +147,4 @@ function BindingStatus({ status, binding }: { status: MidiStatus; binding: MidiB
       ) : null}
     </>
   );
-}
-
-function groupBindings(bindings: MidiBinding[]) {
-  const groups = new Map<string, { control: MidiControl; bindings: MidiBinding[] }>();
-  for (const binding of bindings) {
-    const key = controlKey(binding.control);
-    const group = groups.get(key);
-    if (group) group.bindings.push(binding);
-    else groups.set(key, { control: binding.control, bindings: [binding] });
-  }
-  return groups;
 }
