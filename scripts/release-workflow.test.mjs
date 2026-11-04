@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 const workflow = name => readFileSync(new URL(`../.github/workflows/${name}.yml`, import.meta.url), 'utf8');
 
@@ -106,14 +110,20 @@ test('every bundled resource is inside the Linux build container context', () =>
 });
 
 test('pull requests build every product unsigned and never reach signing or notarization', () => {
-  const source = workflow('pr-build');
-  assert.match(source, /^on:\n  pull_request:\n  workflow_dispatch:\n\n/m);
-  assert.match(source, /uses: \.\/\.github\/workflows\/build-linux-release\.yml/);
-  assert.match(source, /APPLE_SIGNING_IDENTITY: '-'\n\s+MIXRELAY_CODESIGN_IDENTITY: '-'/);
-  assert.match(source, /zsh scripts\/build-macos-universal-app\.sh/);
-  assert.match(source, /mixrelay-macos-hal-bundle/);
-  const code = source.split('\n').filter(line => !line.trimStart().startsWith('#')).join('\n');
-  assert.doesNotMatch(code, /secrets\.|vars\.|environment:|prepare-ci-macos-signing|release-macos|notar|productbuild|contents: write/i);
+  const linux = workflow('pr-build');
+  assert.match(linux, /^on:\n  pull_request:\n  workflow_dispatch:\n\n/m);
+  assert.match(linux, /uses: \.\/\.github\/workflows\/build-linux-release\.yml/);
+  // The arm64 pull request leg of native-lab builds the unsigned macOS app on its runner.
+  const macos = workflow('native-lab');
+  const build = macos.slice(macos.indexOf('- name: Build the universal app'));
+  assert.match(build, /if: github\.event_name == 'pull_request' && matrix\.arch == 'arm64'/);
+  assert.match(build, /APPLE_SIGNING_IDENTITY: '-'\n\s+MIXRELAY_CODESIGN_IDENTITY: '-'/);
+  assert.match(build, /zsh scripts\/build-macos-universal-app\.sh/);
+  assert.match(build, /mixrelay-macos-hal-bundle/);
+  for (const source of [linux, macos]) {
+    const code = source.split('\n').filter(line => !line.trimStart().startsWith('#')).join('\n');
+    assert.doesNotMatch(code, /secrets\.|vars\.|environment:|prepare-ci-macos-signing|release-macos|notar|productbuild|contents: write/i);
+  }
   // Only release.yml may reach the signing environment.
   for (const name of readdirSync(new URL('../.github/workflows/', import.meta.url)).filter(name => name.endsWith('.yml') && name !== 'release.yml')) {
     const other = readFileSync(new URL(`../.github/workflows/${name}`, import.meta.url), 'utf8');
@@ -124,15 +134,17 @@ test('pull requests build every product unsigned and never reach signing or nota
 });
 
 test('macOS builds select Xcode 26 before compiling Icon Composer assets', () => {
-  for (const name of ['release', 'pr-build']) {
-    const source = workflow(name);
-    const select = source.indexOf('ls -d /Applications/Xcode_26*.app');
-    assert.ok(select > 0, name);
-    assert.ok(source.indexOf('DEVELOPER_DIR=$xcode/Contents/Developer" >> "$GITHUB_ENV"') > select, name);
-    assert.ok(select < source.indexOf('Install the universal build toolchain'), name);
-    assert.match(source, /runs-on: macos-26\n/, name);
-    assert.doesNotMatch(source, /runs-on: macos-1[0-9]/, name);
-  }
+  const release = workflow('release');
+  const select = release.indexOf('ls -d /Applications/Xcode_26*.app');
+  assert.ok(select > 0);
+  assert.ok(release.indexOf('DEVELOPER_DIR=$xcode/Contents/Developer" >> "$GITHUB_ENV"') > select);
+  assert.ok(select < release.indexOf('Install the universal build toolchain'));
+  assert.match(release, /runs-on: macos-26\n/);
+  assert.doesNotMatch(release, /runs-on: macos-1[0-9]/);
+  // The review build accepts any Xcode from 26 on, whose actool reads Icon Composer files.
+  const lab = workflow('native-lab');
+  const labSelect = lab.indexOf("awk -F'[_.]' '$2 >= 26'");
+  assert.ok(labSelect > 0 && labSelect < lab.indexOf('- name: Build the universal app'));
 });
 
 test('only a merged release PR tags a version and starts the official build', () => {
@@ -172,11 +184,40 @@ test('each pull request workflow reports one required check that skipped work pa
     const jobs = [...source.slice(source.indexOf('\njobs:\n')).matchAll(/^  ([a-z][a-z0-9_-]*):$/gm)].map(match => match[1]).filter(job => job !== 'passed');
     assert.deepEqual(passed.match(/needs: \[([^\]]+)\]/)[1].split(', ').sort(), jobs.sort(), name);
     // Reads every job of the run: a matrix leg that never got a runner is invisible through `needs`.
-    assert.match(passed, /\n    permissions:\n      actions: read\n/, name);
-    assert.match(passed, /actions\/runs\/\$GITHUB_RUN_ID\/attempts\/\$GITHUB_RUN_ATTEMPT\/jobs" --paginate/, name);
+    assert.match(passed, /\n    permissions:\n      actions: read\n      contents: read\n/, name);
+    assert.match(passed, /run: bash scripts\/ci\/require-jobs-passed\.sh\n/, name);
     assert.equal(passed.match(/SELF: (.+)\n/)[1], passed.match(/\n    name: (.+)\n/)[1], name);
-    assert.ok(passed.includes(`$3 != "success" && $3 != "skipped"`), name);
     assert.doesNotMatch(passed, /needs\.\*\.result/, name);
+  }
+  const gate = readFileSync(new URL('ci/require-jobs-passed.sh', import.meta.url), 'utf8');
+  assert.match(gate, /actions\/runs\/\$GITHUB_RUN_ID\/attempts\/\$GITHUB_RUN_ATTEMPT\/jobs" --paginate/);
+  assert.ok(gate.includes(`$3 != "success" && $3 != "skipped"`));
+  // A reusable workflow's jobs can still read as in progress when `needs` releases the gate.
+  assert.match(gate, /for _ in \$\(seq 30\); do[\s\S]*\$2 != "completed"[\s\S]*sleep 10\ndone/);
+});
+
+test('the required-check gate waits for jobs to settle and rejects any unfinished or failed job', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'jobs-gate-'));
+  try {
+    const bin = join(directory, 'bin');
+    mkdirSync(bin);
+    const responses = join(directory, 'responses');
+    // Each call to the fake gh prints the next prepared listing.
+    writeFileSync(join(bin, 'gh'), `#!/bin/sh\nn=$(cat "${responses}/count" 2>/dev/null || echo 0)\nnext=$((n+1))\n[ -f "${responses}/$next" ] || next=$n\necho $next > "${responses}/count"\ncat "${responses}/$next"\n`, { mode: 0o755 });
+    writeFileSync(join(bin, 'sleep'), '#!/bin/sh\n', { mode: 0o755 });
+    const gate = fileURLToPath(new URL('ci/require-jobs-passed.sh', import.meta.url));
+    const run = (...listings) => {
+      rmSync(responses, { recursive: true, force: true });
+      mkdirSync(responses);
+      listings.forEach((listing, index) => writeFileSync(join(responses, String(index + 1)), listing));
+      return spawnSync('bash', [gate], { encoding: 'utf8', env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, SELF: 'Gate',
+        GITHUB_REPOSITORY: 'o/r', GITHUB_RUN_ID: '1', GITHUB_RUN_ATTEMPT: '1' } });
+    };
+    assert.equal(run('a\tin_progress\tnull\n', 'a\tcompleted\tsuccess\nb\tcompleted\tskipped\n').status, 0);
+    assert.notEqual(run('a\tcompleted\tsuccess\nb\tcompleted\tcancelled\n').status, 0);
+    assert.notEqual(run('a\tqueued\tnull\n').status, 0);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
   }
 });
 

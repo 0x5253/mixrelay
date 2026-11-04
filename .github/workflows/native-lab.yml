@@ -43,7 +43,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.support.outputs.macos) }}
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 60
+    timeout-minutes: 120
     # sccache keeps compiled crates in the GitHub Actions cache between runs. Incremental
     # compilation is off so workspace crates are cacheable too.
     env:
@@ -79,6 +79,25 @@ jobs:
       # including `pnpm test:scripts` and `pnpm probe:macos-roundtrip --self-test`.
       - run: node --test scripts/lab/native-check.test.mjs scripts/lab/vm.test.mjs scripts/lab/guest-scripts.test.mjs scripts/lab/pipewire-cli.test.mjs
       - run: pnpm lab:test
+      # Pull requests also build the unsigned universal app on the arm64 leg, so a pull
+      # request holds two of the account's five macOS runners instead of three.
+      # Icon Composer (.icon) assets need the actool that ships with Xcode 26 or later.
+      # Releases pin Xcode 26 on macOS 26; this review build takes the newest Xcode it finds.
+      - name: Select Xcode 26 or later for Icon Composer assets
+        if: github.event_name == 'pull_request' && matrix.arch == 'arm64'
+        run: |
+          xcode="$(ls -d /Applications/Xcode_*.app 2>/dev/null | awk -F'[_.]' '$2 >= 26' | sort -V | tail -n 1)"
+          [[ -n "$xcode" ]] || { ls -d /Applications/Xcode*.app; echo "Xcode 26 or later is required" >&2; exit 1; }
+          echo "DEVELOPER_DIR=$xcode/Contents/Developer" >> "$GITHUB_ENV"
+          DEVELOPER_DIR="$xcode/Contents/Developer" xcodebuild -version
+      - name: Build the universal app, remover and HAL driver ad-hoc signed
+        if: github.event_name == 'pull_request' && matrix.arch == 'arm64'
+        env:
+          APPLE_SIGNING_IDENTITY: '-'
+          MIXRELAY_CODESIGN_IDENTITY: '-'
+        run: |
+          zsh scripts/build-macos-universal-app.sh
+          cargo run --locked -p mixrelay-macos-hal-bundle -- --output target/universal-apple-darwin/release/hal
       - name: Compiler cache statistics
         if: always()
         run: sccache --show-stats
@@ -163,18 +182,16 @@ jobs:
     if: always()
     needs: [support, native, linux, streamdeck]
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 10
     permissions:
       actions: read
+      contents: read
     steps:
-      # A matrix leg that never got a runner is not reported as cancelled through `needs`,
-      # so read every job of this run attempt and accept only success or skipped.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts/ci
       - env:
           GH_TOKEN: ${{ github.token }}
           SELF: Native checks passed
-        run: |
-          set -euo pipefail
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs" --paginate \
-            --jq '.jobs[] | select(.name != env.SELF) | "\(.name)\t\(.status)\t\(.conclusion)"' > jobs.tsv
-          cat jobs.tsv
-          ! awk -F'\t' '$2 != "completed" || ($3 != "success" && $3 != "skipped")' jobs.tsv | grep .
+        run: bash scripts/ci/require-jobs-passed.sh
