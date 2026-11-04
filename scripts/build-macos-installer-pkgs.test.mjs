@@ -71,8 +71,8 @@ function assertInstallerReadme(resources) {
   assert.match(rtfText(korean), /^MixRelay\n설치 안내\n/);
   assert.match(rtfText(korean), /시스템 전체의 오디오가 잠시 중단됩니다/);
   assert.match(rtfText(korean), /Mac을 재부팅할 필요는 없습니다/);
-  assert.match(rtfText(korean), /MixRelay 상태 메뉴에서 종료를 선택하면 모든 Driver 장치와 오디오 전달이 중지되며, 장치 설정은 유지됩니다/);
-  assert.match(rtfText(korean), /저장된 설정으로 장치와 오디오 경로를 다시 시작합니다/);
+  assert.match(rtfText(korean), /MixRelay 상태 메뉴에서 종료를 선택하면 모든 Driver 장치와 오디오 라우팅이 중지되며, 장치 설정은 유지됩니다/);
+  assert.match(rtfText(korean), /저장된 설정으로 장치와 오디오 라우팅을 다시 시작합니다/);
   assert.match(rtfText(korean), /MixRelay 앱을 종료하는 것만으로는 Driver가 중지되지 않습니다/);
 }
 

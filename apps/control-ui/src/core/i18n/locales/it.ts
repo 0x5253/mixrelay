@@ -70,7 +70,7 @@ export const it = {
     not_installed: {
       title: 'È necessario MixRelay',
       description:
-        'Installa MixRelay per usare il routing audio, gli effetti e la registrazione. Poi riprova a connetterti.',
+        'Installa MixRelay per usare l’instradamento audio, gli effetti e la registrazione. Poi riprova a connetterti.',
     },
     incompatible: {
       title: 'Aggiorna MixRelay',
@@ -94,12 +94,12 @@ export const it = {
     saveAs: 'Salva con nome…',
   },
   driverManagement: {
-    mixed: 'Diverso',
+    mixed: 'Misto',
     channels: 'Canali',
     bitDepth: 'Profondità di bit',
-    title: 'Impostazioni Driver',
+    title: 'Impostazioni driver',
     loading: 'Lettura del driver…',
-    unavailable: 'Servizio Driver non disponibile.',
+    unavailable: 'Servizio driver non disponibile.',
     name: 'Nome del dispositivo',
     unknown: 'Sconosciuto',
     create: 'Crea dispositivo',
@@ -268,7 +268,7 @@ export const it = {
       'I grafi salvati non sono disponibili. Il grafo esistente non è stato sostituito.',
     reloadGraphs: 'Ricarica grafi',
     graphSaveFailed:
-      'L’audio è attivo, ma impossibile salvare il grafo. Il riavvio può causare la perdita di queste modifiche.',
+      'L’audio è attivo, ma non è stato possibile salvare il grafo. Con il riavvio queste modifiche potrebbero andare perse.',
     graphs: 'Grafi',
     newGraph: 'Nuovo grafo',
     graphName: 'Nome del grafo',
@@ -331,7 +331,7 @@ export const it = {
       },
     },
     nodeName: {
-      title: 'Rinomina nome visualizzato',
+      title: 'Modifica nome visualizzato',
       label: 'Nome visualizzato',
       save: 'Salva',
     },
@@ -421,7 +421,7 @@ export const it = {
       'Rimanda l’audio inviato a MixRelay dalle applicazioni macOS all’ingresso del dispositivo usato da OBS e DAW.',
     canvasLabel: 'Grafo di instradamento I/O virtuale MixRelay',
     ports: {
-      application: "Audio dell'app",
+      application: 'Audio dell’app',
       deviceInput: 'Ingresso dispositivo',
       deviceOutput: 'Uscita dispositivo',
       effectInput: 'Ingresso {{name}}',
@@ -439,7 +439,7 @@ export const it = {
       nodeMoved:
         'Nodo selezionato spostato verso {{direction}}. Nuova posizione: x {{x}}, y {{y}}.',
       directions: {
-        up: "l'alto",
+        up: 'l’alto',
         down: 'il basso',
         left: 'sinistra',
         right: 'destra',
@@ -514,7 +514,7 @@ export const it = {
       graph_binding_unsupported:
         'Questo formato o collegamento audio non è supportato dal dispositivo o processore selezionato.',
       node_not_found: 'Il nodo di destinazione è stato rimosso. Nessun comando è stato applicato.',
-      node_disabled: 'Questo nodo è spento. Abilitalo prima di usare questo controllo.',
+      node_disabled: 'Questo nodo è disabilitato. Abilitalo prima di usare questo controllo.',
       graph_exchange_busy: 'Il motore audio sta ancora attivando il grafo precedente.',
       graph_invalid: 'Il motore ha rifiutato un grafo audio non valido.',
       graph_draft_changed:
@@ -536,7 +536,7 @@ export const it = {
       retry: 'Riprova',
     },
     persistenceWarning:
-      'L’audio è attivo, ma impossibile salvare le modifiche al grafo. Potrebbero andare perse alla chiusura di MixRelay.',
+      'L’audio è attivo, ma non è stato possibile salvare le modifiche al grafo. Potrebbero andare perse alla chiusura di MixRelay.',
     layout: {
       failed:
         'Impossibile salvare o caricare la disposizione dei nodi e la vista. Le modifiche attuali sono conservate.',

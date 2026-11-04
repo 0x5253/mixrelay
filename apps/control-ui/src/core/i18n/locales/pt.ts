@@ -2,26 +2,26 @@ import { effectTranslations } from '../effects';
 export const pt = {
   midi: {
     mapMode: 'Modo de mapeamento MIDI',
-    mapTarget: 'Atribuir {{name}}: {{action}}',
-    selectTarget: 'Selecione um controlo realçado e mova um fader ou prima um botão MIDI.',
-    waitingTarget: '{{name}} · {{action}} — mova um controlo MIDI para atribuir ou substituir.',
+    mapTarget: 'Mapear {{name}}: {{action}}',
+    selectTarget: 'Selecione um controle destacado e mova um fader ou pressione um botão MIDI.',
+    waitingTarget: '{{name}} · {{action}} — mova um controle MIDI para atribuí-lo ou substituí-lo.',
     done: 'Concluir mapeamento',
     selectMapping: 'Selecionar {{name}} · {{action}}',
     recorderAction: 'Ação do gravador',
     min: 'Mínimo',
     max: 'Máximo',
-    empty: 'Sem mapeamentos MIDI. Selecione um controlo realçado para adicionar um.',
+    empty: 'Sem mapeamentos MIDI. Selecione um controle destacado para adicionar um.',
     targetUnavailable: 'Estado dos destinos indisponível',
-    title: 'Controlos MIDI',
-    disconnected: 'Dispositivo desligado',
-    targetMissing: 'Destino em falta',
+    title: 'Controles MIDI',
+    disconnected: 'Dispositivo desconectado',
+    targetMissing: 'Destino ausente',
     unavailable: 'MIDI indisponível',
     mode: 'Modo de volume',
-    pickup: 'Mova o fader até ao nível atual para assumir o controlo.',
+    pickup: 'Mova o fader até o nível atual para assumir o controle.',
     step: 'Incremento',
     remove: 'Remover',
-    removeTarget: 'Remover controlo MIDI de {{name}}',
-    failed: 'Não foi possível alterar os controlos MIDI. Tente novamente.',
+    removeTarget: 'Remover controle MIDI de {{name}}',
+    failed: 'Não foi possível alterar os controles MIDI. Tente novamente.',
     control: '{{device}} · Canal {{channel}} · {{kind}} {{number}}',
     modes: {
       absolute: 'Absoluto (captação suave)',
@@ -79,7 +79,7 @@ export const pt = {
     unavailable: {
       title: 'Não foi possível conectar ao MixRelay',
       description:
-        'O MixRelay não responde ou o mecanismo de áudio não está pronto. Tente conectar novamente.',
+        'O MixRelay não responde ou o motor de áudio não está pronto. Tente conectar novamente.',
     },
     install: 'Instalar MixRelay',
     update: 'Atualizar MixRelay',
@@ -93,7 +93,7 @@ export const pt = {
     saveAs: 'Salvar como…',
   },
   driverManagement: {
-    mixed: 'Diferente',
+    mixed: 'Misto',
     channels: 'Canais',
     bitDepth: 'Profundidade de bits',
     title: 'Configurações do driver',
@@ -108,7 +108,7 @@ export const pt = {
     confirmRemove: 'Remover este dispositivo e as suas configurações salvas.',
     changeFailed: 'Não foi possível alterar o dispositivo. Atualize a lista e tente novamente.',
     saveFailed: 'O dispositivo foi alterado, mas não foi possível salvar as configurações.',
-    deviceMissing: 'Este dispositivo já não existe. Atualize a lista de dispositivos.',
+    deviceMissing: 'Este dispositivo não existe mais. Atualize a lista de dispositivos.',
     openApp: 'Abrir MixRelay',
     appUnavailable: 'O MixRelay não está instalado ou não pôde ser aberto.',
   },
@@ -163,7 +163,7 @@ export const pt = {
     changing: 'Alterando o estado do áudio…',
     pauseFailed: 'Não foi possível pausar ou retomar. Verifique o estado atual.',
     pausedAfterFailures:
-      'O MixRelay pausou o áudio porque o mecanismo parou inesperadamente várias vezes. Verifique as alterações recentes e retome.',
+      'O MixRelay pausou o áudio porque o motor parou inesperadamente várias vezes. Verifique as alterações recentes e retome.',
     pauseNotSaved:
       'Aplicado, mas não foi possível salvar. Pode não ser mantido ao reiniciar o MixRelay.',
     diagnostics: 'Detalhes do áudio',
@@ -179,7 +179,7 @@ export const pt = {
     applying: 'Aplicando…',
     changeNotice: 'Alterar esta configuração interrompe brevemente o áudio.',
     captureUnavailable:
-      'A captura de áudio de aplicações não está disponível na sessão de áudio atual.',
+      'A captura de áudio de aplicativos não está disponível na sessão de áudio atual.',
     changeFailed: 'Não foi possível alterar a sessão de áudio. Verifique o estado do motor.',
     errors: {
       audio_session_processor_state_unavailable:
@@ -219,9 +219,9 @@ export const pt = {
       processing_failed:
         'O processamento de áudio falhou. É possível acessar o motor, mas o áudio parou.',
       application_unavailable:
-        'A fonte de áudio da aplicação selecionada não está disponível. Aguardando o seu retorno.',
+        'A fonte de áudio do aplicativo selecionado não está disponível. Aguardando o seu retorno.',
       application_ambiguous:
-        'Mais de uma fonte de áudio corresponde à aplicação selecionada. Selecione a fonte desejada.',
+        'Mais de uma fonte de áudio corresponde ao aplicativo selecionado. Selecione a fonte desejada.',
       preferences_unavailable:
         'Não foi possível ler ou gravar as configurações de áudio salvas. O motor continua disponível; aplique um formato compatível para salvar novamente.',
       endpoint_preferences_unavailable:
@@ -264,7 +264,7 @@ export const pt = {
     audioPaused: 'Áudio em pausa',
     deleteGraph: 'Excluir grafo',
     deleteGraphNotice:
-      'Eliminar “{{name}}”? O áudio e as gravações serão interrompidos. Na lista de grafos, Command+Z no macOS ou Ctrl+Z no Linux anula; acrescente Shift para refazer. Os ficheiros guardados permanecem.',
+      'Excluir “{{name}}”? O processamento de áudio e as gravações serão interrompidos. Na lista de grafos, use Command+Z no macOS ou Ctrl+Z no Linux para desfazer; adicione Shift para refazer. Os arquivos de espaço de trabalho salvos são mantidos.',
     catalogUnavailable:
       'Os grafos salvos não estão disponíveis. O grafo existente não foi substituído.',
     reloadGraphs: 'Recarregar grafos',
@@ -280,7 +280,7 @@ export const pt = {
     workspace: 'Espaço de trabalho de roteamento',
     signalPathLabel: 'Caminho do sinal do MixRelay',
     capture: 'Captura',
-    captureDescription: 'O áudio das aplicações e do sistema entra aqui.',
+    captureDescription: 'O áudio dos aplicativos e do sistema entra aqui.',
     stream: 'Transmissão',
     streamDescription: 'O OBS recebe a mixagem final deste dispositivo.',
     remote: 'Controle remoto',
@@ -311,7 +311,7 @@ export const pt = {
     },
     nodeStatus: {
       offline: 'Offline',
-      reselectApplication: 'Selecionar a aplicação novamente',
+      reselectApplication: 'Selecionar o aplicativo novamente',
       unknown: 'Estado do áudio desconhecido',
       running: 'Sessão de áudio em execução',
       idle: 'Áudio pronto',
@@ -319,8 +319,8 @@ export const pt = {
       failed: 'Falha no processamento de áudio',
       issues: {
         processing_failed: 'Falha no processamento de áudio',
-        application_unavailable: 'Sessão: aplicação indisponível',
-        application_ambiguous: 'Sessão: seleção de aplicação ambígua',
+        application_unavailable: 'Sessão: aplicativo indisponível',
+        application_ambiguous: 'Sessão: seleção de aplicativo ambígua',
         device_unavailable: 'Sessão: dispositivo indisponível',
         sample_rate_mismatch: 'Sessão: taxas de amostragem diferentes',
         block_size_mismatch: 'Sessão: tamanhos de buffer diferentes',
@@ -375,7 +375,7 @@ export const pt = {
     },
     addNode: 'Adicionar nó',
     emptyCanvas: 'Adicione aplicativos, dispositivos, efeitos e muito mais.',
-    noApplications: 'Não há aplicações em execução',
+    noApplications: 'Não há aplicativos em execução',
     noInputDevices: 'Não há dispositivos de entrada',
     noOutputDevices: 'Não há dispositivos de saída',
     noProcessors: 'Não há efeitos de áudio instalados',
@@ -388,7 +388,7 @@ export const pt = {
       output: 'Saída',
       processor: 'Processador',
       routing: 'Roteamento',
-      runningApplications: 'Aplicações em execução',
+      runningApplications: 'Aplicativos em execução',
       source: 'Fonte',
       utility: 'Utilitário',
       au: 'AU',
@@ -419,7 +419,7 @@ export const pt = {
     },
     title: 'Roteamento de E/S virtual',
     description:
-      'Encaminhe o áudio enviado ao MixRelay pelas aplicações do macOS de volta à entrada do dispositivo usada pelo OBS e pelas DAWs.',
+      'Encaminhe o áudio enviado ao MixRelay pelos aplicativos do macOS de volta à entrada do dispositivo usada pelo OBS e pelas DAWs.',
     canvasLabel: 'Grafo de roteamento de E/S virtual do MixRelay',
     ports: {
       application: 'Áudio do aplicativo',
@@ -452,7 +452,7 @@ export const pt = {
     toggleGain: 'Ganho de −6 dB',
     apply: 'Aplicar',
     nodes: {
-      application: 'Aplicação',
+      application: 'Aplicativo',
       attack: 'Ataque',
       audioInput: 'Entrada padrão',
       audioOutput: 'Saída padrão',
@@ -472,14 +472,14 @@ export const pt = {
       limiter: 'Limitador',
       limiterDescription: 'Evitar picos de saída acima do limite máximo',
       makeupGain: 'Ganho de compensação',
-      mixer: 'Misturador',
+      mixer: 'Mixer',
       options: 'Opções',
       virtualSinkPort: 'Áudio para o dispositivo',
       processor: 'Processador',
       processorLayoutUnavailable: 'Configuração de canais do processador indisponível',
       outputGain: 'Ganho de saída',
       renderChannels: 'Entradas',
-      ratio: 'Razão',
+      ratio: 'Proporção',
       release: 'Liberação',
       sourceGain: 'Ganho da fonte',
       threshold: 'Limiar',
@@ -487,7 +487,7 @@ export const pt = {
     },
     states: {
       awaitingMicrophonePermission:
-        'A aguardar permissão do microfone — escolha Permitir na caixa de diálogo do macOS',
+        'Aguardando permissão do microfone — escolha “Permitir” na caixa de diálogo do macOS',
       active: 'Ativo',
       blocked: 'Não aplicado',
       applying: 'Aplicando',
@@ -498,17 +498,17 @@ export const pt = {
     },
     errors: {
       audio_permission_pending:
-        'A aguardar a permissão do microfone. Permita o acesso no macOS e tente novamente.',
+        'Aguardando a permissão do microfone. Permita o acesso no macOS e tente novamente.',
       audio_permission_denied:
-        'O acesso ao microfone foi negado. Permita-o em Privacidade e Segurança do macOS e tente novamente.',
+        'O acesso ao microfone foi negado. Permita-o em “Privacidade e Segurança” do macOS e tente novamente.',
       audio_device_disconnected:
         'Não foi possível aplicar a configuração do dispositivo de áudio virtual.',
       audio_source_unavailable:
-        'A captura de áudio de aplicações não está disponível. Verifique a aplicação e a permissão de captura de áudio.',
+        'A captura de áudio de aplicativos não está disponível. Verifique o aplicativo e a permissão de captura de áudio.',
       control_unavailable: 'O motor de áudio local não está disponível.',
       control_request_failed: 'A solicitação de controle de áudio falhou.',
       engine_replaced:
-        'O mecanismo de áudio reiniciou antes desta alteração. Nada foi aplicado. Tente novamente.',
+        'O motor de áudio reiniciou antes desta alteração. Nada foi aplicado. Tente novamente.',
       invalid_operation_id: 'A solicitação de controle de áudio era inválida e não foi aplicada.',
       graph_binding_unsupported:
         'O dispositivo ou processador selecionado não é compatível com este formato de áudio ou conexão.',
@@ -532,7 +532,7 @@ export const pt = {
     },
     inventory: {
       failed:
-        'Não foi possível atualizar as aplicações e os dispositivos de áudio. Exibindo a última lista disponível.',
+        'Não foi possível atualizar os aplicativos e os dispositivos de áudio. Exibindo a última lista disponível.',
       retry: 'Tentar novamente',
     },
     persistenceWarning:

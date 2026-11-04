@@ -69,7 +69,7 @@ test('discovery filters each action to real capabilities without invented volume
 test('property inspector uses host Korean or English without translating node identities', () => {
   assert.equal(translate('ko', 'Volume'), '볼륨');
   assert.equal(translate('ko-KR', 'Folder'), '폴더');
-  assert.equal(translate('ko-KR', 'Format'), '형식');
+  assert.equal(translate('ko-KR', 'Format'), '포맷');
   assert.equal(translate('en', 'Volume'), 'Volume');
   assert.equal(translate('ko', 'User node name'), 'User node name');
 });

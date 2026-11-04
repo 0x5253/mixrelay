@@ -11,8 +11,8 @@ case "${LC_ALL:-${LC_MESSAGES:-${LANG:-}}}" in
   fr*) instruction='Exécutez MixRelay avec le compte utilisateur connecté.' ;;
   de*) instruction='Führen Sie MixRelay als angemeldeter Benutzer aus.' ;;
   es*) instruction='Ejecute MixRelay con el usuario que ha iniciado sesión.' ;;
-  pt*) instruction='Execute o MixRelay como o utilizador com sessão iniciada.' ;;
-  it*) instruction='Eseguire MixRelay con l’utente che ha effettuato l’accesso.' ;;
+  pt*) instruction='Execute o MixRelay com o usuário que iniciou a sessão.' ;;
+  it*) instruction='Esegui MixRelay con l’utente che ha effettuato l’accesso.' ;;
   ru*) instruction='Запустите MixRelay от имени пользователя, вошедшего в систему.' ;;
   *) instruction='Run MixRelay as the signed-in user.' ;;
 esac

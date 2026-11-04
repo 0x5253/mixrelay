@@ -7,7 +7,7 @@ set -eu
 case "${LC_ALL:-${LC_MESSAGES:-${LANG:-}}}" in
   ko*)
     title='MixRelay 제거'
-    message='MixRelay 상태 메뉴에서 모든 오디오를 중지하고 MixRelay 편집 앱과 MixRelay를 종료한 뒤 다시 시도하세요. 그래프와 설정은 기본으로 보존합니다. 녹음 파일과 내보낸 프로젝트는 보존합니다.'
+    message='제거하기 전에 MixRelay 상태 메뉴에서 모든 오디오를 중지하고 MixRelay 편집 앱과 MixRelay를 종료하세요. 삭제를 선택하지 않으면 저장된 그래프와 설정은 유지됩니다. 녹음 파일과 내보낸 프로젝트는 항상 유지됩니다.'
     delete_label='저장된 그래프와 설정 삭제'
     remove_label='제거'
     cancel_label='취소'
@@ -20,7 +20,7 @@ case "${LC_ALL:-${LC_MESSAGES:-${LANG:-}}}" in
     ;;
   ja*)
     title='MixRelay のアンインストール'
-    message='MixRelayのステータスメニューですべてのオーディオを停止し、MixRelayエディターとMixRelayを終了してから再試行してください。 グラフと設定は既定で保持されます。録音とエクスポートしたプロジェクトは保持されます。'
+    message='アンインストールする前に、MixRelayのステータスメニューですべてのオーディオを停止し、MixRelayエディターとMixRelayを終了してください。削除を選択しない限り、保存されたグラフと設定は保持されます。録音とエクスポートしたプロジェクトは常に保持されます。'
     delete_label='保存されたグラフと設定を削除'
     remove_label='アンインストール'
     cancel_label='キャンセル'
@@ -33,46 +33,46 @@ case "${LC_ALL:-${LC_MESSAGES:-${LANG:-}}}" in
     ;;
   zh_Hans*|zh-Hans*)
     title='卸载 MixRelay'
-    message='请从 MixRelay 状态菜单停止所有音频，关闭 MixRelay 编辑器和 MixRelay，然后重试。 默认保留图和设置。录音和导出的项目会保留。'
-    delete_label='删除保存的图和设置'
+    message='卸载前，请从 MixRelay 状态菜单停止所有音频，并关闭 MixRelay 编辑器和 MixRelay。除非您选择删除，否则已保存的音频图和设置会保留。录音和导出的项目始终会保留。'
+    delete_label='删除已保存的音频图和设置'
     remove_label='卸载'
     cancel_label='取消'
     failed='卸载失败。请退出 MixRelay，批准授权请求后重试。保存的数据未删除。'
     unsafe='数据路径不安全，已停止卸载。保存的数据未删除。'
-    cleanup_failed='应用已卸载，但部分图或设置无法删除。'
+    cleanup_failed='应用已卸载，但部分音频图或设置无法删除。'
     root_error='请以已登录的普通用户身份运行 MixRelay 卸载程序。'
     missing='未找到已安装的 MixRelay 软件包。'
     done_message='MixRelay 已卸载。'
     ;;
   zh_Hant*|zh-Hant*|zh_TW*|zh-TW*|zh_HK*|zh-HK*|zh_MO*|zh-MO*)
     title='解除安裝 MixRelay'
-    message='請從 MixRelay 狀態選單停止所有音訊，關閉 MixRelay 編輯器與 MixRelay，然後重試。 預設保留圖與設定。錄音與匯出的專案會保留。'
-    delete_label='刪除儲存的圖與設定'
+    message='解除安裝前，請從 MixRelay 狀態選單停止所有音訊，並關閉 MixRelay 編輯器與 MixRelay。除非您選擇刪除，否則已儲存的音訊圖與設定會保留。錄音與匯出的專案一律會保留。'
+    delete_label='刪除已儲存的音訊圖與設定'
     remove_label='解除安裝'
     cancel_label='取消'
     failed='解除安裝失敗。請結束 MixRelay，核准授權要求後重試。儲存的資料未刪除。'
     unsafe='資料路徑不安全，已停止解除安裝。儲存的資料未刪除。'
-    cleanup_failed='應用程式已移除，但部分圖或設定無法刪除。'
+    cleanup_failed='應用程式已移除，但部分音訊圖或設定無法刪除。'
     root_error='請以已登入的一般使用者身分執行 MixRelay 解除安裝程式。'
     missing='找不到已安裝的 MixRelay 套件。'
     done_message='MixRelay 已解除安裝。'
     ;;
   zh*)
     title='卸载 MixRelay'
-    message='请从 MixRelay 状态菜单停止所有音频，关闭 MixRelay 编辑器和 MixRelay，然后重试。 默认保留图和设置。录音和导出的项目会保留。'
-    delete_label='删除保存的图和设置'
+    message='卸载前，请从 MixRelay 状态菜单停止所有音频，并关闭 MixRelay 编辑器和 MixRelay。除非您选择删除，否则已保存的音频图和设置会保留。录音和导出的项目始终会保留。'
+    delete_label='删除已保存的音频图和设置'
     remove_label='卸载'
     cancel_label='取消'
     failed='卸载失败。请退出 MixRelay，批准授权请求后重试。保存的数据未删除。'
     unsafe='数据路径不安全，已停止卸载。保存的数据未删除。'
-    cleanup_failed='应用已卸载，但部分图或设置无法删除。'
+    cleanup_failed='应用已卸载，但部分音频图或设置无法删除。'
     root_error='请以已登录的普通用户身份运行 MixRelay 卸载程序。'
     missing='未找到已安装的 MixRelay 软件包。'
     done_message='MixRelay 已卸载。'
     ;;
   fr*)
     title='Désinstaller MixRelay'
-    message='Arrêtez tout l’audio depuis le menu d’état de MixRelay, fermez l’éditeur MixRelay et MixRelay, puis réessayez. Les graphes et paramètres sont conservés par défaut. Les enregistrements et projets exportés sont conservés.'
+    message='Avant de désinstaller, arrêtez tout l’audio depuis le menu d’état de MixRelay, puis fermez l’éditeur MixRelay et MixRelay. Les graphes et paramètres enregistrés sont conservés, sauf si vous choisissez de les supprimer. Les enregistrements et projets exportés sont toujours conservés.'
     delete_label='Supprimer les graphes et paramètres enregistrés'
     remove_label='Désinstaller'
     cancel_label='Annuler'
@@ -85,7 +85,7 @@ case "${LC_ALL:-${LC_MESSAGES:-${LANG:-}}}" in
     ;;
   de*)
     title='MixRelay deinstallieren'
-    message='Stoppen Sie alle Audiovorgänge im MixRelay-Statusmenü, schließen Sie den MixRelay-Editor und MixRelay und versuchen Sie es erneut. Graphen und Einstellungen bleiben standardmäßig erhalten. Aufnahmen und exportierte Projekte bleiben erhalten.'
+    message='Stoppen Sie vor der Deinstallation alle Audiovorgänge im MixRelay-Statusmenü und schließen Sie den MixRelay-Editor und MixRelay. Gespeicherte Graphen und Einstellungen bleiben erhalten, sofern Sie nicht deren Löschung auswählen. Aufnahmen und exportierte Projekte bleiben immer erhalten.'
     delete_label='Gespeicherte Graphen und Einstellungen löschen'
     remove_label='Deinstallieren'
     cancel_label='Abbrechen'
@@ -98,8 +98,8 @@ case "${LC_ALL:-${LC_MESSAGES:-${LANG:-}}}" in
     ;;
   es*)
     title='Desinstalar MixRelay'
-    message='Detenga todo el audio desde el menú de estado de MixRelay, cierre el editor de MixRelay y MixRelay y vuelva a intentarlo. Los grafos y la configuración se conservan de forma predeterminada. Se conservan las grabaciones y los proyectos exportados.'
-    delete_label='Eliminar los grafos y la configuración guardados'
+    message='Antes de desinstalar, detenga todo el audio desde el menú de estado de MixRelay y cierre el editor de MixRelay y MixRelay. Los grafos y ajustes guardados se conservan, salvo que elija eliminarlos. Las grabaciones y los proyectos exportados se conservan siempre.'
+    delete_label='Eliminar los grafos y ajustes guardados'
     remove_label='Desinstalar'
     cancel_label='Cancelar'
     failed='No se pudo desinstalar. Cierre MixRelay, apruebe la solicitud de autorización e inténtelo de nuevo. Los datos guardados no se han eliminado.'
@@ -111,33 +111,33 @@ case "${LC_ALL:-${LC_MESSAGES:-${LANG:-}}}" in
     ;;
   pt*)
     title='Desinstalar MixRelay'
-    message='Pare todo o áudio pelo menu de estado do MixRelay, feche o editor do MixRelay e o MixRelay e tente novamente. Os grafos e as definições são mantidos por predefinição. As gravações e os projetos exportados são mantidos.'
-    delete_label='Eliminar grafos e definições guardados'
+    message='Antes de desinstalar, pare todo o áudio pelo menu de status do MixRelay e feche o editor do MixRelay e o MixRelay. Os grafos e as configurações salvos são mantidos, a menos que você escolha excluí-los. As gravações e os projetos exportados são sempre mantidos.'
+    delete_label='Excluir grafos e configurações salvos'
     remove_label='Desinstalar'
     cancel_label='Cancelar'
-    failed='A desinstalação falhou. Feche o MixRelay, aprove o pedido de autorização e tente novamente. Os dados guardados não foram eliminados.'
-    unsafe='A desinstalação foi interrompida porque um caminho de dados não é seguro. Os dados guardados não foram eliminados.'
-    cleanup_failed='A aplicação foi removida, mas não foi possível eliminar alguns grafos ou definições guardados.'
-    root_error='Execute a desinstalação do MixRelay como o utilizador normal com sessão iniciada.'
+    failed='A desinstalação falhou. Feche o MixRelay, aprove a solicitação de autorização e tente novamente. Os dados salvos não foram excluídos.'
+    unsafe='A desinstalação foi interrompida porque um caminho de dados não é seguro. Os dados salvos não foram excluídos.'
+    cleanup_failed='O aplicativo foi removido, mas não foi possível excluir alguns grafos ou configurações salvos.'
+    root_error='Execute a desinstalação do MixRelay com o usuário comum que iniciou a sessão.'
     missing='O pacote MixRelay instalado não foi encontrado.'
     done_message='O MixRelay foi desinstalado.'
     ;;
   it*)
-    title='Disinstallare MixRelay'
-    message='Interrompi tutto l’audio dal menu di stato di MixRelay, chiudi l’editor MixRelay e MixRelay e riprova. Grafi e impostazioni vengono conservati per impostazione predefinita. Registrazioni e progetti esportati vengono conservati.'
-    delete_label='Eliminare grafi e impostazioni salvati'
-    remove_label='Disinstallare'
+    title='Disinstalla MixRelay'
+    message='Prima di disinstallare, interrompi tutto l’audio dal menu di stato di MixRelay e chiudi l’editor MixRelay e MixRelay. Grafi e impostazioni salvati vengono conservati, a meno che tu non scelga di eliminarli. Registrazioni e progetti esportati vengono sempre conservati.'
+    delete_label='Elimina grafi e impostazioni salvati'
+    remove_label='Disinstalla'
     cancel_label='Annulla'
-    failed='Disinstallazione non riuscita. Chiudere MixRelay, approvare la richiesta di autorizzazione e riprovare. I dati salvati non sono stati eliminati.'
+    failed='Disinstallazione non riuscita. Chiudi MixRelay, approva la richiesta di autorizzazione e riprova. I dati salvati non sono stati eliminati.'
     unsafe='Disinstallazione interrotta perché un percorso dei dati non è sicuro. I dati salvati non sono stati eliminati.'
     cleanup_failed='L’applicazione è stata rimossa, ma non è stato possibile eliminare alcuni grafi o impostazioni salvati.'
-    root_error='Eseguire la disinstallazione di MixRelay con l’utente normale che ha effettuato l’accesso.'
+    root_error='Esegui la disinstallazione di MixRelay con l’utente normale che ha effettuato l’accesso.'
     missing='Il pacchetto MixRelay installato non è stato trovato.'
     done_message='MixRelay è stato disinstallato.'
     ;;
   ru*)
     title='Удалить MixRelay'
-    message='Остановите всё аудио через меню состояния MixRelay, закройте редактор MixRelay и MixRelay, затем повторите попытку. По умолчанию графы и настройки сохраняются. Записи и экспортированные проекты сохраняются.'
+    message='Перед удалением остановите всё аудио через меню состояния MixRelay и закройте редактор MixRelay и MixRelay. Сохранённые графы и настройки останутся, если вы не выберете их удаление. Записи и экспортированные проекты сохраняются всегда.'
     delete_label='Удалить сохранённые графы и настройки'
     remove_label='Удалить'
     cancel_label='Отмена'
@@ -150,7 +150,7 @@ case "${LC_ALL:-${LC_MESSAGES:-${LANG:-}}}" in
     ;;
   *)
     title='Uninstall MixRelay'
-    message='Stop all audio from the MixRelay status menu, close the MixRelay editor and MixRelay, then retry. Graphs and settings are preserved by default. Recordings and exported projects are preserved.'
+    message='Before uninstalling, stop all audio from the MixRelay status menu and close the MixRelay editor and MixRelay. Saved graphs and settings are kept unless you choose to delete them. Recordings and exported projects are always kept.'
     delete_label='Delete saved graphs and settings'
     remove_label='Uninstall'
     cancel_label='Cancel'

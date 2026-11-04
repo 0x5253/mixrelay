@@ -1,2 +1,2 @@
-NSAudioCaptureUsageDescription = "MixRelay acquisisce l’audio delle applicazioni selezionate per instradarlo ai propri dispositivi audio e alle proprie trasmissioni.";
+NSAudioCaptureUsageDescription = "MixRelay acquisisce l’audio delle applicazioni selezionate per instradarlo ai tuoi dispositivi audio e alle tue trasmissioni.";
 NSMicrophoneUsageDescription = "MixRelay accede ai microfoni e agli altri dispositivi di ingresso audio selezionati durante l’instradamento o la registrazione.";

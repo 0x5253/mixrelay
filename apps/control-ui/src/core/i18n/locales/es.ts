@@ -3,14 +3,14 @@ export const es = {
   midi: {
     mapMode: 'Modo de mapeo MIDI',
     mapTarget: 'Asignar {{name}}: {{action}}',
-    selectTarget: 'Selecciona un control resaltado y mueve un fader o pulsa un botón MIDI.',
-    waitingTarget: '{{name}} · {{action}} — mueve un control MIDI para asignarlo o sustituirlo.',
+    selectTarget: 'Seleccione un control resaltado y mueva un fader o pulse un botón MIDI.',
+    waitingTarget: '{{name}} · {{action}} — mueva un control MIDI para asignarlo o sustituirlo.',
     done: 'Finalizar mapeo',
     selectMapping: 'Seleccionar {{name}} · {{action}}',
     recorderAction: 'Acción de grabación',
     min: 'Mínimo',
     max: 'Máximo',
-    empty: 'No hay asignaciones MIDI. Selecciona un control resaltado para añadir una.',
+    empty: 'No hay asignaciones MIDI. Seleccione un control resaltado para añadir una.',
     targetUnavailable: 'Estado de los destinos no disponible',
     title: 'Controles MIDI',
     disconnected: 'Dispositivo desconectado',
@@ -69,16 +69,16 @@ export const es = {
     not_installed: {
       title: 'Se necesita MixRelay',
       description:
-        'Instala MixRelay para usar el enrutamiento de audio, los efectos y la grabación. Después, vuelve a conectarte.',
+        'Instale MixRelay para usar el enrutamiento de audio, los efectos y la grabación. Después, vuelva a conectarse.',
     },
     incompatible: {
-      title: 'Actualiza MixRelay',
+      title: 'Actualice MixRelay',
       description:
-        'El MixRelay instalado no es compatible con esta aplicación. Actualízalo y vuelve a conectarte.',
+        'El MixRelay instalado no es compatible con esta aplicación. Actualícelo y vuelva a conectarse.',
     },
     unavailable: {
       title: 'No se puede conectar con MixRelay',
-      description: 'MixRelay no responde o su motor de audio no está listo. Vuelve a conectarte.',
+      description: 'MixRelay no responde o su motor de audio no está listo. Vuelva a conectarse.',
     },
     install: 'Instalar MixRelay',
     update: 'Actualizar MixRelay',
@@ -92,7 +92,7 @@ export const es = {
     saveAs: 'Guardar como…',
   },
   driverManagement: {
-    mixed: 'Diferente',
+    mixed: 'Mixto',
     channels: 'Canales',
     bitDepth: 'Profundidad de bits',
     title: 'Ajustes del controlador',
@@ -162,7 +162,7 @@ export const es = {
     changing: 'Cambiando el estado del audio…',
     pauseFailed: 'No se pudo pausar o reanudar. Compruebe el estado actual.',
     pausedAfterFailures:
-      'MixRelay pausó el audio porque el motor se detuvo inesperadamente varias veces. Revisa los cambios recientes y luego reanuda.',
+      'MixRelay pausó el audio porque el motor se detuvo inesperadamente varias veces. Revise los cambios recientes y luego reanude.',
     pauseNotSaved:
       'Aplicado, pero no se pudo guardar. Es posible que no se conserve al reiniciar MixRelay.',
     diagnostics: 'Detalles de audio',
@@ -360,7 +360,7 @@ export const es = {
       targetStart: 'Primer canal de entrada',
       noTargets: 'Ningún otro nodo tiene canales de entrada.',
       preview: 'Vista previa',
-      pending: 'Elige un destino y canales para ver las conexiones.',
+      pending: 'Elija un destino y canales para ver las conexiones.',
       summary: 'Se conectarán: {{accepted}} · Omitidos: {{skipped}}',
       pair: '{{source}} → {{target}}',
       skipped: '{{source}}: {{reason}}',
@@ -433,9 +433,9 @@ export const es = {
     },
     a11y: {
       nodeDescription:
-        'Pulsa Intro o Espacio para seleccionar un nodo. Después muévelo con las flechas; mantén Mayús para pasos más grandes. Pulsa Supr para eliminarlo o Esc para cancelar.',
+        'Pulse Intro o Espacio para seleccionar un nodo. Después muévalo con las flechas; mantenga Mayús para pasos más grandes. Pulse Supr para eliminarlo o Esc para cancelar.',
       nodeDescriptionStatic:
-        'Pulsa Intro o Espacio para seleccionar un nodo. Pulsa Supr para eliminarlo o Esc para cancelar.',
+        'Pulse Intro o Espacio para seleccionar un nodo. Pulse Supr para eliminarlo o Esc para cancelar.',
       nodeMoved: 'Nodo seleccionado movido hacia {{direction}}. Nueva posición: x {{x}}, y {{y}}.',
       directions: {
         up: 'arriba',
@@ -444,7 +444,7 @@ export const es = {
         right: 'la derecha',
       },
       edgeDescription:
-        'Pulsa Intro o Espacio para seleccionar un cable. Pulsa Supr para eliminarlo o Esc para cancelar.',
+        'Pulse Intro o Espacio para seleccionar un cable. Pulse Supr para eliminarlo o Esc para cancelar.',
       edgeLabel: '{{source}} CH {{sourceChannel}} → {{target}} CH {{targetChannel}}',
       meterChannel: '{{name}} canal {{channel}}',
     },
@@ -486,7 +486,7 @@ export const es = {
     },
     states: {
       awaitingMicrophonePermission:
-        'Esperando permiso del micrófono — elige Permitir en el diálogo de macOS',
+        'Esperando permiso del micrófono — elija «Permitir» en el diálogo de macOS',
       active: 'Activo',
       blocked: 'Sin aplicar',
       applying: 'Aplicando',
@@ -497,9 +497,9 @@ export const es = {
     },
     errors: {
       audio_permission_pending:
-        'Esperando el permiso del micrófono. Permite el acceso en macOS y vuelve a intentarlo.',
+        'Esperando el permiso del micrófono. Permita el acceso en macOS y vuelva a intentarlo.',
       audio_permission_denied:
-        'Se ha denegado el acceso al micrófono. Permítelo en Privacidad y seguridad de macOS y vuelve a intentarlo.',
+        'Se ha denegado el acceso al micrófono. Permítalo en «Privacidad y seguridad» de macOS y vuelva a intentarlo.',
       audio_device_disconnected:
         'No se pudo aplicar la configuración del dispositivo de audio virtual.',
       audio_source_unavailable:
@@ -507,7 +507,7 @@ export const es = {
       control_unavailable: 'El motor de audio local no está disponible.',
       control_request_failed: 'La solicitud de control de audio falló.',
       engine_replaced:
-        'El motor de audio se reinició antes de este cambio. No se aplicó nada. Inténtalo de nuevo.',
+        'El motor de audio se reinició antes de este cambio. No se aplicó nada. Inténtelo de nuevo.',
       invalid_operation_id: 'La solicitud de control de audio no era válida y no se aplicó.',
       graph_binding_unsupported:
         'El dispositivo o procesador seleccionado no admite este formato de audio o esta conexión.',
@@ -517,7 +517,7 @@ export const es = {
       graph_invalid: 'El motor rechazó un grafo de audio no válido.',
       graph_draft_changed:
         'Las ediciones cambiaron durante la recarga. Se conservó su borrador; elija de nuevo.',
-      graph_revision_stale: 'No se pudo aplicar el cambio. Inténtalo de nuevo.',
+      graph_revision_stale: 'No se pudo aplicar el cambio. Inténtelo de nuevo.',
       graph_conflict_unresolved: 'Los cambios simultáneos no se pudieron aplicar automáticamente.',
       processor_unavailable: 'El procesador de audio seleccionado no está disponible.',
     },
@@ -545,9 +545,9 @@ export const es = {
       reportTitle: 'Informe de búsqueda de efectos',
       viewReport: 'Ver informe de búsqueda…',
       complete: 'La búsqueda de efectos terminó sin problemas.',
-      probeFailed: 'No se pudo cargar este complemento. Los demás efectos siguen disponibles.',
+      probeFailed: 'No se pudo cargar este plug-in. Los demás efectos siguen disponibles.',
       scanFailed:
-        'No se pudo completar la búsqueda de complementos. Se conservan los efectos disponibles anteriormente.',
+        'No se pudo completar la búsqueda de plug-ins. Se conservan los efectos disponibles anteriormente.',
       scanning: 'Buscando efectos de audio…',
       incomplete: 'Búsqueda de efectos incompleta',
       partial:

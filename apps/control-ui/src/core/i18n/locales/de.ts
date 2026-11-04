@@ -22,10 +22,10 @@ export const de = {
     step: 'Schrittweite',
     remove: 'Entfernen',
     removeTarget: 'MIDI-Zuweisung für {{name}} entfernen',
-    failed: 'MIDI-Einstellungen konnten nicht geändert werden. Versuchen Sie es erneut.',
+    failed: 'Die MIDI-Steuerung konnte nicht geändert werden. Versuchen Sie es erneut.',
     control: '{{device}} · Kanal {{channel}} · {{kind}} {{number}}',
     modes: {
-      absolute: 'Absolut (Abholen)',
+      absolute: 'Absolut (Pick-up)',
       twos_complement: 'Relativ: Zweierkomplement',
       offset64: 'Relativ: Offset 64',
     },
@@ -75,7 +75,7 @@ export const de = {
     incompatible: {
       title: 'MixRelay aktualisieren',
       description:
-        'Der installierte MixRelay ist mit dieser App nicht kompatibel. Aktualisieren Sie ihn und verbinden Sie sich erneut.',
+        'Das installierte MixRelay ist mit dieser App nicht kompatibel. Aktualisieren Sie es und verbinden Sie sich erneut.',
     },
     unavailable: {
       title: 'Keine Verbindung zu MixRelay',
@@ -94,7 +94,7 @@ export const de = {
     saveAs: 'Speichern unter…',
   },
   driverManagement: {
-    mixed: 'Uneinheitlich',
+    mixed: 'Gemischt',
     channels: 'Kanäle',
     bitDepth: 'Bittiefe',
     title: 'Treibereinstellungen',
@@ -168,7 +168,7 @@ export const de = {
     changing: 'Audiostatus wird geändert…',
     pauseFailed: 'Pausieren oder Fortsetzen fehlgeschlagen. Prüfen Sie den aktuellen Zustand.',
     pausedAfterFailures:
-      'MixRelay hat das Audio angehalten, weil die Engine mehrmals unerwartet beendet wurde. Prüfen Sie die letzten Änderungen und setzen Sie dann fort.',
+      'MixRelay hat das Audio pausiert, weil die Engine mehrmals unerwartet beendet wurde. Prüfen Sie die letzten Änderungen und setzen Sie dann fort.',
     pauseNotSaved:
       'Übernommen, aber nicht gespeichert. Nach einem Neustart von MixRelay bleibt dies eventuell nicht erhalten.',
     diagnostics: 'Audiodetails',
@@ -190,7 +190,7 @@ export const de = {
       audio_session_processor_state_unavailable:
         'Formatänderungen im laufenden Betrieb mit AU/VST/LV2-Plug-ins erfordern die Übertragung nativer Preset-Zustände. Diese ist noch nicht implementiert. Die aktuelle Sitzung wurde unverändert beibehalten.',
       audio_session_unsupported:
-        'Dieses Format ist nicht verfügbar oder die Aufnahmequellen verhindern eine Änderung der Abtastrate.',
+        'Dieses Format ist nicht verfügbar oder die Erfassungsquellen verhindern eine Änderung der Abtastrate.',
       audio_session_reconfigure_failed: 'Die Audioeinstellungen konnten nicht geändert werden.',
       graph_revision_stale:
         'Der Graph wurde geändert oder wird noch angewendet. Versuchen Sie es danach erneut.',
@@ -234,7 +234,7 @@ export const de = {
       stored_format_unavailable:
         'Das Gerät hat die gespeicherten Einstellungen beim Start nicht akzeptiert. Wenden Sie eine unterstützte Abtastrate und Puffergröße erneut an.',
       reconfiguration_failed:
-        'Das Zurücksetzen des Geräts ist fehlgeschlagen. Audio bleibt angehalten. Wenden Sie ein unterstütztes Format erneut an, um es wiederherzustellen.',
+        'Das Zurücksetzen des Geräts ist fehlgeschlagen. Audio bleibt unterbrochen. Wenden Sie ein unterstütztes Format erneut an, um es wiederherzustellen.',
       device_unavailable:
         'Ein Audiogerät ist nicht verfügbar oder sein Stream wurde gestoppt. Die Engine bleibt erreichbar.',
       sample_rate_mismatch:
@@ -284,7 +284,7 @@ export const de = {
     engineShort: 'Engine',
     workspace: 'Routing-Arbeitsbereich',
     signalPathLabel: 'MixRelay-Signalpfad',
-    capture: 'Aufnahme',
+    capture: 'Erfassung',
     captureDescription: 'Hier geht Audio von Anwendungen und vom System ein.',
     stream: 'Stream',
     streamDescription: 'OBS empfängt den fertigen Mix von diesem Gerät.',
@@ -478,7 +478,7 @@ export const de = {
       limiter: 'Limiter',
       limiterDescription: 'Ausgangsspitzen oberhalb der Obergrenze verhindern',
       makeupGain: 'Aufholverstärkung',
-      mixer: 'Mischer',
+      mixer: 'Mixer',
       options: 'Optionen',
       virtualSinkPort: 'Audio zum Gerät',
       processor: 'Prozessor',
@@ -504,13 +504,13 @@ export const de = {
     },
     errors: {
       audio_permission_pending:
-        'Warten auf die Mikrofonberechtigung. Erlaube den Zugriff in macOS und versuche es erneut.',
+        'Warten auf die Mikrofonberechtigung. Erlauben Sie den Zugriff in macOS und versuchen Sie es erneut.',
       audio_permission_denied:
-        'Der Mikrofonzugriff wurde verweigert. Erlaube ihn unter Datenschutz & Sicherheit in macOS und versuche es erneut.',
+        'Der Mikrofonzugriff wurde verweigert. Erlauben Sie ihn in macOS unter „Datenschutz & Sicherheit“ und versuchen Sie es erneut.',
       audio_device_disconnected:
         'Die Konfiguration des virtuellen Audiogeräts konnte nicht angewendet werden.',
       audio_source_unavailable:
-        'Die Anwendungsaufnahme ist nicht verfügbar. Prüfen Sie die Anwendung und die Berechtigung zur Audioaufnahme.',
+        'Die Audioerfassung von Anwendungen ist nicht verfügbar. Prüfen Sie die Anwendung und die Berechtigung zur Audioaufnahme.',
       control_unavailable: 'Die lokale Audio-Engine ist nicht verfügbar.',
       control_request_failed: 'Die Audiosteuerungsanfrage ist fehlgeschlagen.',
       engine_replaced:
@@ -615,7 +615,7 @@ export const de = {
       provider: 'Anbieter',
     },
     flow: {
-      capture: '01 · Aufnahme',
+      capture: '01 · Erfassung',
       shape: '02 · Bearbeitung',
       deliver: '03 · Ausgabe',
     },
@@ -648,11 +648,11 @@ export const de = {
     nodes: {
       application: {
         name: 'Anwendung',
-        description: 'Chrome, Firefox, Spiele und andere Prozesse getrennt aufnehmen',
+        description: 'Chrome, Firefox, Spiele und andere Prozesse getrennt erfassen',
       },
       systemAudio: {
         name: 'Systemaudio',
-        description: 'Die gesamte macOS-Ausgabe und Soundeffekte aufnehmen',
+        description: 'Die gesamte macOS-Ausgabe und Soundeffekte erfassen',
       },
       inputDevice: {
         name: 'Eingabegerät',
