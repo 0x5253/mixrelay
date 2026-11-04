@@ -269,14 +269,12 @@ mod tests {
     }
 
     fn fixture(directory: &std::path::Path, script: &str) -> (Connection, PathBuf) {
-        use std::os::unix::fs::PermissionsExt as _;
         let executable = directory.join("controller.sh");
-        std::fs::write(
+        mixrelay_test_support::write_executable(
             &executable,
-            format!("#!/bin/sh\ncd \"$(dirname \"$0\")\"\n{script}\n"),
+            &format!("#!/bin/sh\ncd \"$(dirname \"$0\")\"\n{script}\n"),
         )
         .unwrap();
-        std::fs::set_permissions(&executable, std::fs::Permissions::from_mode(0o700)).unwrap();
         (
             Connection::for_socket_fixture(
                 directory.join("control.sock"),

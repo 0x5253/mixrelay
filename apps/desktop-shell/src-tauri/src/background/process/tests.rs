@@ -1,7 +1,6 @@
 use super::*;
 use std::{
     fs,
-    os::unix::fs::PermissionsExt,
     time::{Duration, Instant},
 };
 
@@ -21,8 +20,7 @@ fn controller_survives_actual_editor_process_exit() {
     let stop = directory.path().join("stop");
     let finished = directory.path().join("finished");
     // A bounded fixture always exits even if an assertion fails; no native audio is opened.
-    fs::write(&executable, "#!/bin/sh\ncd \"$(dirname \"$0\")\"\nprintf ready > ready\ni=0\nwhile test ! -f stop && test \"$i\" -lt 100; do sleep 0.05; i=$((i+1)); done\nprintf finished > finished\n").unwrap();
-    fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
+    mixrelay_test_support::write_executable(&executable, "#!/bin/sh\ncd \"$(dirname \"$0\")\"\nprintf ready > ready\ni=0\nwhile test ! -f stop && test \"$i\" -lt 100; do sleep 0.05; i=$((i+1)); done\nprintf finished > finished\n").unwrap();
     let status = std::process::Command::new(std::env::current_exe().unwrap())
         .args([
             "--exact",
