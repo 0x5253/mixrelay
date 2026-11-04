@@ -106,14 +106,20 @@ test('every bundled resource is inside the Linux build container context', () =>
 });
 
 test('pull requests build every product unsigned and never reach signing or notarization', () => {
-  const source = workflow('pr-build');
-  assert.match(source, /^on:\n  pull_request:\n  workflow_dispatch:\n\n/m);
-  assert.match(source, /uses: \.\/\.github\/workflows\/build-linux-release\.yml/);
-  assert.match(source, /APPLE_SIGNING_IDENTITY: '-'\n\s+MIXRELAY_CODESIGN_IDENTITY: '-'/);
-  assert.match(source, /zsh scripts\/build-macos-universal-app\.sh/);
-  assert.match(source, /mixrelay-macos-hal-bundle/);
-  const code = source.split('\n').filter(line => !line.trimStart().startsWith('#')).join('\n');
-  assert.doesNotMatch(code, /secrets\.|vars\.|environment:|prepare-ci-macos-signing|release-macos|notar|productbuild|contents: write/i);
+  const linux = workflow('pr-build');
+  assert.match(linux, /^on:\n  pull_request:\n  workflow_dispatch:\n\n/m);
+  assert.match(linux, /uses: \.\/\.github\/workflows\/build-linux-release\.yml/);
+  // The arm64 pull request leg of native-lab builds the unsigned macOS app on its runner.
+  const macos = workflow('native-lab');
+  const build = macos.slice(macos.indexOf('- name: Build the universal app'));
+  assert.match(build, /if: github\.event_name == 'pull_request' && matrix\.arch == 'arm64'/);
+  assert.match(build, /APPLE_SIGNING_IDENTITY: '-'\n\s+MIXRELAY_CODESIGN_IDENTITY: '-'/);
+  assert.match(build, /zsh scripts\/build-macos-universal-app\.sh/);
+  assert.match(build, /mixrelay-macos-hal-bundle/);
+  for (const source of [linux, macos]) {
+    const code = source.split('\n').filter(line => !line.trimStart().startsWith('#')).join('\n');
+    assert.doesNotMatch(code, /secrets\.|vars\.|environment:|prepare-ci-macos-signing|release-macos|notar|productbuild|contents: write/i);
+  }
   // Only release.yml may reach the signing environment.
   for (const name of readdirSync(new URL('../.github/workflows/', import.meta.url)).filter(name => name.endsWith('.yml') && name !== 'release.yml')) {
     const other = readFileSync(new URL(`../.github/workflows/${name}`, import.meta.url), 'utf8');
@@ -124,15 +130,16 @@ test('pull requests build every product unsigned and never reach signing or nota
 });
 
 test('macOS builds select Xcode 26 before compiling Icon Composer assets', () => {
-  for (const name of ['release', 'pr-build']) {
-    const source = workflow(name);
-    const select = source.indexOf('ls -d /Applications/Xcode_26*.app');
-    assert.ok(select > 0, name);
-    assert.ok(source.indexOf('DEVELOPER_DIR=$xcode/Contents/Developer" >> "$GITHUB_ENV"') > select, name);
-    assert.ok(select < source.indexOf('Install the universal build toolchain'), name);
-    assert.match(source, /runs-on: macos-26\n/, name);
-    assert.doesNotMatch(source, /runs-on: macos-1[0-9]/, name);
-  }
+  const release = workflow('release');
+  const select = release.indexOf('ls -d /Applications/Xcode_26*.app');
+  assert.ok(select > 0);
+  assert.ok(release.indexOf('DEVELOPER_DIR=$xcode/Contents/Developer" >> "$GITHUB_ENV"') > select);
+  assert.ok(select < release.indexOf('Install the universal build toolchain'));
+  assert.match(release, /runs-on: macos-26\n/);
+  assert.doesNotMatch(release, /runs-on: macos-1[0-9]/);
+  const lab = workflow('native-lab');
+  const labSelect = lab.indexOf('ls -d /Applications/Xcode_26*.app');
+  assert.ok(labSelect > 0 && labSelect < lab.indexOf('- name: Build the universal app'));
 });
 
 test('only a merged release PR tags a version and starts the official build', () => {

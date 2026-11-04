@@ -1,8 +1,9 @@
 name: Pull request build (unsigned)
 
-# Builds every release product for review without signing secrets: Linux packages
-# as released, macOS apps ad-hoc signed. PKG signing and notarization run only in
-# release.yml behind the approved release environment.
+# Builds the Linux release packages for review without signing secrets. The unsigned
+# macOS app is built by the arm64 pull request leg of native-lab.yml, which already holds
+# a macOS runner. PKG signing and notarization run only in release.yml behind the
+# approved release environment.
 on:
   pull_request:
   workflow_dispatch:
@@ -22,45 +23,11 @@ jobs:
     with:
       source_ref: ${{ github.sha }}
 
-  macos:
-    # chore, ci and docs pull requests do not build.
-    if: ${{ !startsWith(github.event.pull_request.title, 'chore') && !startsWith(github.event.pull_request.title, 'ci') && !startsWith(github.event.pull_request.title, 'docs') }}
-    # Icon Composer assets compile only on a macOS 26 host with Xcode 26.
-    runs-on: macos-26
-    timeout-minutes: 150
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 24.19.0
-          package-manager-cache: false
-      - name: Select Xcode 26 for Icon Composer assets
-        run: |
-          xcode="$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -n 1)"
-          [[ -n "$xcode" ]] || { ls -d /Applications/Xcode*.app; echo "Xcode 26 is required" >&2; exit 1; }
-          echo "DEVELOPER_DIR=$xcode/Contents/Developer" >> "$GITHUB_ENV"
-          DEVELOPER_DIR="$xcode/Contents/Developer" xcodebuild -version
-      - name: Install the universal build toolchain
-        run: |
-          npm install --global pnpm@11.9.0
-          rustup toolchain install 1.96.0 --profile minimal --target aarch64-apple-darwin,x86_64-apple-darwin
-          rustup default 1.96.0
-          pnpm install --frozen-lockfile
-      - name: Build the universal app, remover and HAL driver ad-hoc signed
-        env:
-          APPLE_SIGNING_IDENTITY: '-'
-          MIXRELAY_CODESIGN_IDENTITY: '-'
-        run: |
-          zsh scripts/build-macos-universal-app.sh
-          cargo run --locked -p mixrelay-macos-hal-bundle -- --output target/universal-apple-darwin/release/hal
-
   passed:
     # The one required check for this workflow; skipped work (chore, ci, docs) passes.
     name: Unsigned build passed
     if: always()
-    needs: [linux, macos]
+    needs: [linux]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:

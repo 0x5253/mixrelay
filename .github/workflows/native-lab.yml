@@ -43,7 +43,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.support.outputs.macos) }}
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 60
+    timeout-minutes: 120
     # sccache keeps compiled crates in the GitHub Actions cache between runs. Incremental
     # compilation is off so workspace crates are cacheable too.
     env:
@@ -79,6 +79,23 @@ jobs:
       # including `pnpm test:scripts` and `pnpm probe:macos-roundtrip --self-test`.
       - run: node --test scripts/lab/native-check.test.mjs scripts/lab/vm.test.mjs scripts/lab/guest-scripts.test.mjs scripts/lab/pipewire-cli.test.mjs
       - run: pnpm lab:test
+      # Pull requests also build the unsigned universal app on the arm64 leg, so a pull
+      # request holds two of the account's five macOS runners instead of three.
+      - name: Select Xcode 26 for Icon Composer assets
+        if: github.event_name == 'pull_request' && matrix.arch == 'arm64'
+        run: |
+          xcode="$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -n 1)"
+          [[ -n "$xcode" ]] || { ls -d /Applications/Xcode*.app; echo "Xcode 26 is required" >&2; exit 1; }
+          echo "DEVELOPER_DIR=$xcode/Contents/Developer" >> "$GITHUB_ENV"
+          DEVELOPER_DIR="$xcode/Contents/Developer" xcodebuild -version
+      - name: Build the universal app, remover and HAL driver ad-hoc signed
+        if: github.event_name == 'pull_request' && matrix.arch == 'arm64'
+        env:
+          APPLE_SIGNING_IDENTITY: '-'
+          MIXRELAY_CODESIGN_IDENTITY: '-'
+        run: |
+          zsh scripts/build-macos-universal-app.sh
+          cargo run --locked -p mixrelay-macos-hal-bundle -- --output target/universal-apple-darwin/release/hal
       - name: Compiler cache statistics
         if: always()
         run: sccache --show-stats
