@@ -246,6 +246,27 @@ mod tests {
     }
 
     #[test]
+    fn a_report_takes_its_window_at_most_once_per_interval() {
+        let tap = FakeTap::default();
+        let mut waker = waker();
+        let start = Instant::from_origin(Duration::from_secs(1));
+        waker.record(TapWake::Missed);
+        waker.report(&tap, None, start);
+        assert_eq!(waker.busy, 0, "the first report takes its window");
+
+        waker.record(TapWake::Missed);
+        let early = start.saturating_add(REPORT_INTERVAL.saturating_sub(Duration::from_millis(1)));
+        waker.report(&tap, None, early);
+        assert_eq!(waker.busy, 1, "a report within the interval is skipped");
+
+        waker.report(&tap, None, start.saturating_add(REPORT_INTERVAL));
+        assert_eq!(
+            waker.busy, 0,
+            "the interval is measured from the last report"
+        );
+    }
+
+    #[test]
     fn each_report_window_counts_its_own_wakes_and_quiet_windows_are_skipped() {
         let mut waker = waker();
         for wake in [

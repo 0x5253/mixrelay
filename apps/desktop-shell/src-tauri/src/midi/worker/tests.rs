@@ -308,7 +308,7 @@ fn a_reconnected_controller_must_pick_up_its_fader_again() {
 }
 
 #[test]
-fn a_rejected_gain_rescans_at_once_and_requires_pickup_again() {
+fn a_rejected_gain_requires_pickup_again_after_the_rescan() {
     let shell = Shell::new();
     shell.bind(vec![binding(Action::Volume, Kind::Cc, 7)]);
     let engine = FakeEngine {

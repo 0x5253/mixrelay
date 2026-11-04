@@ -18,13 +18,13 @@ const MAX_QUEUED_INPUT_FRAMES: usize = 256;
 /// Converts tap PCM to the graph rate for one transport epoch. A new epoch starts when the
 /// format, rate, clock role or native timeline changes; nothing carries across it.
 pub(super) struct ConversionEpoch {
-    pub(super) bridge: AsyncClockBridge,
+    bridge: AsyncClockBridge,
     pub(super) format: u64,
     pub(super) native_rate: u32,
     ticks: u64,
     epoch: u64,
     dropped_frames: u64,
-    pub(super) queued_input: usize,
+    queued_input: usize,
     native_generation: u64,
     native_discontinuities: u64,
     clock_master: bool,

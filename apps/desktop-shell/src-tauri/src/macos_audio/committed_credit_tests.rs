@@ -77,6 +77,11 @@ fn raw_capture_backlog_cannot_authorize_unwritten_source_pcm() {
     assert_eq!(registry.clock(token).unwrap().native_frames, 64);
     assert!(transport.write(&[0.0; 128], &[200; 64], 64));
     assert_eq!(registry.clock(token).unwrap().native_frames, 96);
+    assert_eq!(
+        registry.clock(token).unwrap().running,
+        1,
+        "a running tap keeps credit"
+    );
     health.running = false;
     transport.observe_capture(&health);
     let clock = registry.clock(token).unwrap();

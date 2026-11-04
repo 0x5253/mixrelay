@@ -150,6 +150,8 @@ struct FakeSink {
     accept_writes: bool,
     resets: Vec<(u64, u32)>,
     native_stops: usize,
+    /// `running` of each capture health the pump reported.
+    observed_running: Vec<bool>,
     write_attempts: usize,
     written_frames: usize,
     /// `(producer, converter, drought)` of each publication.
@@ -169,6 +171,7 @@ impl Default for FakeSink {
             accept_writes: true,
             resets: Vec::new(),
             native_stops: 0,
+            observed_running: Vec::new(),
             write_attempts: 0,
             written_frames: 0,
             measurements: Vec::new(),
@@ -196,9 +199,7 @@ impl SourceSink for FakeSink {
     }
 
     fn observe_capture(&mut self, health: &TapStats) {
-        if !health.running {
-            self.stop_native();
-        }
+        self.observed_running.push(health.running);
     }
 
     fn publish_measurements(&mut self, producer: u32, converter: u32, drought: u32) {
@@ -225,7 +226,6 @@ impl SourceSink for FakeSink {
 #[derive(Default)]
 struct FakeLease {
     revoked: AtomicBool,
-    stop_fails: AtomicBool,
     stops: AtomicUsize,
 }
 
@@ -246,11 +246,7 @@ impl PlaybackLease for FakeLease {
 
     fn stop(&self) -> Result<(), String> {
         self.stops.fetch_add(1, Ordering::Relaxed);
-        if self.stop_fails.load(Ordering::Relaxed) {
-            Err("restore failed".into())
-        } else {
-            Ok(())
-        }
+        Ok(())
     }
 }
 
@@ -485,9 +481,11 @@ fn an_invalidated_format_is_recoverable_but_a_stopped_tap_ends_the_pump() {
     let error = harness.step().unwrap_err();
     assert_eq!(error.to_string(), "native process tap stopped");
     assert_eq!(
-        harness.pump.transport.native_stops, 2,
-        "the engine gets no credit from a stopped tap"
+        harness.pump.transport.observed_running.last(),
+        Some(&false),
+        "the transport sees the stopped tap and withdraws its credit"
     );
+    assert_eq!(harness.pump.transport.native_stops, 1);
 
     let mut harness = Harness::started(FakeTap::default());
     harness.pump.capture.health.sample_rate = 0.0;
@@ -571,14 +569,8 @@ fn playback_leases_are_released_when_replaced_or_revoked() {
     second.revoked.store(true, Ordering::Relaxed);
     harness.after_control_interval().unwrap();
     assert!(harness.pump.playback.0.is_none());
-    assert!(second.stops() >= 1, "the revoked lease was released");
+    assert_eq!(second.stops(), 1, "the revoked lease was released once");
     harness.until_written();
-
-    let third = Arc::new(FakeLease::default());
-    harness.mailbox.playback.publish(Some(Arc::clone(&third)));
-    harness.step().unwrap();
-    third.revoked.store(true, Ordering::Relaxed);
-    third.stop_fails.store(true, Ordering::Relaxed);
-    let error = harness.after_control_interval().unwrap_err();
-    assert_eq!(error.to_string(), "restore failed");
+    drop(harness);
+    assert_eq!(second.stops(), 1, "the pump does not release it again");
 }

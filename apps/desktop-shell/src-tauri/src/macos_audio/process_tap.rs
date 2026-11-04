@@ -354,7 +354,7 @@ impl ApplicationCaptureSession for ProcessTap {
 pub(super) struct TapReader(ExclusiveReader<ProcessTap>);
 
 impl TapReader {
-    pub(super) fn tap(&self) -> &ProcessTap {
+    fn tap(&self) -> &ProcessTap {
         self.0.owner()
     }
 }

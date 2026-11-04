@@ -274,7 +274,8 @@ impl<P: PumpPorts> Pump<P> {
         if let Err(error) = playback.refresh() {
             playback.stop()?;
             tracing::warn!(%error, "scoped playback lease revoked; capture preserved");
-            self.playback = ActivePlayback(None);
+            // Already stopped: clear the holder in place so its drop does not stop it again.
+            self.playback.0 = None;
         }
         Ok(())
     }
