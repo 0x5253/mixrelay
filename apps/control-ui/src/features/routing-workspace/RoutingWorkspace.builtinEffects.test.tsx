@@ -4,7 +4,6 @@ import '../../test-support/integration';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { AudioGraphCanvasProps } from '../../core/audio-graph/AudioGraphCanvas';
-import { graphNodeDefaultWidth } from '../../core/audio-graph/model';
 import { I18nProvider, i18n } from '../../core/i18n';
 import { MixRelayProvider } from '../../core/theme/MixRelayProvider';
 import { AudioNodeCard } from '../../core/ui/AudioNodeCard';
