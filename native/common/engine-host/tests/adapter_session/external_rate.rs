@@ -8,7 +8,7 @@ fn endpoint(rate: u32) -> Arc<AtomicU32> {
 }
 
 fn status(endpoint: &Arc<AtomicU32>) -> AdapterRuntimeStatus {
-    let mut profile = tests::profile(AudioBackendKind::CoreAudio);
+    let mut profile = profile(AudioBackendKind::CoreAudio);
     profile.capabilities.can_reconfigure_live = true;
     let endpoint = endpoint.clone();
     AdapterRuntimeStatus::new(profile, std::sync::Arc::new(mixrelay_time::StdClock::new()))
@@ -127,7 +127,7 @@ fn external_rate_race_and_unsupported_format_do_not_publish() {
 #[test]
 fn observed_status_alone_does_not_enable_external_following() {
     let status = AdapterRuntimeStatus::new(
-        tests::profile(AudioBackendKind::PipeWire),
+        profile(AudioBackendKind::PipeWire),
         std::sync::Arc::new(mixrelay_time::StdClock::new()),
     );
     status.observe_device_rate(Some(48_000));
@@ -188,7 +188,7 @@ fn proposed_format_capabilities_do_not_read_old_active_format() {
 
 #[test]
 fn graph_only_control_does_not_invent_a_native_rate_change() {
-    let mut profile = tests::profile(AudioBackendKind::PipeWire);
+    let mut profile = profile(AudioBackendKind::PipeWire);
     profile.capabilities.can_reconfigure_live = true;
     let status = Arc::new(
         AdapterRuntimeStatus::new(profile, std::sync::Arc::new(mixrelay_time::StdClock::new()))

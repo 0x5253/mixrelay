@@ -1,18 +1,17 @@
 //! Compiles portable plans and prepares DSP, hosted processors and recorder taps.
-use mixrelay_render::RenderPlanError;
+use super::recording_sinks::FileRecordingSinks;
+use mixrelay_audio_graph::{ExecutionPlan, GraphCompiler, NodeConfig};
+use mixrelay_engine_core::{PrepareProcessorError, ProcessorFactory};
+use mixrelay_processor_host::{CatalogNodeResolver, ExternalProcessorFactory, ProcessorCatalog};
+use mixrelay_render::{BlockProcessor, PeakMeterBank, RenderPlan, RenderPlanError};
+use std::sync::Arc;
 
-use crate::{
-    Arc, BlockProcessor, CatalogNodeResolver, ExecutionPlan, ExternalProcessorFactory,
-    GraphCompiler, NodeConfig, PeakMeterBank, PrepareProcessorError, ProcessorCatalog,
-    ProcessorFactory, RenderPlan, recording_sinks::FileRecordingSinks,
-};
-
-pub(super) struct BuiltInProcessorFactory {
-    pub(super) recorders: mixrelay_audio_recorder::RecorderRegistry,
-    pub(super) catalog: ProcessorCatalog,
-    pub(super) hosted: ExternalProcessorFactory,
-    pub(super) meters: Arc<PeakMeterBank>,
-    pub(super) render_prepare: fn(&ExecutionPlan) -> Result<RenderPlan, RenderPlanError>,
+pub(crate) struct BuiltInProcessorFactory {
+    pub(crate) recorders: mixrelay_audio_recorder::RecorderRegistry,
+    pub(crate) catalog: ProcessorCatalog,
+    pub(crate) hosted: ExternalProcessorFactory,
+    pub(crate) meters: Arc<PeakMeterBank>,
+    pub(crate) render_prepare: fn(&ExecutionPlan) -> Result<RenderPlan, RenderPlanError>,
 }
 
 impl ProcessorFactory for BuiltInProcessorFactory {

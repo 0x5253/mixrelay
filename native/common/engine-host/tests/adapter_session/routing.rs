@@ -6,7 +6,7 @@ use mixrelay_audio_io::{
 };
 
 fn runtime() -> AdapterRuntimeStatus {
-    let mut profile = tests::profile(AudioBackendKind::CoreAudio);
+    let mut profile = profile(AudioBackendKind::CoreAudio);
     profile.capabilities.supported_sample_rates = SAMPLE_RATES.to_vec();
     profile.capabilities.supported_block_frames = BUFFER_SIZES.to_vec();
     profile.capabilities.can_reconfigure_live = true;

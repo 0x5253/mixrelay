@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 use mixrelay_control_protocol::NodeControlRequest;
 
 fn graph() -> GraphDocument {
@@ -22,7 +22,7 @@ fn request(revision: u64, enabled: Option<bool>, muted: Option<bool>) -> NodeCon
 }
 
 fn acknowledge_control(
-    engine: &crate::controller_test_support::ControllerFixture,
+    engine: &ControllerFixture,
     processor: &mut Box<mixrelay_render::BlockProcessor>,
 ) {
     let plan = engine.exchange.plan_revisions();
@@ -46,8 +46,7 @@ fn previous_take_stop_cannot_stop_a_new_recording_at_same_graph_revision() {
     use mixrelay_audio_io::recording::{RecorderAction, RecorderRequest, RecorderState};
     use mixrelay_control_protocol::{ObservedRecording, RecorderControlRequest};
     let directory = mixrelay_test_support::FixtureDir::new("take-fence").unwrap();
-    let engine = crate::endpoint_settings_tests::controller(graph())
-        .with_graph_catalog_path(directory.join("graphs.json"));
+    let engine = controller(graph()).with_graph_catalog_path(directory.join("graphs.json"));
     let graph_id = engine.graph_catalog().unwrap().active_id;
     let id = engine
         .core
@@ -129,8 +128,7 @@ fn recorder_off_finalizes_and_on_does_not_restart_recording() {
     use mixrelay_audio_io::recording::{RecorderAction, RecorderRequest, RecorderState};
     use mixrelay_control_protocol::RecorderControlRequest;
     let directory = mixrelay_test_support::FixtureDir::new("node-control-recorder").unwrap();
-    let engine = crate::endpoint_settings_tests::controller(graph())
-        .with_graph_catalog_path(directory.join("graphs.json"));
+    let engine = controller(graph()).with_graph_catalog_path(directory.join("graphs.json"));
     let graph_id = engine.graph_catalog().unwrap().active_id;
     let mut processor = engine
         .core

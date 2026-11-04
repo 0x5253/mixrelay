@@ -1,5 +1,4 @@
-use crate::endpoint_settings_tests::controller;
-use crate::*;
+use super::*;
 use mixrelay_audio_io::recording::{Encoding, RecorderAction, RecorderRequest, RecorderState};
 use mixrelay_control_protocol::RecorderControlRequest;
 use mixrelay_test_support::FixtureDir;

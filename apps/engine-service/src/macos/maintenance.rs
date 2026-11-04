@@ -1,7 +1,7 @@
 //! Control-side native observation and off-audio-thread reclamation. Both workers
 //! have an explicit owner; shutdown waits for their current operation to finish.
 
-use crate::EngineGraphController;
+use crate::controller::EngineGraphController;
 use mixrelay_engine_core::session::AdapterRuntimeStatus;
 use mixrelay_engine_host::control_maintenance::ControlMaintenance;
 use mixrelay_macos_engine::{

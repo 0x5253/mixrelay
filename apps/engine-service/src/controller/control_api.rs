@@ -1,10 +1,13 @@
 //! Delegates the server adapter contract to the engine application service.
-use crate::{
-    AppStatus, ControlBackend, EngineGraphController, ExternalProcessorCatalog, GraphApplyRequest,
-    GraphApplyResponse, GraphDocument, GraphRuntimeStatus, MeterSnapshot, ProcessorEditorStatus,
-    ProcessorParameterUpdateResponse, ProcessorRetryRequest, ProcessorScanRequest, ProtocolError,
-    SessionReconfigureRequest,
+use super::EngineGraphController;
+use mixrelay_audio_graph::GraphDocument;
+use mixrelay_control_protocol::{
+    AppStatus, ExternalProcessorCatalog, GraphApplyRequest, GraphApplyResponse, GraphRuntimeStatus,
+    MeterSnapshot, ProcessorEditorStatus, ProcessorParameterUpdateResponse, ProcessorRetryRequest,
+    ProcessorScanRequest, ProtocolError, SessionReconfigureRequest,
 };
+use mixrelay_control_server::ControlBackend;
+
 impl ControlBackend for EngineGraphController {
     fn telemetry_state(&self) -> Option<mixrelay_control_protocol::ControlStateSnapshot> {
         self.core.telemetry_state()

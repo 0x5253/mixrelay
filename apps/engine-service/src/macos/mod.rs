@@ -3,7 +3,10 @@ mod endpoint_driver;
 mod latency_publication;
 mod maintenance;
 mod shutdown;
-use crate::{EngineGraphController, EngineGraphControllerConfig, control_service::ControlService};
+use crate::{
+    control_service::ControlService,
+    controller::{EngineGraphController, EngineGraphControllerConfig},
+};
 use mixrelay_audio_graph::RenderFormat;
 use mixrelay_engine_core::{default_peak_meter_bank, session::AdapterRuntimeStatus};
 use mixrelay_engine_host::{
@@ -215,3 +218,6 @@ fn initialize_native_transport() -> Result<(), String> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests;

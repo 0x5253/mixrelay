@@ -41,31 +41,6 @@ fn audio_worker_finish_preserves_a_panicked_worker_reason() {
     assert!(weak.upgrade().is_none());
 }
 
-pub(super) fn profile(backend: AudioBackendKind) -> AdapterProfile {
-    AdapterProfile {
-        initial_format: SessionFormat {
-            sample_rate: 44_100,
-            block_frames: 128,
-        },
-        capabilities: AudioSessionCapabilities {
-            backend,
-            supported_sample_rates: vec![44_100, 48_000, 96_000],
-            supported_block_frames: vec![64, 128, 256],
-            can_reconfigure_live: false,
-            hardware_input: true,
-            hardware_output: false,
-            virtual_endpoint: true,
-            application_capture: true,
-            sample_rate_conversion: false,
-            drift_correction: false,
-        },
-        application_capture_rates: vec![44_100, 96_000],
-        clock_authority: ClockAuthority::AudioServer,
-        transport_latency_frames: None,
-        requires_observed_device_rate: false,
-    }
-}
-
 #[test]
 fn os_label_does_not_invent_device_health_or_supported_io() {
     for backend in [AudioBackendKind::CoreAudio, AudioBackendKind::PipeWire] {
@@ -350,7 +325,7 @@ fn runtime_backend_quiesces_processing_and_retains_failed_rollback_pause() {
         }),
     );
     ready.wait();
-    let runtime: &dyn crate::RuntimeBackend = status.as_ref();
+    let runtime: &dyn RuntimeBackend = status.as_ref();
     let suspended = runtime.suspend();
     let paused = status.pause_requested();
     runtime.fail_reconfiguration();

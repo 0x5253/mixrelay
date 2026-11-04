@@ -1,6 +1,5 @@
 //! Native integration fixture for recorder and document ownership tests.
 use super::*;
-use crate::controller_test_support::ControllerFixture;
 use mixrelay_audio_io::{
     NativeDeviceFormats, VirtualEndpointDeviceSettings, VirtualEndpointSettings,
     session::{AudioBackendKind, AudioSessionCapabilities, ClockAuthority, SessionFormat},

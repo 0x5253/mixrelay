@@ -1,6 +1,6 @@
 //! Real controller/capability/format-staging path, with native rate negotiation
 //! replaced by an owned in-memory counter. Never opens a tap or changes HAL rate.
-use crate::{EngineGraphController, EngineGraphControllerConfig};
+use crate::controller::{EngineGraphController, EngineGraphControllerConfig};
 use mixrelay_audio_graph::{
     CompileContext, CompileLimits, GraphCompiler, GraphDocument, NodeConfig, NodeSpec, RenderFormat,
 };

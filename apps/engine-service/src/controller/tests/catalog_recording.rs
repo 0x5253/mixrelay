@@ -1,6 +1,4 @@
-use crate::controller_test_support::settle;
-use crate::endpoint_settings_tests::controller;
-use crate::*;
+use super::*;
 use mixrelay_control_protocol::{GraphCatalogAction, GraphCatalogRequest};
 
 struct Fixture(mixrelay_test_support::FixtureDir);

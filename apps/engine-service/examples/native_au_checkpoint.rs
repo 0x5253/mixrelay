@@ -44,7 +44,7 @@ mod qualification {
     use mixrelay_engine_core::{
         FixedRuntimeStatus, NoopGraphResourceBackend, default_peak_meter_bank,
     };
-    use mixrelay_engine_service::{EngineGraphController, EngineGraphControllerConfig};
+    use mixrelay_engine_service::controller::{EngineGraphController, EngineGraphControllerConfig};
     use mixrelay_processor_host::{
         PLUGIN_PROBE_ARGUMENT, PLUGIN_SCAN_ARGUMENT, PLUGIN_WORKER_ARGUMENT, ProcessorCatalog,
         RackFormat, RackLocator,

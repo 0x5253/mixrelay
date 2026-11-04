@@ -2839,6 +2839,7 @@ dependencies = [
  "mixrelay-engine-core",
  "mixrelay-render",
  "mixrelay-test-support",
+ "mixrelay-time",
  "serde",
  "serde_json",
  "tokio",

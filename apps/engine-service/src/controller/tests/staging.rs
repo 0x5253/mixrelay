@@ -1,5 +1,5 @@
 //! Real staging cleanup and joined maintenance ownership at the application boundary.
-use crate::*;
+use super::*;
 use std::{
     fs,
     sync::atomic::{AtomicUsize, Ordering},
@@ -23,8 +23,8 @@ impl ProcessorFactory for CountingFactory {
 fn invalid_graph_after_successful_staging_removes_only_its_temporary_document() {
     let fixture = mixrelay_test_support::FixtureDir::new("catalog-cleanup").unwrap();
     let path = fixture.join("graphs.json");
-    let mut engine = endpoint_settings_tests::controller(GraphDocument::new(1, vec![], vec![]))
-        .with_graph_catalog_path(path.clone());
+    let mut engine =
+        controller(GraphDocument::new(1, vec![], vec![])).with_graph_catalog_path(path.clone());
     let prepares = Arc::new(AtomicUsize::new(0));
     let base = engine.core.test_factory();
     engine.core.test_set_factory(Arc::new(CountingFactory {
@@ -52,8 +52,8 @@ fn invalid_graph_after_successful_staging_removes_only_its_temporary_document() 
 fn providerless_pending_graph_needs_no_snapshot_or_shutdown_checkpoint() {
     let fixture = mixrelay_test_support::FixtureDir::new("catalog-maintenance").unwrap();
     let path = fixture.join("graphs.json");
-    let engine = endpoint_settings_tests::controller(GraphDocument::new(1, vec![], vec![]))
-        .with_graph_catalog_path(path.clone());
+    let engine =
+        controller(GraphDocument::new(1, vec![], vec![])).with_graph_catalog_path(path.clone());
     let mut document = engine.graph();
     document.revision += 1;
     engine.apply_graph_request(document.clone().into()).unwrap();

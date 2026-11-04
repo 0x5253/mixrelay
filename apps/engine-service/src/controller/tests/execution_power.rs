@@ -1,7 +1,9 @@
-const SAVED_PAUSE: &str = "engine-paused.json";
-use mixrelay_audio_graph::GraphDocument;
+//! Engine power, pause persistence and execution ownership across service restarts.
+use super::*;
 use mixrelay_audio_io::recording::{RecorderAction, RecorderRequest, RecorderState};
 use mixrelay_control_server::ControlBackend;
+
+const SAVED_PAUSE: &str = "engine-paused.json";
 
 fn recorder_request(action: RecorderAction) -> RecorderRequest {
     RecorderRequest {
@@ -23,15 +25,11 @@ fn graph(revision: u64) -> GraphDocument {
 
 #[test]
 fn a_pause_outlives_the_service_until_resume() {
-    use crate::controller_test_support::settle;
     let directory = mixrelay_test_support::FixtureDir::new("engine-saved-pause").unwrap();
     let catalog = directory.join("graphs.json");
     let marker = directory.join(SAVED_PAUSE);
     let start = || {
-        crate::endpoint_settings_tests::controller(
-            crate::endpoint_settings_tests::endpoint_document(1, "Retained device"),
-        )
-        .with_graph_catalog_path(catalog.clone())
+        controller(endpoint_document(1, "Retained device")).with_graph_catalog_path(catalog.clone())
     };
     let engine = start();
     assert!(engine.core.status().engine_power.unwrap().enabled);
@@ -106,12 +104,11 @@ fn a_pause_outlives_the_service_until_resume() {
 
 #[test]
 fn a_pause_after_repeated_failures_keeps_its_reason_until_resume() {
-    use crate::controller_test_support::settle;
     use mixrelay_control_protocol::EnginePauseReason;
     let directory = mixrelay_test_support::FixtureDir::new("engine-crash-loop").unwrap();
     let catalog = directory.join("graphs.json");
     let start = |tripped| {
-        crate::endpoint_settings_tests::controller(graph(1))
+        controller(graph(1))
             .after_repeated_failures(tripped)
             .with_graph_catalog_path(catalog.clone())
     };
@@ -162,10 +159,8 @@ fn a_pause_after_repeated_failures_keeps_its_reason_until_resume() {
 
 #[test]
 fn an_unsaved_pause_choice_is_reported_until_maintenance_saves_it() {
-    use crate::controller_test_support::settle;
     let directory = mixrelay_test_support::FixtureDir::new("engine-unsaved-pause").unwrap();
-    let engine = crate::endpoint_settings_tests::controller(graph(1))
-        .with_graph_catalog_path(directory.join("graphs.json"));
+    let engine = controller(graph(1)).with_graph_catalog_path(directory.join("graphs.json"));
     let marker = directory.join(SAVED_PAUSE);
     let warning = || engine.graph_catalog().unwrap().persistence_error;
     let unsaved = |warning: Option<String>| {
@@ -249,8 +244,7 @@ fn an_unsaved_pause_choice_is_reported_until_maintenance_saves_it() {
 fn pause_retires_render_taps_but_resumes_the_same_rf64_without_the_gap() {
     let directory = mixrelay_test_support::FixtureDir::new("engine-pause-recording").unwrap();
     let path = directory.join("take.wav");
-    let engine = crate::endpoint_settings_tests::controller(graph(1))
-        .with_graph_catalog_path(directory.join("graphs.json"));
+    let engine = controller(graph(1)).with_graph_catalog_path(directory.join("graphs.json"));
     let catalog = engine.graph_catalog().unwrap();
     let id = engine
         .core
@@ -345,8 +339,7 @@ fn pause_retires_render_taps_but_resumes_the_same_rf64_without_the_gap() {
 fn global_resume_preserves_manual_pause_and_stopping_while_paused_finalizes() {
     let directory = mixrelay_test_support::FixtureDir::new("engine-manual-pause").unwrap();
     let path = directory.join("take.wav");
-    let engine = crate::endpoint_settings_tests::controller(graph(1))
-        .with_graph_catalog_path(directory.join("graphs.json"));
+    let engine = controller(graph(1)).with_graph_catalog_path(directory.join("graphs.json"));
     let catalog = engine.graph_catalog().unwrap();
     let id = engine
         .core
@@ -422,8 +415,7 @@ fn global_resume_preserves_manual_pause_and_stopping_while_paused_finalizes() {
 fn failed_resume_keeps_the_open_take_paused() {
     let directory = mixrelay_test_support::FixtureDir::new("engine-resume-failure").unwrap();
     let path = directory.join("take.wav");
-    let engine = crate::endpoint_settings_tests::controller(graph(1))
-        .with_graph_catalog_path(directory.join("graphs.json"));
+    let engine = controller(graph(1)).with_graph_catalog_path(directory.join("graphs.json"));
     let catalog = engine.graph_catalog().unwrap();
     let id = engine
         .core
@@ -489,8 +481,7 @@ fn failed_resume_keeps_the_open_take_paused() {
 #[test]
 fn off_edits_keep_authored_catalog_and_resume_the_latest_document() {
     let directory = mixrelay_test_support::FixtureDir::new("engine-power").unwrap();
-    let engine = crate::endpoint_settings_tests::controller(graph(1))
-        .with_graph_catalog_path(directory.join("graphs.json"));
+    let engine = controller(graph(1)).with_graph_catalog_path(directory.join("graphs.json"));
     let original = engine.graph_catalog().unwrap();
     let mut processor = engine
         .core
@@ -569,7 +560,7 @@ fn off_edits_keep_authored_catalog_and_resume_the_latest_document() {
 
 #[test]
 fn failed_enable_keeps_execution_off() {
-    let engine = crate::endpoint_settings_tests::controller(GraphDocument::new(1, vec![], vec![]));
+    let engine = controller(GraphDocument::new(1, vec![], vec![]));
     let mut processor = engine
         .core
         .test_prepare_processor(&engine.graph(), engine.core.test_context())
@@ -601,8 +592,7 @@ fn failed_enable_keeps_execution_off() {
 #[test]
 fn storage_failure_cannot_block_stop_and_stale_start_preflight_cannot_publish() {
     let directory = mixrelay_test_support::FixtureDir::new("engine-power-disk").unwrap();
-    let engine = crate::endpoint_settings_tests::controller(graph(1))
-        .with_graph_catalog_path(directory.join("graphs.json"));
+    let engine = controller(graph(1)).with_graph_catalog_path(directory.join("graphs.json"));
     let mut processor = engine
         .core
         .test_prepare_processor(&engine.graph(), engine.core.test_context())

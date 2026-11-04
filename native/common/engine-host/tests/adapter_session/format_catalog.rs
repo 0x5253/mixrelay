@@ -6,7 +6,7 @@ use mixrelay_audio_io::{
     session::AudioBackendKind,
 };
 fn runtime(endpoint: &Arc<AtomicU32>) -> AdapterRuntimeStatus {
-    let mut profile = tests::profile(AudioBackendKind::CoreAudio);
+    let mut profile = profile(AudioBackendKind::CoreAudio);
     profile.initial_format.sample_rate = 48_000;
     profile.capabilities.supported_sample_rates = SAMPLE_RATES.to_vec();
     profile.capabilities.supported_block_frames = BUFFER_SIZES.to_vec();

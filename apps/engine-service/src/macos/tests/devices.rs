@@ -1,5 +1,5 @@
 //! Actual service controller transactions over owned simulated `CoreAudio` resources.
-use crate::{EngineGraphController, EngineGraphControllerConfig};
+use crate::controller::{EngineGraphController, EngineGraphControllerConfig};
 use mixrelay_audio_graph::{
     AudioDeviceInputConfig, AudioDeviceOutputConfig, DeviceSelector, GraphDocument, NodeConfig,
     NodeSpec, RenderFormat,
@@ -140,9 +140,7 @@ impl Engine {
                 format: format(48_000, 256),
                 meters: mixrelay_engine_core::default_peak_meter_bank(),
                 initial_bindings: vec![],
-                endpoint_backend: Arc::new(
-                    crate::macos_application_rate_tests::EndpointFixture::new(),
-                ),
+                endpoint_backend: Arc::new(super::application_rate::EndpointFixture::new()),
                 required_endpoint_node_id: None,
                 processor_catalog: mixrelay_processor_host::ProcessorCatalog::default(),
                 graph_resources: resources.clone(),

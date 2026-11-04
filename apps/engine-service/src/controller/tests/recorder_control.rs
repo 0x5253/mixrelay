@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 use mixrelay_audio_graph::{GraphDocument, NodeId, NodeSpec};
 use mixrelay_audio_io::recording::{RecorderAction, RecorderRequest, RecorderState};
 use mixrelay_control_protocol::{GraphCatalogAction, GraphCatalogRequest, RecorderControlRequest};
@@ -30,8 +30,7 @@ fn channels_can_change_only_after_the_take_is_stopped() {
         }],
         vec![],
     );
-    let engine = crate::endpoint_settings_tests::controller(document)
-        .with_graph_catalog_path(directory.join("graphs.json"));
+    let engine = controller(document).with_graph_catalog_path(directory.join("graphs.json"));
     let catalog = engine.graph_catalog().unwrap();
     let graph_id = catalog.active_id;
     let id = engine
@@ -90,11 +89,13 @@ fn controls_target_original_graph_even_after_another_graph_is_selected() {
         }],
         vec![],
     );
-    let engine = crate::endpoint_settings_tests::controller(document)
-        .with_graph_catalog_path(directory.join("graphs.json"));
+    let engine = controller(document).with_graph_catalog_path(directory.join("graphs.json"));
     let original = engine.graph_catalog().unwrap();
     let id = mixrelay_render::recording_session_key(
-        &graph_composition::runtime_node_id(&original.active_id, &NodeId::from("record")),
+        &mixrelay_audio_graph::composition::runtime_node_id(
+            &original.active_id,
+            &NodeId::from("record"),
+        ),
         2,
     );
     let tap = engine.recorders.prepare(id.as_str(), 2).unwrap();

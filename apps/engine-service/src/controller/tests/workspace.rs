@@ -2,7 +2,6 @@
 use std::{fs::File, path::Path};
 
 use super::*;
-use crate::{controller_test_support::settle, endpoint_settings_tests::controller};
 use mixrelay_audio_graph::{NodeId, NodeSpec, ProviderNodeConfig, ProviderPorts};
 use mixrelay_control_protocol::{WorkspaceAction, WorkspaceRequest};
 use mixrelay_control_server::ControlBackend;
@@ -192,18 +191,16 @@ fn missing_unreferenced_and_malformed_state_assets_do_not_change_catalog() {
 fn portable_bundle_reopens_large_states_after_source_store_is_deleted() {
     const STATE_BYTES: usize = 9 * 1024 * 1024;
     let dir = mixrelay_test_support::FixtureDir::new("workspace-portable-state").unwrap();
-    let driver_inventory = crate::default_duplex_document(1, None);
-    let engine = crate::endpoint_settings_tests::controller_with_inventory(
-        GraphDocument::new(1, vec![], vec![]),
-        &driver_inventory,
-    )
-    .with_graph_catalog_path(dir.join("graphs.json"));
+    let driver_inventory = default_duplex_document(1, None);
+    let engine =
+        controller_with_inventory(GraphDocument::new(1, vec![], vec![]), &driver_inventory)
+            .with_graph_catalog_path(dir.join("graphs.json"));
     let source_store = engine.processor_files.snapshot().unwrap();
     let first_state = vec![0x35; STATE_BYTES];
     let second_state = vec![0xa7; STATE_BYTES];
     let first_ref = source_store.put(&first_state).unwrap();
     let second_ref = source_store.put(&second_state).unwrap();
-    let mut catalog = catalog_fixture(crate::default_duplex_document(1, Some(-6.0)));
+    let mut catalog = catalog_fixture(default_duplex_document(1, Some(-6.0)));
     add_provider(&mut catalog, "missing-effect-a", with_state(&first_ref));
     add_provider(&mut catalog, "missing-effect-b", with_state(&second_ref));
     let references = state_references(&catalog);
@@ -216,11 +213,9 @@ fn portable_bundle_reopens_large_states_after_source_store_is_deleted() {
     write_bundle_fixture(&source, &catalog, &references, &source_store, 1);
     let source_bytes = std::fs::read(&source).unwrap();
     assert!(source_bytes.len() > 16 * 1024 * 1024);
-    let preview_engine = crate::endpoint_settings_tests::controller_with_inventory(
-        GraphDocument::new(1, vec![], vec![]),
-        &driver_inventory,
-    )
-    .with_graph_catalog_path(dir.join("preview-graphs.json"));
+    let preview_engine =
+        controller_with_inventory(GraphDocument::new(1, vec![], vec![]), &driver_inventory)
+            .with_graph_catalog_path(dir.join("preview-graphs.json"));
     let preview_store = preview_engine.processor_files.snapshot().unwrap();
     let preview_request = request(
         &preview_engine,

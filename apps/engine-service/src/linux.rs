@@ -1,5 +1,8 @@
 //! Composes `PipeWire` native owners with engine, processor, recorder and control adapters.
-use crate::{EngineGraphController, EngineGraphControllerConfig, control_service::ControlService};
+use crate::{
+    control_service::ControlService,
+    controller::{EngineGraphController, EngineGraphControllerConfig},
+};
 use mixrelay_audio_graph::GraphDocument;
 use mixrelay_engine_core::default_peak_meter_bank;
 use mixrelay_engine_host::{
