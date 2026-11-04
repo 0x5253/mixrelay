@@ -403,7 +403,8 @@ mod tests {
     #[test]
     fn one_independent_input_requires_time_addressed_worker_reads() {
         let (_, plan) = input_output_plan();
-        let (input, _context) = super::super::tests::synthetic_device(2, 48_000, 48_000, true);
+        let (input, _context) =
+            super::super::device_fixture::synthetic_device(2, 48_000, 48_000, true);
         input.clock_identity.store(11, Ordering::Release);
         let devices = DeviceSet(
             BTreeMap::from([("input".into(), Arc::clone(&input))]),

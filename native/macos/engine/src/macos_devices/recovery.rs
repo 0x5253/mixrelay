@@ -1,14 +1,18 @@
 //! Reconcile desired selections against current presence without deleting graph intent.
 use super::{
-    Aggregate, Cache, Device, DeviceSet, MacDevices, Publication, Spec, aggregate_members,
-    backend_error,
+    Aggregate, Cache, Device, DeviceSet, MacDevices, Publication, Spec, backend_error,
+    spec::aggregate_members,
 };
 use mixrelay_audio_graph::DeviceSelector;
 use mixrelay_audio_io::process::{InputActivity, TransferOutcome};
 use mixrelay_audio_io::{AudioDeviceDescriptor, DeviceDirection, HostAudioBackendError};
 use std::{
     collections::BTreeMap,
-    sync::{Arc, Weak},
+    sync::{
+        Arc, Weak,
+        atomic::{AtomicBool, Ordering},
+    },
+    time::{Duration, Instant},
 };
 
 pub(super) fn offline_transfer(samples: usize, channels: usize) -> TransferOutcome {
@@ -76,6 +80,43 @@ impl Presence {
 }
 
 impl MacDevices {
+    /// New native work belongs to the stoppable observer, never the reclaimer
+    /// that must remain alive while the audio worker is being joined.
+    pub fn recover(&self, stop: &AtomicBool) {
+        if stop.load(Ordering::Acquire) {
+            return;
+        }
+        let Ok(mut cache) = self.cache.try_lock() else {
+            return;
+        };
+        // Membership, rate changes and hotplug are reconciled off the DSP
+        // thread. Preparation is transactional: old owners remain published
+        // until an entire replacement set is ready, and invalid callbacks mute.
+        let Ok(mut next) = self.next_group_check.try_lock() else {
+            return;
+        };
+        if stop.load(Ordering::Acquire)
+            || !self.handoff.idle()
+            || (Instant::now() < *next && !self.recovery_requested.load(Ordering::Acquire))
+        {
+            return;
+        }
+        self.recovery_requested.store(false, Ordering::Release);
+        *next = Instant::now() + Duration::from_secs(2);
+        let desired = cache
+            .iter()
+            .map(|(id, (spec, _))| (id.clone(), spec.clone()))
+            .collect();
+        if let Err(error) = self.prepare_devices(&mut cache, &desired, Publication::Recovery) {
+            tracing::warn!(%error, "CoreAudio private-group recovery deferred");
+        }
+    }
+    /// Bypass the periodic inventory delay after callback topology loss.
+    /// No native property access or resource construction occurs on the caller.
+    pub(crate) fn request_recovery(&self) {
+        self.recovery_requested.store(true, Ordering::Release);
+    }
+
     pub(super) fn prepare_devices(
         &self,
         cache: &mut Cache,

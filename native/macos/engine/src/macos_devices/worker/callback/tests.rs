@@ -1,5 +1,5 @@
 use super::*;
-use crate::macos_devices::tests::synthetic_device;
+use crate::macos_devices::device_fixture::synthetic_device;
 use mixrelay_macos_transport::{audio_buffer::AudioBuffer, device_io::mr_device_io_process};
 
 #[repr(C)]

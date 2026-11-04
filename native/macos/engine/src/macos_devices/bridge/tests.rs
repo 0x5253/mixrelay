@@ -1,4 +1,8 @@
 use super::*;
+use crate::macos_devices::device_fixture::{synthetic_device, synthetic_output};
+use crate::macos_devices::ffi::{
+    mr_device_io_graph_frames, mr_device_io_graph_write, mr_device_io_queued,
+};
 use mixrelay_macos_transport::{audio_buffer::AudioBuffer, device_io::mr_device_io_process};
 use std::ptr;
 
@@ -6,7 +10,7 @@ mod queue_targets;
 
 #[test]
 fn transport_restart_reuses_storage_and_invalidates_old_pcm() {
-    let (_device, context) = crate::macos_devices::tests::synthetic_device(2, 48_000, 96_000, true);
+    let (_device, context) = synthetic_device(2, 48_000, 96_000, true);
     let mut bridge = DeviceBridge::new(&context, 96_000).unwrap();
     bridge.bridge.push_interleaved(&[0.5; 512]).unwrap();
     let epoch = bridge.epoch;
@@ -29,7 +33,7 @@ fn transport_restart_reuses_storage_and_invalidates_old_pcm() {
 #[ignore = "serial before/after timing; run explicitly without other benchmarks"]
 fn compare_transport_recreation_and_restart() {
     use std::{hint::black_box, time::Instant};
-    let (_device, context) = crate::macos_devices::tests::synthetic_device(2, 48_000, 96_000, true);
+    let (_device, context) = synthetic_device(2, 48_000, 96_000, true);
     let mut bridge = DeviceBridge::new(&context, 96_000).unwrap();
     // Same geometry, native owner, activation/epoch reset and iteration count.
     // Alternate order each round; the old path includes replacing/dropping its converter.
@@ -103,8 +107,7 @@ fn native_callback(context: &WorkerContext, native: &mut InputBuffer) {
 #[test]
 fn independent_converter_preserves_pcm_across_three_native_callback_bursts() {
     for input in [true, false] {
-        let (device, context) =
-            crate::macos_devices::tests::synthetic_device(1, 48_000, 96_000, input);
+        let (device, context) = synthetic_device(1, 48_000, 96_000, input);
         let mut bridge = DeviceBridge::new(&context, 96_000).unwrap();
         let mut native_pcm = [0.25_f32; 32];
         let mut native = InputBuffer {
@@ -186,8 +189,7 @@ fn prime(
 fn capture_clock_feedback_bounds_backlog_across_batched_graph_consumption() {
     let mut outcomes = Vec::new();
     for drift_ppm in [-300_i32, 0, 300] {
-        let (device, context) =
-            crate::macos_devices::tests::synthetic_device(1, 48_000, 96_000, true);
+        let (device, context) = synthetic_device(1, 48_000, 96_000, true);
         context.graph_quantum.store(256, Ordering::Release);
         let mut bridge = DeviceBridge::new(&context, 96_000).unwrap();
         let mut input = [0.25_f32; 32];
@@ -248,8 +250,7 @@ fn capture_clock_feedback_bounds_backlog_across_batched_graph_consumption() {
 
 #[test]
 fn private_residence_advances_on_native_time_without_graph_producer_progress() {
-    let (_device, context) =
-        crate::macos_devices::tests::synthetic_device(1, 48_000, 48_000, false);
+    let (_device, context) = synthetic_device(1, 48_000, 48_000, false);
     context.clock_aligned.store(true, Ordering::Release);
     let mut bridge = DeviceBridge::new(&context, 48_000).unwrap();
     bridge.bridge.push_interleaved(&[0.25; 128]).unwrap();
@@ -286,8 +287,7 @@ fn graph_domain_src_residence_uses_native_scalar_in_both_directions() {
     use crate::macos_devices::latency::tests::passage;
     use mixrelay_audio_io::residence::ResidenceSnapshot;
     for input in [true, false] {
-        let (_device, context) =
-            crate::macos_devices::tests::synthetic_device(1, 48_000, 48_000, input);
+        let (_device, context) = synthetic_device(1, 48_000, 48_000, input);
         context.clock_aligned.store(true, Ordering::Release);
         let mut bridge = DeviceBridge::new(&context, 48_000).unwrap();
         let mut before = bridge.bridge.pull_interleaved(&mut [0.0; 64]).unwrap();
@@ -339,6 +339,82 @@ fn graph_domain_src_residence_uses_native_scalar_in_both_directions() {
         assert!(
             (delay - 10_010_000.0).abs() < 0.001,
             "input={input}: {delay}"
+        );
+    }
+}
+
+#[test]
+fn queue_retains_complete_converter_bursts_without_padding_same_clock_copy() {
+    let (device, context) = synthetic_output(2, 48000, 48000);
+    let pcm = [0.0; 64];
+    unsafe {
+        mr_device_io_graph_write(device.native.pointer.as_ptr(), pcm.as_ptr(), 32, 0);
+    }
+    context.clock_aligned.store(true, Ordering::Release);
+    let bridge = DeviceBridge::new(&context, 48000).unwrap();
+    assert_eq!(bridge.queue_target(&context, false), 32);
+    context.clock_aligned.store(false, Ordering::Release);
+    let bridge = DeviceBridge::new(&context, 48000).unwrap();
+    assert_eq!(
+        bridge.queue_target(&context, false),
+        bridge.bridge.processing_quantum().1 * 2
+    );
+}
+
+#[test]
+fn output_queue_latency_budget() {
+    let (device, context) = synthetic_output(2, 48000, 48000);
+    context.clock_aligned.store(true, Ordering::Release);
+    let mut bridge = DeviceBridge::new(&context, 48000).unwrap();
+    let source = vec![0.125_f32; 256 * 2];
+    for _ in 0..16 {
+        assert_eq!(
+            unsafe {
+                mr_device_io_graph_write(device.native.pointer.as_ptr(), source.as_ptr(), 256, 0)
+            },
+            256
+        );
+    }
+    for _ in 0..32 {
+        bridge.pump(&context).unwrap();
+    }
+    let queued = unsafe { mr_device_io_queued(device.native.pointer.as_ptr(), false) };
+    eprintln!(
+        "same-clock 48kHz stereo native output queued={queued} frames ({:.3} ms)",
+        f64::from(queued) / 48.0
+    );
+    assert_eq!(queued, 256);
+}
+
+#[test]
+fn worker_bridge_has_no_priming_output_and_uses_actual_native_rate() {
+    for channels in [1, 2, 16, 64] {
+        let mut counts = Vec::new();
+        for native_rate in [44_100, 96_000] {
+            let (device, context) = synthetic_output(channels, 48_000, native_rate);
+            let mut bridge = DeviceBridge::new(&context, native_rate).unwrap();
+            bridge.pump(&context).unwrap();
+            assert_eq!(
+                unsafe { mr_device_io_queued(device.native.pointer.as_ptr(), false) },
+                0
+            );
+            let source = vec![0.25; 512 * usize::from(channels)];
+            assert_eq!(device.write(&source, 0).frames, 512);
+            for _ in 0..4 {
+                bridge.pump(&context).unwrap();
+            }
+            let transferred = unsafe { mr_device_io_queued(device.native.pointer.as_ptr(), false) };
+            assert!(transferred > 0);
+            assert!(device.bridge_ready.load(Ordering::Acquire));
+            assert_eq!(
+                unsafe { mr_device_io_graph_frames(device.native.pointer.as_ptr()) },
+                512
+            );
+            counts.push(transferred);
+        }
+        assert!(
+            counts[1] > counts[0] * 3 / 2,
+            "48k to 96k must produce more native frames than 44.1k: {counts:?}"
         );
     }
 }

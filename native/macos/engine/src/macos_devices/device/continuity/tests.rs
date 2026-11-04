@@ -1,5 +1,6 @@
 use crate::macos_devices::{
-    DeviceSet, bridge::NEXT_DEVICE_EPOCH, ffi, tests::synthetic_device, worker::WorkerContext,
+    DeviceSet, bridge::NEXT_DEVICE_EPOCH, device_fixture::synthetic_device, ffi,
+    worker::WorkerContext,
 };
 use mixrelay_audio_graph::{
     AUDIO_PORT_ID, AudioDeviceInputConfig, AudioDeviceOutputConfig, AudioEndpoint, ChannelMapping,
