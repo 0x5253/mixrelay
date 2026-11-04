@@ -191,7 +191,10 @@ fn native_fixture() -> Fixture {
 #[test]
 fn native_integer_capture_encodes_canonical_client_mix_gain_and_exact_mute() {
     let fixture = native_fixture();
-    for (index, encoding) in crate::properties::NATIVE_FORMATS.into_iter().enumerate() {
+    for (index, encoding) in crate::properties::stream::NATIVE_FORMATS
+        .into_iter()
+        .enumerate()
+    {
         for channels in [1, 2, 7, 64] {
             let transport = Transport::new(
                 u8::try_from(index * 4 + channels as usize % 4 + 1).unwrap(),
