@@ -5,18 +5,26 @@ export function ciMatrices(contract) {
     // runs on manual dispatch and in installed qualification of release candidates.
     macosPullRequest: { include: contract.codeChecks.macos.filter(target => target.pullRequest) },
     linux: { include: contract.codeChecks.linuxDistributions.flatMap(distro =>
-      distro.architectures.map(arch => ({ id: `${distro.id}-${arch}`, distro: distro.id, arch,
-        runner: arch === 'arm64' ? 'ubuntu-24.04-arm' : 'ubuntu-24.04' }))) },
+      distro.architectures.map(arch => ({ id: `${distro.id}-${arch}`, distro: distro.id, arch, runner: runners[arch] }))) },
     // One build per CPU bundles every Tauri package format from the same binaries;
     // the Arch package later wraps that CPU's checked DEB payload.
-    linuxBuild: { include: contract.artifacts.filter(a => a.os === 'linux' && a.format === 'deb').map(artifact => {
-      const rpm = contract.artifacts.find(a => a.os === 'linux' && a.arch === artifact.arch && a.format === 'rpm');
+    linuxBuild: { include: linuxArtifacts(contract, 'deb').map(artifact => {
+      const rpm = linuxArtifacts(contract, 'rpm').find(a => a.arch === artifact.arch);
+      const arch = linuxArtifacts(contract, 'arch').find(a => a.arch === artifact.arch);
       return { id: artifact.id, arch: artifact.arch, distro: contract.build.linuxDistribution,
-        runner: artifact.arch === 'arm64' ? 'ubuntu-24.04-arm' : 'ubuntu-24.04',
-        bundles: rpm ? 'deb,rpm' : 'deb', rpm: rpm?.id ?? '' };
+        runner: runners[artifact.arch], bundles: rpm ? 'deb,rpm' : 'deb', rpm: rpm?.id ?? '', archPackage: arch?.id ?? '' };
     }) },
+    // makepkg runs natively in the Arch distribution of the package's CPU.
+    archBuild: { include: linuxArtifacts(contract, 'arch').map(artifact => ({
+      id: artifact.id, arch: artifact.arch, runner: runners[artifact.arch], pkgarch: pacmanArchitectures[artifact.arch],
+      distro: contract.codeChecks.linuxDistributions.find(d => d.artifactFormat === 'arch' && d.architectures.includes(artifact.arch)).id,
+    })) },
   };
 }
+
+const runners = { x64: 'ubuntu-24.04', arm64: 'ubuntu-24.04-arm' };
+const pacmanArchitectures = { x64: 'x86_64', arm64: 'aarch64' };
+const linuxArtifacts = (contract, format) => contract.artifacts.filter(a => a.os === 'linux' && a.format === format);
 
 
 export function matchesVersion(actual, target) {

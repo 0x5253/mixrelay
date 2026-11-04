@@ -176,6 +176,8 @@ if [ -x /usr/bin/dpkg-query ] && [ "$(/usr/bin/dpkg-query -W -f='${db:Status-Sta
   manager=apt
 elif [ -x /usr/bin/rpm ] && /usr/bin/rpm -q mix-relay >/dev/null 2>&1; then
   manager=dnf
+elif [ -x /usr/bin/pacman ] && /usr/bin/pacman -Q mix-relay >/dev/null 2>&1; then
+  manager=pacman
 else
   show_error "$missing"
 fi
@@ -231,6 +233,7 @@ fi
 case "$manager" in
   apt) /usr/bin/pkexec --disable-internal-agent /usr/bin/apt -y remove mix-relay || show_error "$failed" ;;
   dnf) /usr/bin/pkexec --disable-internal-agent /usr/bin/dnf --setopt=clean_requirements_on_remove=False -y remove mix-relay || show_error "$failed" ;;
+  pacman) /usr/bin/pkexec --disable-internal-agent /usr/bin/pacman -R --noconfirm mix-relay || show_error "$failed" ;;
 esac
 
 if [ "$selection" = "$delete_label" ]; then

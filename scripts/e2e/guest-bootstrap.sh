@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Run only inside the disposable cloud guest, before installing the candidate.
 source /etc/os-release
-if [[ "$ID" == arch ]]; then
+if [[ "$ID" == arch || "$ID" == archarm ]]; then
   pacman -Syu --noconfirm --needed xorg-server-xvfb dbus pipewire pipewire-audio \
     pipewire-pulse wireplumber glib2 libarchive openbox sudo python-atspi python-gobject gtk3 gdb strace
 elif [[ "$ID" == fedora ]]; then

@@ -45,10 +45,10 @@ function fixture(t, missing = []) {
   return { root, inputs, output, candidate, comparison, run };
 }
 
-test('pins any earlier same-version candidate and exposes all 14 hosted target mappings', (t) => {
+test('pins any earlier same-version candidate and exposes all 15 hosted target mappings', (t) => {
   const f = fixture(t);
   const matrix = selectBaseline(f.inputs, f.output, f.candidate, f.comparison);
-  assert.equal(matrix.include.length, 14);
+  assert.equal(matrix.include.length, 15);
   assert.ok(matrix.include.every((target) => target.baseline === 'available'));
   const baseline = JSON.parse(readFileSync(join(f.output, 'baseline.json')));
   assert.equal(baseline.version, '0.1.0');
@@ -62,7 +62,7 @@ test('pins any earlier same-version candidate and exposes all 14 hosted target m
 test('a missing format remains in the matrix and fails its affected target explicitly', (t) => {
   const f = fixture(t, ['linux-x64-arch']);
   const matrix = selectBaseline(f.inputs, f.output, f.candidate, f.comparison);
-  assert.equal(matrix.include.length, 14);
+  assert.equal(matrix.include.length, 15);
   assert.match(
     matrix.include.find((target) => target.id === 'arch-rolling-x64').baseline,
     /MISSING.*linux-x64-arch/,
