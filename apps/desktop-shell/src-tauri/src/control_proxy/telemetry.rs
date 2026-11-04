@@ -14,7 +14,7 @@ use mixrelay_control_protocol::TelemetryEncoder;
 use tauri::Manager as _;
 use tokio::sync::{Semaphore, watch};
 
-use forward::{Delivery, forward};
+use forward::{TelemetryEvent, forward};
 
 mod forward;
 
@@ -74,11 +74,7 @@ pub(crate) async fn control_subscribe_telemetry(
             let mut encoder = TelemetryEncoder::default();
             forward(
                 &mut subscription,
-                |delivery| {
-                    channel
-                        .send(webview_message(&mut encoder, &delivery))
-                        .is_ok()
-                },
+                |event| channel.send(webview_message(&mut encoder, &event)).is_ok(),
                 &credit,
                 &mut visibility,
             )
@@ -100,11 +96,13 @@ pub(crate) async fn control_subscribe_telemetry(
 /// The same credited channel carries binary telemetry frames and a terminal JSON marker.
 fn webview_message(
     encoder: &mut TelemetryEncoder,
-    delivery: &Delivery,
+    event: &TelemetryEvent,
 ) -> tauri::ipc::InvokeResponseBody {
-    match delivery {
-        Delivery::Window(window) => tauri::ipc::InvokeResponseBody::Raw(encoder.raw(window)),
-        Delivery::Ended => tauri::ipc::InvokeResponseBody::Json(r#"{"ended":true}"#.to_owned()),
+    match event {
+        TelemetryEvent::Window(window) => tauri::ipc::InvokeResponseBody::Raw(encoder.raw(window)),
+        TelemetryEvent::Ended => {
+            tauri::ipc::InvokeResponseBody::Json(r#"{"ended":true}"#.to_owned())
+        }
     }
 }
 
@@ -173,17 +171,17 @@ mod tests {
         };
         let first = metadata(webview_message(
             &mut encoder,
-            &Delivery::Window(Box::new(window(1, 0.5))),
+            &TelemetryEvent::Window(Box::new(window(1, 0.5))),
         ));
         assert_eq!(first["meters"]["bindings"][0]["channels"], 1);
         assert!(first["meters"].get("nodes").is_none());
         let second = metadata(webview_message(
             &mut encoder,
-            &Delivery::Window(Box::new(window(2, 0.5))),
+            &TelemetryEvent::Window(Box::new(window(2, 0.5))),
         ));
         assert!(second["meters"].get("bindings").is_none());
         assert!(matches!(
-            webview_message(&mut encoder, &Delivery::Ended),
+            webview_message(&mut encoder, &TelemetryEvent::Ended),
             tauri::ipc::InvokeResponseBody::Json(_)
         ));
     }

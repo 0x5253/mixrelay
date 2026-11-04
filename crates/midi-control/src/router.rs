@@ -34,11 +34,6 @@ impl Router {
         self.inputs.clear();
     }
 
-    #[must_use]
-    pub fn bindings(&self) -> &[Binding] {
-        &self.bindings
-    }
-
     /// Takes every bound input that arrived before a shared cross-port boundary, in
     /// reception order. Nothing is taken while a callback is still publishing.
     pub fn drain<'a, I>(&mut self, sources: I)

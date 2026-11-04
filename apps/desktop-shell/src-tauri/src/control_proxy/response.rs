@@ -9,7 +9,7 @@ use serde_json::{Value, json};
 pub(crate) struct ControlProxyResponse {
     /// The engine incarnation that answered, when one did.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub(crate) engine: Option<String>,
+    pub(super) engine: Option<String>,
     pub(crate) status: u16,
     pub(crate) body: Value,
     /// Only macOS capture ownership distinguishes unsent from uncertain requests.
@@ -20,7 +20,7 @@ pub(crate) struct ControlProxyResponse {
 
 impl ControlProxyResponse {
     /// An answer the engine sent.
-    pub(crate) fn answered(engine: Option<String>, status: u16, body: Value) -> Self {
+    pub(super) fn answered(engine: Option<String>, status: u16, body: Value) -> Self {
         Self::delivered(engine, status, body, Delivery::ServerResponse)
     }
 
@@ -42,7 +42,7 @@ impl ControlProxyResponse {
     }
 
     /// Refused by the desktop; nothing was sent, so nothing was applied.
-    pub(crate) fn rejected(code: &str) -> Self {
+    pub(super) fn rejected(code: &str) -> Self {
         Self::delivered(
             None,
             409,
@@ -72,7 +72,7 @@ impl ControlProxyResponse {
         )
     }
 
-    pub(crate) fn is_success(&self) -> bool {
+    pub(super) fn is_success(&self) -> bool {
         (200..300).contains(&self.status)
     }
 }

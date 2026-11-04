@@ -15,7 +15,7 @@ const HIDDEN_INTERVAL: Duration = Duration::from_secs(1);
 
 /// What one webview subscriber receives, in order.
 #[derive(Debug, PartialEq)]
-pub(super) enum Delivery {
+pub(super) enum TelemetryEvent {
     Window(Box<ControlTelemetry>),
     /// The stream ended; the UI resubscribes or falls back to polling.
     Ended,
@@ -37,7 +37,7 @@ impl Windows for crate::background::StartedTelemetrySubscription {
 /// webview stopped returning it) unless the channel is gone.
 pub(super) async fn forward(
     windows: &mut impl Windows,
-    mut send: impl FnMut(Delivery) -> bool,
+    mut send: impl FnMut(TelemetryEvent) -> bool,
     credit: &Semaphore,
     visibility: &mut watch::Receiver<bool>,
 ) {
@@ -54,7 +54,7 @@ pub(super) async fn forward(
         loop {
             let Ok(Ok(permit)) = tokio::time::timeout(CREDIT_LIMIT, credit.acquire()).await else {
                 // Best effort: a webview that resumes learns to resubscribe.
-                send(Delivery::Ended);
+                send(TelemetryEvent::Ended);
                 return;
             };
             let visible = *visibility.borrow_and_update();
@@ -63,7 +63,7 @@ pub(super) async fn forward(
                     () = tokio::time::sleep_until(deadline) => {},
                     changed = visibility.changed() => {
                         if changed.is_err() {
-                            send(Delivery::Ended);
+                            send(TelemetryEvent::Ended);
                             return;
                         }
                         continue;
@@ -71,13 +71,13 @@ pub(super) async fn forward(
                 }
             }
             let Ok(window) = mailbox.take().await else {
-                send(Delivery::Ended);
+                send(TelemetryEvent::Ended);
                 return;
             };
             permit.forget();
             next_hidden =
                 (!*visibility.borrow()).then(|| tokio::time::Instant::now() + HIDDEN_INTERVAL);
-            if !send(Delivery::Window(Box::new(window))) {
+            if !send(TelemetryEvent::Window(Box::new(window))) {
                 return;
             }
         }
@@ -159,8 +159,8 @@ mod tests {
             let credit = Semaphore::new(CREDITS);
             forward(
                 &mut Controlled(receiver),
-                |delivery| {
-                    delivered.lock().unwrap().push(delivery);
+                |event| {
+                    delivered.lock().unwrap().push(event);
                     credit.add_permits(1);
                     true
                 },
@@ -182,7 +182,7 @@ mod tests {
         {
             let messages = sent.lock().unwrap();
             assert_eq!(messages.len(), 2);
-            let Delivery::Window(packet) = &messages[1] else {
+            let TelemetryEvent::Window(packet) = &messages[1] else {
                 panic!("hidden editor must receive its current telemetry");
             };
             assert_eq!(packet.sequence, 3);
@@ -197,14 +197,14 @@ mod tests {
         assert_eq!(sent.lock().unwrap().len(), 3);
         {
             let messages = sent.lock().unwrap();
-            let Delivery::Window(packet) = &messages[2] else {
+            let TelemetryEvent::Window(packet) = &messages[2] else {
                 panic!("restored editor must receive its latest state immediately");
             };
             assert_eq!(packet.state.as_ref().unwrap().graph.active_revision, 4);
         }
         drop(windows);
         task.await.unwrap();
-        assert_eq!(sent.lock().unwrap().last(), Some(&Delivery::Ended));
+        assert_eq!(sent.lock().unwrap().last(), Some(&TelemetryEvent::Ended));
     }
 
     #[tokio::test(start_paused = true)]
@@ -228,7 +228,7 @@ mod tests {
         )
         .await;
         assert_eq!(sent.len(), 2);
-        assert_eq!(sent[1], Delivery::Ended);
+        assert_eq!(sent[1], TelemetryEvent::Ended);
     }
 
     #[tokio::test(start_paused = true)]
@@ -254,8 +254,8 @@ mod tests {
             .await;
             // One credit: a single window, then the end once credit never returns.
             assert_eq!(sent.len(), 2);
-            assert!(matches!(sent[0], Delivery::Window(_)));
-            assert_eq!(sent[1], Delivery::Ended);
+            assert!(matches!(sent[0], TelemetryEvent::Window(_)));
+            assert_eq!(sent[1], TelemetryEvent::Ended);
             assert_eq!(started.elapsed(), Duration::from_secs(10));
         }
     }
@@ -277,7 +277,7 @@ mod tests {
             &mut watch::channel(true).1,
         )
         .await;
-        assert_eq!(sent, [Delivery::Ended]);
+        assert_eq!(sent, [TelemetryEvent::Ended]);
         let mut attempts = 0;
         forward(
             &mut Prepared {
