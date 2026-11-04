@@ -1,22 +1,17 @@
 import '@xyflow/react/dist/base.css';
 
-import type { XYPosition } from '@xyflow/react';
-import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
-import type { AudioMeterStore } from '../audio-meter/AudioMeterStore';
-import type { ProcessorEditorFailure, ProcessorEditorStatus } from '../domain/control/processors';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import type { ProcessorEditorStatus } from '../domain/control/processors';
 import { connectGraphBatch } from '../domain/graph/topology';
 import { useMidiMappingActive } from '../midi/MidiContext';
-import type { EndpointUpdate } from '../ui/AudioNodeEndpointOptions';
-import type { HierarchicalMenuItem } from '../ui/HierarchicalMenu';
+import type { AudioGraphCanvasProps } from './audioGraphCanvasTypes';
 import { ChannelConnectionDialog } from './ChannelConnectionDialog';
 import { GraphCanvasBackground } from './GraphCanvasBackground';
 import { GraphContextSurface } from './GraphContextSurface';
 import { fitViewOptions, GraphFlowSurface } from './GraphFlowSurface';
 import { AudioGraphProviders } from './graphCanvasContexts';
 import type { useChannelConnectionRequests } from './graphKeyboard';
-import type { AudioGraphViewport } from './graphViewport';
-import type { AudioGraphModel, AudioGraphNode } from './model';
-import type { PlaceGraphNodes } from './nodePlacement';
+import type { AudioGraphModel } from './model';
 import { nodeProcessorEditors } from './nodeViewModel';
 import { PortSelectionFeedback } from './PortSelectionFeedback';
 import { useAudioFlowCollections } from './useAudioFlowCollections';
@@ -27,66 +22,12 @@ import {
   useConnectionHandlers,
   useDeletionHandlers,
 } from './useConnectionHandlers';
-import {
-  type GraphContextMenuLabels,
-  type NodeContextAction,
-  useGraphContextMenu,
-} from './useGraphContextMenu';
+import { useGraphContextMenu } from './useGraphContextMenu';
 import { useNodeInsertion } from './useNodeInsertion';
 import { type NodeMenu, useNodeMenu } from './useNodeMenu';
 import { useNodeRequests } from './useNodeRequests';
 
 const emptyProcessorEditorStatuses = new Map<string, ProcessorEditorStatus>();
-
-export interface ProcessorEditorLabels {
-  open: string;
-  retry: string;
-  failure: Record<ProcessorEditorFailure, string>;
-}
-export interface AudioNodeControlSlots {
-  power?: ReactNode;
-  mute?: ReactNode;
-}
-export type AudioGraphChangeKind =
-  | 'layout'
-  | 'level'
-  | 'processor_parameter'
-  | 'parameter_group'
-  | 'runtime';
-
-export interface AudioGraphCanvasProps {
-  nodeContextActions?: (nodeId: string) => readonly NodeContextAction[];
-  renderNodeControls?: (node: AudioGraphNode) => AudioNodeControlSlots | null;
-  renderNodeContent?: (node: AudioGraphNode) => ReactNode;
-  contextMenuLabels?: GraphContextMenuLabels;
-  addNodeLabel?: string;
-  ariaLabel: string;
-  meterStore?: AudioMeterStore;
-  model: AudioGraphModel;
-  nodeMenuItems?: readonly AudioGraphNodeMenuItem[];
-  onAddNode?: (itemId: string, position: XYPosition, placeNodes?: PlaceGraphNodes) => void;
-  onNodeMenuOpenedChange?: (opened: boolean) => void;
-  onNodeRenameRequest?: (nodeId: string) => void;
-  onModelChange: (model: AudioGraphModel, kind: AudioGraphChangeKind) => void;
-  onNodeEndpointChange?: (nodeId: string, value: EndpointUpdate) => void;
-  /** A choice from the node's `channelLayoutControl`. */
-  onNodeChannelLayoutChange?: (nodeId: string, value: string) => void;
-  onNodeGainChange?: (nodeId: string, gainDb: number) => void;
-  onNodeParameterChange?: (nodeId: string, parameterId: string, value: number) => void;
-  onNodeParametersChange?: (
-    nodeId: string,
-    updates: readonly { id: string; value: number }[],
-  ) => void;
-  onProcessorEditorRetry?: (nodeId: string) => void;
-  processorEditorLabels?: ProcessorEditorLabels;
-  processorEditorStatuses?: ReadonlyMap<string, ProcessorEditorStatus>;
-  /** Initial or externally restored view; user movement remains locally interactive. */
-  viewport?: AudioGraphViewport;
-  /** Reports user pan/zoom and insertion reveals, never external viewport restoration. */
-  onViewportChange?: (viewport: AudioGraphViewport) => void;
-}
-
-export type AudioGraphNodeMenuItem = HierarchicalMenuItem;
 
 function useCanvasViewActions(
   onAddNode: AudioGraphCanvasProps['onAddNode'],

@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest';
 import { UndoHistory } from '../../core/application/history/UndoHistory';
-import type { AudioGraphChangeKind } from '../../core/audio-graph/AudioGraphCanvas';
+import type { AudioGraphChangeKind } from '../../core/audio-graph/audioGraphCanvasTypes';
 import type { AudioGraphModel } from '../../core/audio-graph/model';
 import type { RuntimeGraphDocument } from '../../core/domain/control/graph';
 import { fakeScheduler } from '../../test-support/fakeScheduler';

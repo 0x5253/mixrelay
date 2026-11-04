@@ -2,7 +2,7 @@ import { createContext, type ReactNode, useContext, useMemo } from 'react';
 import { AudioMeterProvider } from '../audio-meter/AudioMeterProvider';
 import type { AudioMeterStore } from '../audio-meter/AudioMeterStore';
 import { NodeOptionsContext, type NodeOptionsState } from '../ui/nodeOptionsState';
-import type { AudioGraphCanvasProps, AudioNodeControlSlots } from './AudioGraphCanvas';
+import type { AudioGraphCanvasProps, AudioNodeControlSlots } from './audioGraphCanvasTypes';
 import type { AudioGraphModel, AudioGraphNode } from './model';
 import type { NodeProcessorEditors } from './nodeViewModel';
 import type { SelectedAudioPort } from './portSelection';

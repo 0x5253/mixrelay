@@ -1,13 +1,13 @@
 import type { TFunction } from 'i18next';
 import { useCallback } from 'react';
-import type { AudioGraphChangeKind } from '../../core/audio-graph/AudioGraphCanvas';
+import type { AudioGraphChangeKind } from '../../core/audio-graph/audioGraphCanvasTypes';
 import type { AudioGraphModel } from '../../core/audio-graph/model';
 import type {
   ExternalProcessorDescriptor,
   ProviderNodeConfig,
   ProviderPorts,
 } from '../../core/domain/control/processors';
-import type { NodeChoiceControl } from '../../core/ui/AudioNodeCard';
+import type { NodeChoiceControl } from '../../core/ui/audioNodeCardTypes';
 import type { GraphPresentation } from './graphPresentation';
 import {
   processorLayoutDescription,

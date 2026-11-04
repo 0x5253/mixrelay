@@ -104,6 +104,8 @@ it('commits only the accepted pairs from the chosen first input', () => {
   choose(/Destination$/, 'Monitor (2)');
   choose(/First input channel$/, 'Monitor input, CH 2');
   expect(screen.getByRole('status')).toHaveTextContent('Will connect: 2 · Skipped: 2');
+  choose(/Number of channels$/, '2');
+  expect(screen.getByRole('status')).toHaveTextContent('Will connect: 2 · Skipped: 0');
   fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
   expect(onConnect).toHaveBeenCalledExactlyOnceWith([
     { sourceNodeId: 'app', sourcePortId: 'out1', targetNodeId: 'mon-b', targetPortId: 'in2' },
@@ -149,6 +151,8 @@ it('shows a vanished first output channel as unselected, matching what would be 
   );
   expect(screen.getByRole('button', { name: /Number of channels$/ })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Connect' })).toBeDisabled();
+  choose(/First output channel$/, 'Music output, CH 2');
+  expect(screen.getByRole('status')).toHaveTextContent('Will connect: 1 · Skipped: 0');
 });
 
 it('focuses the first field: the source channel, or the destination for a kept selection', async () => {

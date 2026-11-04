@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { MixRelayProvider } from '../theme/MixRelayProvider';
-import { AudioNodeCard, type AudioNodeCardProps } from './AudioNodeCard';
+import { AudioNodeCard } from './AudioNodeCard';
+import type { AudioNodeCardProps } from './audioNodeCardTypes';
 
 it('uses disabled Core controls when a processing node is Off', () => {
   render(

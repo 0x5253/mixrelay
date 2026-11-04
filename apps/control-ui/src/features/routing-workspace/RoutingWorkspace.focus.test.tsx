@@ -3,7 +3,7 @@ import type { RuntimeGraphDocument } from '../../core/domain/control/graph';
 import '../../test-support/integration';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
-import type { AudioGraphCanvasProps } from '../../core/audio-graph/AudioGraphCanvas';
+import type { AudioGraphCanvasProps } from '../../core/audio-graph/audioGraphCanvasTypes';
 import { I18nProvider, i18n } from '../../core/i18n';
 import { MixRelayProvider } from '../../core/theme/MixRelayProvider';
 import { AudioNodeCard } from '../../core/ui/AudioNodeCard';

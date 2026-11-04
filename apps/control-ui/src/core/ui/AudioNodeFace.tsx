@@ -1,9 +1,9 @@
 import type { Ref } from 'react';
-import type { AudioNodeCardProps } from './AudioNodeCard';
 import styles from './AudioNodeCard.module.css';
 import { AudioNodeIcon } from './AudioNodeIcon';
 import { AudioNodeMeterBanks } from './AudioNodeMeterBanks';
 import { compactFeedbackMessage, ioSummaryText } from './audioNodeCardModel';
+import type { AudioNodeCardProps } from './audioNodeCardTypes';
 import type { AudioNodeFaceMode } from './audioNodeLayout';
 import { DeviceAppActivity } from './DeviceAppActivity';
 import { ProcessorTimingLabel } from './ProcessorTimingLabel';

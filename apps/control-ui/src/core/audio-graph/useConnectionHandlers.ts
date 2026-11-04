@@ -8,7 +8,7 @@ import {
   reconnectGraph,
   removeGraphItems,
 } from '../domain/graph/topology';
-import type { AudioGraphChangeKind } from './AudioGraphCanvas';
+import type { AudioGraphChangeKind } from './audioGraphCanvasTypes';
 import { dragConnectionRequest } from './connectionPlanning';
 import type { AudioGraphModel } from './model';
 import type { SelectedAudioPort } from './portSelection';

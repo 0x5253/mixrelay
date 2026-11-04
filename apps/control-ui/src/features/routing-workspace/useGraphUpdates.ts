@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { AudioGraphChangeKind } from '../../core/audio-graph/AudioGraphCanvas';
+import type { AudioGraphChangeKind } from '../../core/audio-graph/audioGraphCanvasTypes';
 import type { AudioGraphModel } from '../../core/audio-graph/model';
 import type { RuntimeGraphDocument } from '../../core/domain/control/graph';
 import type { ExternalProcessorDescriptor } from '../../core/domain/control/processors';

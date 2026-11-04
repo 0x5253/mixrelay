@@ -1,4 +1,4 @@
-import type { AudioGraphChangeKind } from '../../core/audio-graph/AudioGraphCanvas';
+import type { AudioGraphChangeKind } from '../../core/audio-graph/audioGraphCanvasTypes';
 import type { AudioGraphModel, AudioGraphNodeAppearance } from '../../core/audio-graph/model';
 
 function changedControl(

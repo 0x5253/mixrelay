@@ -1,6 +1,6 @@
 import type { HistoryStep } from '../../core/application/history/UndoHistory';
 import type { GraphApplicationQueue } from '../../core/application/workspace/GraphApplicationQueue';
-import type { AudioGraphChangeKind } from '../../core/audio-graph/AudioGraphCanvas';
+import type { AudioGraphChangeKind } from '../../core/audio-graph/audioGraphCanvasTypes';
 import type { AudioGraphModel } from '../../core/audio-graph/model';
 import { graphHistoryGroup } from './graphHistoryGroup';
 import type { PendingProcessorParameter } from './ProcessorParameterQueue';

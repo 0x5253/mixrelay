@@ -1,6 +1,6 @@
-import { type ReactNode, type Ref, useContext } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MidiContext } from '../../core/midi/MidiContext';
+import { useMidiMappingActive } from '../../core/midi/MidiContext';
 import { TitleField } from '../../core/ui/TitleField';
 import { WorkspaceHeader } from '../../core/ui/WorkspaceHeader';
 import styles from './RoutingWorkspace.module.css';
@@ -19,7 +19,7 @@ export function WorkspaceToolbar({
   headerEnd?: ReactNode;
 }) {
   const { t } = useTranslation();
-  const mapping = useContext(MidiContext)?.active ?? false;
+  const mapping = useMidiMappingActive();
   return (
     <WorkspaceHeader>
       <div className={styles.titleBlock}>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
-import type { AudioNodeCardProps } from './AudioNodeCard';
+import type { AudioNodeCardProps } from './audioNodeCardTypes';
 import { useElementBounds } from './useElementBounds';
 
 function cssHeight(value: string) {

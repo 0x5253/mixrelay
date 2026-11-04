@@ -9,7 +9,7 @@ import { ProblemsTarget } from '../../test-support/ProblemsTarget';
 import '../../test-support/integration';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import type { AudioGraphCanvasProps } from '../../core/audio-graph/AudioGraphCanvas';
+import type { AudioGraphCanvasProps } from '../../core/audio-graph/audioGraphCanvasTypes';
 import { GraphApplicationError } from '../../core/domain/graph/WorkspaceEdits';
 import { I18nProvider, i18n } from '../../core/i18n';
 import { MixRelayProvider } from '../../core/theme/MixRelayProvider';

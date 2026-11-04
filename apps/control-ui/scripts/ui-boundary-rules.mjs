@@ -911,12 +911,28 @@ function rendersScreen(statement) {
   );
 }
 
-function testImports(filename, source) {
-  if (!/\.test\.tsx?$/u.test(filename)) return [];
-  return parse(source, {
-    sourceType: 'module',
-    plugins: ['typescript', 'jsx'],
-  }).program.body.filter((statement) => statement.type === 'ImportDeclaration');
+function testAst(filename, source) {
+  if (!/\.test\.tsx?$/u.test(filename)) return undefined;
+  return parse(source, { sourceType: 'module', plugins: ['typescript', 'jsx'] });
+}
+
+/** `import()` of a screen loads it as surely as a static value import. */
+function importsScreenDynamically(node) {
+  const dynamic =
+    node.type === 'ImportExpression' ||
+    (node.type === 'CallExpression' && node.callee.type === 'Import');
+  return dynamic && screenModule(moduleSource(node) ?? '');
+}
+
+/** The first static or dynamic import through which a test can render a whole screen. */
+function screenImport(ast) {
+  let found;
+  visit(ast, (node) => {
+    if (found) return false;
+    if (node.type === 'ImportDeclaration' ? rendersScreen(node) : importsScreenDynamically(node))
+      found = node;
+  });
+  return found;
 }
 
 /** A test that renders a whole screen (App, StudioScreen, RoutingWorkspace) imports
@@ -925,12 +941,14 @@ function testImports(filename, source) {
 export function inspectIntegrationTests(files) {
   const violations = [];
   for (const { filename, source } of files) {
-    const imports = testImports(filename, source);
-    const screen = imports.find(rendersScreen);
+    const ast = testAst(filename, source);
+    const screen = ast && screenImport(ast);
     if (!screen) continue;
-    const integration = imports.some(
+    const integration = ast.program.body.some(
       (statement) =>
-        statement.source.value.endsWith('test-support/integration') && sideEffectImport(statement),
+        statement.type === 'ImportDeclaration' &&
+        statement.source.value.endsWith('test-support/integration') &&
+        sideEffectImport(statement),
     );
     if (integration) continue;
     violations.push({
@@ -974,7 +992,8 @@ export function inspectScreenRenderTests(files, allowed = screenRenderTests) {
   const violations = [];
   const renderers = new Set();
   for (const { filename, source } of files) {
-    const screen = testImports(filename, source).find(rendersScreen);
+    const ast = testAst(filename, source);
+    const screen = ast && screenImport(ast);
     if (!screen) continue;
     renderers.add(filename);
     if (allowed.has(filename)) continue;

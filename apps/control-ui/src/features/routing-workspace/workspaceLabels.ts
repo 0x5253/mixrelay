@@ -1,7 +1,7 @@
 import type { TFunction } from 'i18next';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ProcessorEditorLabels } from '../../core/audio-graph/AudioGraphCanvas';
+import type { ProcessorEditorLabels } from '../../core/audio-graph/audioGraphCanvasTypes';
 import { processorCatalogPlaceholder } from './processorCatalogMenu';
 import { createNodeMenuItems } from './routingNodeMenus';
 import type { WorkspaceViewProps } from './workspaceViewProps';

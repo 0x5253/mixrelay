@@ -1,9 +1,9 @@
 import type { NodeControlState, RuntimeGraphEdge } from '../domain/control/graph';
 import type { GraphEdge, GraphNode, GraphPort, GraphTopology } from '../domain/graph/topology';
 import { nodeWidths } from '../theme/tokens';
-import type { NodeChoiceControl } from '../ui/AudioNodeCard';
 import type { EndpointControl } from '../ui/AudioNodeEndpointOptions';
 import type { AudioNodeParameterControl } from '../ui/AudioNodeParameterGrid';
+import type { NodeChoiceControl } from '../ui/audioNodeCardTypes';
 import type { DeviceAppActivityProps } from '../ui/DeviceAppActivity';
 import type { DynamicsMeterContract } from '../ui/DynamicsMeter';
 import type { GraphicEqualizerContract } from '../ui/GraphicEqualizer';

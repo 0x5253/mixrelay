@@ -1,8 +1,12 @@
 import type { CSSProperties } from 'react';
 import { spacing } from '../theme/tokens';
-import type { AudioNodeCardProps, NodeChoiceControl } from './AudioNodeCard';
 import type { AudioNodeMeterBank } from './AudioNodeMeterBanks';
 import type { AudioNodeParameterControl } from './AudioNodeParameterGrid';
+import type {
+  AudioNodeCardProps,
+  NodeChoiceControl,
+  ProcessorEditorControl,
+} from './audioNodeCardTypes';
 import {
   type AudioNodeFaceMode,
   audioNodeFaceGeometry,
@@ -10,13 +14,6 @@ import {
   channelRowMetrics,
 } from './audioNodeLayout';
 import type { StatusTone } from './StatusBadge';
-
-/** A native plug-in editor window a processor node can open. */
-export interface ProcessorEditorControl {
-  actionLabel: string;
-  failureLabel?: string;
-  state: 'unavailable' | 'closed' | 'opening' | 'open' | 'failed';
-}
 
 /** A working native editor replaces the generic parameter list in Options. */
 export function prefersProcessorEditor(control: ProcessorEditorControl | undefined) {

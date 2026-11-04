@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { expect, userEvent, within } from 'storybook/test';
 
 import mixrelayAppIcon from '../../../../desktop-shell/src-tauri/icons/32x32.png';
-import { AudioGraphCanvas, type AudioGraphNodeMenuItem } from './AudioGraphCanvas';
+import { AudioGraphCanvas } from './AudioGraphCanvas';
+import type { AudioGraphNodeMenuItem } from './audioGraphCanvasTypes';
 import quickTimeAppIcon from './fixtures/quicktime-player.png';
 import type { AudioGraphModel, AudioGraphPort } from './model';
 

@@ -2,8 +2,8 @@ import { Background, BackgroundVariant, Panel as ReactFlowPanel } from '@xyflow/
 import { useTranslation } from 'react-i18next';
 import { useMidiMappingActive } from '../midi/MidiContext';
 import { HierarchicalMenuButton } from '../ui/HierarchicalMenu';
-import type { AudioGraphNodeMenuItem } from './AudioGraphCanvas';
 import styles from './AudioGraphCanvas.module.css';
+import type { AudioGraphNodeMenuItem } from './audioGraphCanvasTypes';
 import type { NodeMenu } from './useNodeMenu';
 
 interface AddNodePanelProps {

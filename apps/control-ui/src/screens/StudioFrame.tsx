@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MidiContext, MidiPanelContext } from '../core/midi/MidiContext';
+import { MidiPanelContext, useMidiMappingActive } from '../core/midi/MidiContext';
 import { useNativeGraphListCommand } from '../core/shell/useNativeGraphListCommand';
 import { shellBreakpoints } from '../core/theme/tokens';
 import { ProductHeading } from '../core/ui/BrandIdentity';
@@ -30,7 +30,7 @@ export function StudioFrame({
 }) {
   const overlay = useOverlaySidebar();
   const midiPanel = useContext(MidiPanelContext);
-  const mapping = useContext(MidiContext)?.active ?? false;
+  const mapping = useMidiMappingActive();
   // Carbon UI shell: wide windows keep the list fixed (View menu may hide it); narrow
   // windows collapse it behind the header menu button and open it over the canvas.
   const [fixedVisible, setFixedVisible] = useState(true);

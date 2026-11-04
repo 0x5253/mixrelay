@@ -1,5 +1,5 @@
 import type { ProcessorEditorStatus } from '../domain/control/processors';
-import type { ProcessorEditorLabels } from './AudioGraphCanvas';
+import type { ProcessorEditorLabels } from './audioGraphCanvasTypes';
 import { type AudioGraphNode, normalizeAudioGraphNodeSize } from './model';
 
 /** The native processor editor state and actions the canvas shares with its nodes. */

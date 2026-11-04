@@ -428,16 +428,27 @@ it('a saved recorder action keeps the selected mapping and keyboard focus across
 });
 
 it('reports a failed command inside the open panel and keeps map mode', async () => {
-  access({
-    async command(name) {
-      if (name === 'midi_remove') throw new Error('disk unavailable');
+  const loading = Promise.withResolvers<MidiStatus>();
+  const command = vi
+    .fn<MidiPort['command']>(async (name) => {
+      if (name === 'midi_remove' || name === 'midi_save') throw new Error('disk unavailable');
       return structuredClone({ ...midiFixture, mapMode: true });
-    },
-  });
-  await click('MIDI map mode');
+    })
+    .mockReturnValueOnce(loading.promise);
+  access({ command });
+  expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+  loading.resolve(structuredClone({ ...midiFixture, mapMode: true }));
+  await advance();
   await click('Remove MIDI control for Programme / Microphone');
   const panel = await find('complementary', { name: 'MIDI controls' });
   expect(within(panel).getByRole('alert')).toHaveTextContent('Could not update MIDI controls');
+  await click('Select Programme / Microphone · Volume');
+  screen.getByRole('button', { name: /Volume mode/ }).focus();
+  await keyboard(' {End}{Enter}');
+  expect(command).toHaveBeenCalledWith('midi_save', expect.anything());
+  expect(
+    screen.getByRole('button', { name: 'Select Programme / Microphone · Volume' }),
+  ).toHaveAttribute('aria-pressed', 'true');
 });
 
 it('groups a shared hardware control once and uses each mapping title as its only selection focus stop', async () => {

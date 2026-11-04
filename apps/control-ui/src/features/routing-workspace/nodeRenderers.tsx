@@ -1,12 +1,12 @@
 import type { TFunction } from 'i18next';
-import { useCallback, useContext, useLayoutEffect, useMemo, useRef } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import {
   type AudioGraphModel,
   type AudioGraphNode,
   audioGraphNodeTitle,
 } from '../../core/audio-graph/model';
 import type { GraphNodeControls } from '../../core/domain/control/graph';
-import { MidiContext } from '../../core/midi/MidiContext';
+import { useMidiMappingActive } from '../../core/midi/MidiContext';
 import { NodeMuteButton, NodePowerButton } from '../../core/ui/NodeSignalControls';
 import { ProcessorEditorAlert } from './ProcessorControlAlerts';
 import { ProcessorRecoveryControl } from './ProcessorRecoveryControl';
@@ -59,7 +59,7 @@ function nodeControlIdle(props: NodeControlInputs) {
 
 /** The engine's power and mute snapshot, polled only while the workspace is idle or mapping. */
 export function useWorkspaceNodeControls(props: NodeControlInputs) {
-  const mapping = useContext(MidiContext)?.active ?? false;
+  const mapping = useMidiMappingActive();
   return useNodeControls(
     props.controlPort,
     props.graphId,
@@ -95,7 +95,7 @@ export function useNodeRenderers(
     state,
     updateModel,
   } = props;
-  const mapping = useContext(MidiContext)?.active ?? false;
+  const mapping = useMidiMappingActive();
   const layoutDirty = props.layout.dirty;
   const inputs = useMemo<NodeRenderInputs>(
     () => ({

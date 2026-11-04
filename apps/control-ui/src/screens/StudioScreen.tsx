@@ -1,7 +1,6 @@
 import {
   type ReactNode,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
@@ -12,7 +11,7 @@ import { browserProcessorPaths } from '../core/adapters/browser/processorPaths';
 import { StudioSession } from '../core/application/workspace/StudioSession';
 import type { RuntimeGraphDocument } from '../core/domain/control/graph';
 import { workspaceSessionDocument } from '../core/domain/graph/WorkspaceDocuments';
-import { MidiContext } from '../core/midi/MidiContext';
+import { useMidiMappingActive } from '../core/midi/MidiContext';
 import type { ControlPort } from '../core/ports/control/ControlPort';
 import type { DiagnosticsPort } from '../core/ports/DiagnosticsPort';
 import { hasPlatformModifier, isNativeTextEntryTarget } from '../core/ui/platformShortcut';
@@ -123,7 +122,7 @@ export function StudioScreen({
   onInstallDriver,
 }: StudioScreenProps) {
   const { t } = useTranslation();
-  const mapping = useContext(MidiContext)?.active ?? false;
+  const mapping = useMidiMappingActive();
   const collection = useGraphCatalog(controlPort);
   useMidiGraphSelection(collection);
   const processorCatalog = useProcessorCatalog(controlPort, undefined, browserProcessorPaths);

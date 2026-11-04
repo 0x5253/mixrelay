@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { GraphApplicationQueue } from '../../core/application/workspace/GraphApplicationQueue';
-import type { AudioGraphChangeKind } from '../../core/audio-graph/AudioGraphCanvas';
+import type { AudioGraphChangeKind } from '../../core/audio-graph/audioGraphCanvasTypes';
 import type { AudioGraphModel } from '../../core/audio-graph/model';
 import type { PlaceGraphNodes } from '../../core/audio-graph/nodePlacement';
 import type {

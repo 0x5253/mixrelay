@@ -671,6 +671,29 @@ it('keeps the overlay sidebar open when a graph switch fails', async () => {
     await waitFor(() => expect(controlPort.mutateGraphCatalog).toHaveBeenCalled());
     await act(async () => {});
     expect(screen.getByRole('navigation', { name: 'Graphs' })).toBeVisible();
+    // The failed choice is over: a later refresh that activates B does not close the sidebar.
+    vi.mocked(controlPort.getGraphCatalog).mockResolvedValue({
+      protocolVersion: 1,
+      catalogRevision: 3,
+      activeId: 'b',
+      graphs: [
+        { id: 'a', name: 'Graph A' },
+        { id: 'b', name: 'Graph B' },
+      ],
+      document: { schemaVersion: 2, revision: 3, nodes: [], edges: [] },
+    });
+    const loads = vi.mocked(controlPort.getGraphCatalog).mock.calls.length;
+    fireEvent.click(within(list).getByRole('button', { name: 'Reload graphs' }));
+    await waitFor(() =>
+      expect(vi.mocked(controlPort.getGraphCatalog).mock.calls.length).toBeGreaterThan(loads),
+    );
+    await waitFor(() =>
+      expect(within(list).getByRole('button', { name: 'Graph B' })).toHaveAttribute(
+        'aria-current',
+        'page',
+      ),
+    );
+    expect(screen.getByRole('navigation', { name: 'Graphs' })).toBeVisible();
   } finally {
     matchMedia.mockRestore();
   }

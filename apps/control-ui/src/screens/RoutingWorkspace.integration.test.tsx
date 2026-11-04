@@ -13,7 +13,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { isValidElement, type ReactNode } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { AudioGraphNodeMenuItem } from '../core/audio-graph/AudioGraphCanvas';
+import type { AudioGraphNodeMenuItem } from '../core/audio-graph/audioGraphCanvasTypes';
 import type { AudioGraphModel, AudioGraphNode } from '../core/audio-graph/model';
 import { GraphApplicationError } from '../core/domain/graph/WorkspaceEdits';
 import { i18n } from '../core/i18n';

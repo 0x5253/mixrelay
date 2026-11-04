@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import type { ProcessorEditorStatus } from '../domain/control/processors';
-import type { ProcessorEditorLabels } from './AudioGraphCanvas';
+import type { ProcessorEditorLabels } from './audioGraphCanvasTypes';
 import type { AudioGraphNode } from './model';
 import { audioFlowNodeWidth, nodeProcessorEditors, processorEditorFace } from './nodeViewModel';
 

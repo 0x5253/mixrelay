@@ -4,7 +4,8 @@ import { assert, describe, expect, it, vi } from 'vitest';
 import { AudioMeterProvider } from '../audio-meter/AudioMeterProvider';
 import { AudioMeterStore } from '../audio-meter/AudioMeterStore';
 import { MixRelayProvider } from '../theme/MixRelayProvider';
-import { AudioNodeCard, type AudioNodeCardProps } from './AudioNodeCard';
+import { AudioNodeCard } from './AudioNodeCard';
+import type { AudioNodeCardProps } from './audioNodeCardTypes';
 
 function card(iconUrl?: string) {
   return (

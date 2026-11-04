@@ -386,6 +386,10 @@ test('only allowlisted tests render a whole screen, and the allowlist has no sta
       source: "import type { StudioScreen } from './StudioScreen';",
     },
     { filename: 'screens/StudioScreen.tsx', source: "import { App } from '../app/App';" },
+    {
+      filename: 'screens/Lazy.test.tsx',
+      source: "it('x', async () => {\n  const { App } = await import('../app/App');\n});",
+    },
   ];
   assert.deepEqual(
     inspectScreenRenderTests(files, allowed).map(({ filename, line, code }) => [
@@ -396,6 +400,7 @@ test('only allowlisted tests render a whole screen, and the allowlist has no sta
     [
       ['screens/Logic.test.tsx', 2, 'test'],
       ['features/f/W.test.tsx', 1, 'test'],
+      ['screens/Lazy.test.tsx', 2, 'test'],
       ['screens/Removed.test.tsx', 1, 'test'],
     ],
   );

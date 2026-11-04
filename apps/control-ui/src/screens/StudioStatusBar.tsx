@@ -1,6 +1,6 @@
-import { type ComponentProps, type ReactNode, useContext } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MidiContext } from '../core/midi/MidiContext';
+import { useMidiMappingActive } from '../core/midi/MidiContext';
 import { ApplicationStatusBar } from '../core/ui/ApplicationStatusBar';
 import { AudioPauseControl } from '../features/audio-session/AudioPauseControl';
 import { AudioSessionNotices } from '../features/audio-session/AudioSessionNotices';
@@ -26,7 +26,7 @@ export function StudioStatusBar({
   }) {
   const { t } = useTranslation();
   return (
-    <div className={styles.statusBar} inert={useContext(MidiContext)?.active} data-midi-inactive>
+    <div className={styles.statusBar} inert={useMidiMappingActive()} data-midi-inactive>
       <ApplicationStatusBar
         information={applicationInfo}
         announcement={diagnosticsAnnouncement(t, diagnosticsCount(problems, processorCatalog))}
