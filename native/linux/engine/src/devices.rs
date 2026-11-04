@@ -71,7 +71,7 @@ impl DeviceSelection {
 }
 
 /// One direction's device request. Inputs and outputs differ only in these facts.
-trait DeviceRequest: Clone + PartialEq {
+trait DeviceRequest: Clone {
     const DIRECTION: DeviceDirection;
     fn selector(&self) -> &DeviceSelector;
     fn channels(&self) -> u16;
