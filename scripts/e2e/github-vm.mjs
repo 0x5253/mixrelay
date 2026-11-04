@@ -413,7 +413,12 @@ export async function runGithubVm({ targetId, directory, output, smoke = false }
     }
     const bootstrapLog = join(output, 'guest-bootstrap.log');
     phase('SSH is ready; waiting for cloud-init');
-    await ssh(['sudo cloud-init status --wait'], { timeout: 180000, log: bootstrapLog });
+    // Exit 2 is "done with recoverable errors" (for example a deprecated key in the image's own
+    // configuration); exit 1 is a failed provisioning. The long form records which one occurred.
+    await ssh(['sudo cloud-init status --wait --long; status=$?; test "$status" -eq 0 -o "$status" -eq 2'], {
+      timeout: 180000,
+      log: bootstrapLog,
+    });
     await ssh(['mkdir -p /home/qa/workspace /home/qa/tools /home/qa/candidate']);
     const source = join(state, 'source.tar');
     await command('git', ['archive', '--format=tar', '-o', source, 'HEAD']);
