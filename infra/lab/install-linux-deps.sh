@@ -36,7 +36,7 @@ case "$ID" in
       rsync ripgrep alsa-lib-devel lilv-devel lv2-devel pipewire-devel pipewire wireplumber \
       gtk3-devel webkit2gtk4.1-devel libayatana-appindicator-gtk3-devel librsvg2-devel \
       libX11-devel libXrandr-devel libXi-devel dbus-daemon dbus-x11 xorg-x11-server-Xvfb xorg-x11-xauth \
-      shadow-utils
+      libasan libubsan shadow-utils
     ;;
   *) echo "Unsupported distribution: $ID" >&2; exit 2 ;;
 esac
