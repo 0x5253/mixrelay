@@ -12,7 +12,6 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { timerScheduler as scheduler } from '../../core/adapters/browser/timers';
-import type { HistoryStep } from '../../core/application/history/UndoHistory';
 import type { GraphApplicationQueue } from '../../core/application/workspace/GraphApplicationQueue';
 import {
   AudioGraphCanvas,
@@ -48,12 +47,11 @@ import { useSustainedProblem } from '../../core/ui/useSustainedProblem';
 import { WorkspaceHeader } from '../../core/ui/WorkspaceHeader';
 import { defaultEffectLabels } from './builtinEffects';
 import { presentEqualizerSampleRate } from './equalizerPresentation';
-import { graphHistoryGroup } from './graphHistoryGroup';
+import { GraphEditSession } from './GraphEditSession';
 import { presentHardwareNodeStatus } from './hardwareNodeStatus';
 import {
   addRoutingNode,
   audioGraphToRuntimeGraph,
-  changedProcessorParameters,
   type GraphPresentation,
   presentRoutingApplicationIcons,
   runtimeGraphToAudioGraph,
@@ -465,101 +463,6 @@ function useGraphHistoryShortcuts(undo: () => boolean, redo: () => boolean, enab
   }, [redo, undo, enabled]);
 }
 
-function processorEditIntent(
-  before: AudioGraphModel | null,
-  after: AudioGraphModel,
-  kind: AudioGraphChangeKind,
-) {
-  return kind === 'processor_parameter' && before ? changedProcessorParameters(before, after) : [];
-}
-
-function restoreHistoryModel(
-  step: { value: AudioGraphModel; kind: AudioGraphChangeKind },
-  current: AudioGraphModel,
-) {
-  const { value, kind } = step;
-  const currentRevision = current.revision;
-  return {
-    ...value,
-    revision: kind === 'layout' ? currentRevision : Math.max(currentRevision, value.revision) + 1,
-  };
-}
-
-type GraphHistoryStep = HistoryStep<AudioGraphModel, AudioGraphChangeKind>;
-
-function useGraphHistoryNavigation(options: {
-  applyModel: GraphApplicationQueue<AudioGraphModel>;
-  currentModel: { current: AudioGraphModel | null };
-  graphRevision: () => number;
-  nextRedoStep: () => GraphHistoryStep | null;
-  nextUndoStep: () => GraphHistoryStep | null;
-  publishProcessorParameter: ReturnType<typeof useProcessorParameterPublisher>['publish'];
-  savePositions: (model: AudioGraphModel) => void;
-  setModel: (model: AudioGraphModel) => void;
-}) {
-  const {
-    applyModel,
-    currentModel,
-    graphRevision,
-    nextRedoStep,
-    nextUndoStep,
-    publishProcessorParameter,
-    savePositions,
-    setModel,
-  } = options;
-  const restore = useCallback(
-    (step: GraphHistoryStep | null) => {
-      if (!step) return false;
-      // History is created only by a loaded canvas and cleared when its workspace owner changes.
-      const previousModel = currentModel.current as AudioGraphModel;
-      const restoredModel = restoreHistoryModel(step, previousModel);
-      currentModel.current = restoredModel;
-      setModel(restoredModel);
-      savePositions(restoredModel);
-      if (step.kind === 'processor_parameter' && previousModel && applyModel.canPublishParameters) {
-        for (const update of changedProcessorParameters(previousModel, restoredModel)) {
-          publishProcessorParameter({ ...update, expectedRevision: graphRevision() });
-        }
-      } else if (step.kind !== 'layout') {
-        applyModel.submit(
-          restoredModel,
-          processorEditIntent(previousModel, restoredModel, step.kind),
-        );
-      }
-      return true;
-    },
-    [applyModel, currentModel, graphRevision, publishProcessorParameter, savePositions, setModel],
-  );
-  const undo = useCallback(() => restore(nextUndoStep()), [nextUndoStep, restore]);
-  const redo = useCallback(() => restore(nextRedoStep()), [nextRedoStep, restore]);
-  return { redo, undo };
-}
-
-function liveWorkspaceOwner(current: { active: boolean }, expected: { active: boolean }) {
-  return current === expected && expected.active;
-}
-
-function gestureChangeKind(kind: AudioGraphChangeKind) {
-  return kind === 'level' || kind === 'processor_parameter' || kind === 'parameter_group';
-}
-
-function recordGraphEdit(
-  history: Pick<
-    ReturnType<typeof useUndoHistory<AudioGraphModel, AudioGraphChangeKind>>,
-    'record' | 'recordDebounced' | 'flush'
-  >,
-  before: AudioGraphModel,
-  after: AudioGraphModel,
-  kind: AudioGraphChangeKind,
-) {
-  const group = graphHistoryGroup(before, after, kind);
-  if (gestureChangeKind(kind) && group) history.recordDebounced(before, after, kind, group);
-  else {
-    history.flush();
-    history.record(before, after, kind, group);
-  }
-}
-
 function useGraphUpdates(
   ownership: { controlPort: ControlPort; graphId?: string },
   presentation: GraphPresentation,
@@ -571,29 +474,18 @@ function useGraphUpdates(
 ) {
   const { controlPort, graphId } = ownership;
   const { model, setModel } = graph;
-  const owner = useMemo(() => ({ controlPort, graphId, active: true }), [controlPort, graphId]);
-  const currentOwner = useRef(owner);
-  currentOwner.current = owner;
+  const owner = useMemo(() => ({ controlPort, graphId }), [controlPort, graphId]);
   const currentModel = useRef(model);
   currentModel.current = model;
-  const {
-    clear: clearHistory,
-    rebase: rebaseHistory,
-    flush: flushHistory,
-    record,
-    recordDebounced,
-    redo: nextRedoStep,
-    undo: nextUndoStep,
-  } = useUndoHistory<AudioGraphModel, AudioGraphChangeKind>();
+  const [session] = useState(() => new GraphEditSession(currentModel));
+  const history = useUndoHistory<AudioGraphModel, AudioGraphChangeKind>();
+  const { clear: clearHistory, rebase: rebaseHistory } = history;
   useEffect(() => {
-    owner.active = true;
+    session.open(owner);
     clearHistory();
-    return () => {
-      owner.active = false;
-    };
-  }, [clearHistory, owner]);
+    return () => session.close(owner);
+  }, [clearHistory, owner, session]);
   const parameters = useProcessorParameterPublisher(controlPort, graph.setPersistenceError);
-  const { publish: publishProcessorParameter } = parameters;
   const applyModel = useGraphApplication(
     controlPort,
     presentation,
@@ -605,57 +497,22 @@ function useGraphUpdates(
     catalogRevision,
     failedProcessors,
   );
-  const updateModel = useCallback(
-    (nextModel: AudioGraphModel, kind: AudioGraphChangeKind) => {
-      // Deferred commits from a replaced/unmounted canvas cannot revive its graph
-      // or submit audio/layout edits through a different workspace owner.
-      if (!liveWorkspaceOwner(currentOwner.current, owner)) return;
-      // Canvas edits exist only while the owner has a loaded model/document.
-      const previousModel = currentModel.current as AudioGraphModel;
-      if (nextModel !== previousModel) {
-        recordGraphEdit(
-          { recordDebounced, record, flush: flushHistory },
-          previousModel,
-          nextModel,
-          kind,
-        );
-      }
-      currentModel.current = nextModel;
-      setModel(nextModel);
-      savePositions(nextModel);
-      if (kind === 'processor_parameter' && previousModel && applyModel.canPublishParameters) {
-        for (const update of changedProcessorParameters(previousModel, nextModel)) {
-          publishProcessorParameter({
-            ...update,
-            expectedRevision: (graph.document as RuntimeGraphDocument).revision,
-          });
-        }
-      } else if (kind !== 'layout') {
-        applyModel.submit(nextModel, processorEditIntent(previousModel, nextModel, kind));
-      }
-    },
-    [
-      applyModel,
-      graph.document?.revision,
-      flushHistory,
-      publishProcessorParameter,
-      record,
-      recordDebounced,
-      setModel,
-      savePositions,
-      owner,
-    ],
-  );
-  const { redo, undo } = useGraphHistoryNavigation({
-    applyModel,
-    currentModel,
+  session.render(owner, {
+    history,
+    queue: applyModel,
+    publishParameter: parameters.publish,
     graphRevision: () => (graph.document as RuntimeGraphDocument).revision,
-    nextRedoStep,
-    nextUndoStep,
-    publishProcessorParameter,
+    show: setModel,
     savePositions,
-    setModel,
   });
+  // Canvas callbacks keep the owner they were created for.
+  const updateModel = useCallback(
+    (nextModel: AudioGraphModel, kind: AudioGraphChangeKind) =>
+      session.edit(owner, nextModel, kind),
+    [owner, session],
+  );
+  const undo = useCallback(() => session.undo(), [session]);
+  const redo = useCallback(() => session.redo(), [session]);
   return {
     clearHistory,
     redo,
