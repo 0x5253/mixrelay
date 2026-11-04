@@ -1,11 +1,7 @@
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { timerScheduler } from '../../core/adapters/browser/timers';
-import type {
-  RecorderEncoding,
-  RecorderRequest,
-  RecorderStatus,
-} from '../../core/domain/control/recorder';
+import type { RecorderEncoding, RecorderRequest } from '../../core/domain/control/recorder';
 import type { RecorderNodeInputs } from '../../core/ports/control/RecorderNodeView';
 import { InlineNotice } from '../../core/ui/InlineNotice';
 import { NodeOptionsSection } from '../../core/ui/NodeOptionsSection';
@@ -15,10 +11,14 @@ import { PathField } from '../../core/ui/PathField';
 import { SelectField } from '../../core/ui/SelectField';
 import { TransportButton } from '../../core/ui/TransportButton';
 import { RecorderController } from './application/RecorderController';
+import {
+  type RecorderControlState,
+  recorderControlState,
+  recordingRateOptions,
+} from './domain/recorderControlState';
 import { recordingDuration } from './domain/recording';
 import styles from './RecorderControls.module.css';
 
-const sampleRates = [44100, 48000, 88200, 96000, 176400, 192000];
 const encodings: { value: RecorderEncoding; label: string }[] = [
   { value: 'pcm16', label: '16-bit PCM' },
   { value: 'pcm24', label: '24-bit PCM' },
@@ -38,9 +38,13 @@ export function RecorderControls(props: RecorderNodeInputs) {
   const snapshot = useSyncExternalStore(controller.subscribe, controller.getSnapshot);
   const settings = snapshot.settings;
   const { opened: optionsOpened, toggle: toggleOptions } = useNodeOptionsState();
-  const locked = snapshot.status?.state === 'recording' || snapshot.status?.state === 'paused';
-  const disabled = snapshot.busy || !snapshot.status || props.poweredOn === false;
-  const fieldsLocked = disabled || locked || !props.enabled || !settings;
+  const view = recorderControlState({
+    ...snapshot,
+    enabled: props.enabled,
+    poweredOn: props.poweredOn !== false,
+    playbackPaused: props.playbackPaused === true,
+  });
+  const fieldsLocked = view.fieldsLocked;
   return (
     <div className={styles.root}>
       <NodeTransportRow
@@ -52,10 +56,7 @@ export function RecorderControls(props: RecorderNodeInputs) {
       >
         <RecorderButtons
           name={props.name}
-          canStart={props.enabled && !!settings && !snapshot.settingsError}
-          disabled={disabled}
-          playbackPaused={props.playbackPaused === true}
-          status={snapshot.status}
+          view={view}
           command={(request) => controller.command(request, props.expectedRevision)}
         />
       </NodeTransportRow>
@@ -86,11 +87,11 @@ export function RecorderControls(props: RecorderNodeInputs) {
         />
         <SelectField
           label={t('recorder.sampleRate')}
-          value={String((locked ? snapshot.status?.sampleRate : settings?.sampleRate) ?? 'auto')}
+          value={String(view.sampleRate ?? 'auto')}
           disabled={fieldsLocked}
           data={[
             { value: 'auto', label: t('recorder.sourceRate') },
-            ...recordingRateOptions(locked ? snapshot.status?.sampleRate : settings?.sampleRate),
+            ...recordingRateOptions(view.sampleRate),
           ]}
           onChange={(value) =>
             controller.saveSettings(
@@ -100,7 +101,7 @@ export function RecorderControls(props: RecorderNodeInputs) {
           }
         />
         <EncodingField
-          value={(locked ? snapshot.status?.encoding : settings?.encoding) ?? 'pcm16'}
+          value={view.encoding}
           disabled={fieldsLocked}
           onChange={(encoding) => controller.saveSettings({ encoding }, props.expectedRevision)}
         />
@@ -140,13 +141,6 @@ function RecorderError({ error }: { error: string | null }) {
   ) : null;
 }
 
-function recordingRateOptions(observed: number | null | undefined) {
-  return [...new Set([...sampleRates, ...(observed ? [observed] : [])])].map((rate) => ({
-    value: String(rate),
-    label: `${rate / 1000} kHz`,
-  }));
-}
-
 function EncodingField(props: {
   value: RecorderEncoding;
   disabled: boolean;
@@ -168,43 +162,34 @@ function EncodingField(props: {
 
 function RecorderButtons({
   name,
-  canStart,
-  disabled,
-  playbackPaused,
-  status,
+  view,
   command,
 }: {
   name?: string;
-  canStart: boolean;
-  disabled: boolean;
-  playbackPaused: boolean;
-  status: RecorderStatus | null;
+  view: RecorderControlState;
   command: (request: RecorderRequest) => void;
 }) {
   const { t } = useTranslation();
-  const locked = status?.state === 'recording' || status?.state === 'paused';
   const label = (action: string) => recorderActionLabel(name, action);
   return (
     <>
       <TransportButton
-        icon={status?.state === 'paused' ? 'resume' : 'record'}
-        label={label(status?.state === 'paused' ? t('recorder.resume') : t('recorder.record'))}
-        active={status?.state === 'recording'}
-        disabled={
-          disabled || playbackPaused || status?.state === 'recording' || (!locked && !canStart)
-        }
+        icon={view.record.resumes ? 'resume' : 'record'}
+        label={label(view.record.resumes ? t('recorder.resume') : t('recorder.record'))}
+        active={view.record.active}
+        disabled={!view.record.enabled}
         onClick={() => command({ action: 'record' })}
       />
       <TransportButton
         icon="pause"
         label={label(t('recorder.pause'))}
-        disabled={disabled || playbackPaused || status?.state !== 'recording'}
+        disabled={!view.pause.enabled}
         onClick={() => command({ action: 'pause' })}
       />
       <TransportButton
         icon="stop"
         label={label(t('recorder.stop'))}
-        disabled={disabled || !locked}
+        disabled={!view.stop.enabled}
         onClick={() => command({ action: 'stop' })}
       />
     </>

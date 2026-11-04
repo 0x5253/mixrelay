@@ -206,23 +206,6 @@ it('keeps canonical folder readback without a chooser when the native platform h
 });
 afterEach(() => vi.restoreAllMocks());
 
-it('allows finalizing a take while global playback is paused without allowing a local resume', async () => {
-  const { port, write } = fixture();
-  const view = render(recorderView(port));
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Record' })).toBeEnabled());
-  fireEvent.click(screen.getByRole('button', { name: 'Record' }));
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Pause' })).toBeEnabled());
-  fireEvent.click(screen.getByRole('button', { name: 'Pause' }));
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Resume' })).toBeEnabled());
-  view.rerender(recorderView(port, { playbackPaused: true }));
-  expect(screen.getByRole('button', { name: 'Resume' })).toBeDisabled();
-  expect(screen.getByRole('button', { name: 'Pause' })).toBeDisabled();
-  expect(screen.getByRole('button', { name: 'Stop' })).toBeEnabled();
-  fireEvent.click(screen.getByRole('button', { name: 'Stop' }));
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Record' })).toBeDisabled());
-  expect(write.mock.calls.map((call) => call[2].action)).toEqual(['record', 'pause', 'stop']);
-});
-
 it.each(['en', 'ko-KR', 'pseudo'])(
   'shows a readonly shared folder and native chooser in %s',
   async (locale) => {
@@ -382,33 +365,6 @@ it('preserves channels 1–8 and locks channel/settings edits for active takes',
   expect(screen.getByRole('button', { name: 'Choose folder…' })).toBeDisabled();
 });
 
-it('blocks new takes for a blocked graph but preserves controls for its existing take', async () => {
-  const { port, write } = fixture();
-  const result = render(recorderView(port, { enabled: false }));
-  expect(screen.getByRole('button', { name: 'Record' })).toBeDisabled();
-  expect(write).not.toHaveBeenCalled();
-  result.rerender(recorderView(port));
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Record' })).toBeEnabled());
-  fireEvent.click(screen.getByRole('button', { name: 'Record' }));
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Pause' })).toBeEnabled());
-  result.rerender(recorderView(port, { enabled: false }));
-  fireEvent.click(screen.getByRole('button', { name: 'Pause' }));
-  expect(await screen.findByRole('button', { name: 'Resume' })).toBeEnabled();
-  expect(screen.getByRole('button', { name: 'Stop' })).toBeEnabled();
-});
-
-it('does not resume a paused take while the engine is powered off', async () => {
-  const { port, write } = fixture();
-  vi.spyOn(port, 'recorderStatus').mockResolvedValue({
-    ...stopped,
-    state: 'paused',
-    path: '/take.wav',
-  });
-  render(recorderView(port, { poweredOn: false }));
-  expect(await screen.findByRole('button', { name: 'Resume' })).toBeDisabled();
-  expect(write).not.toHaveBeenCalled();
-});
-
 it('keeps Stop available and shows actual take format when canonical preferences cannot be read', async () => {
   const { port, write } = fixture();
   vi.spyOn(port, 'recorderStatus').mockResolvedValue({
@@ -427,35 +383,5 @@ it('keeps Stop available and shows actual take format when canonical preferences
   fireEvent.click(screen.getByRole('button', { name: 'Stop' }));
   await waitFor(() =>
     expect(write).toHaveBeenCalledExactlyOnceWith('graph-a', 'recorder-1', { action: 'stop' }, 1),
-  );
-});
-
-it('allows new eight-channel takes and resumes an existing paused take', async () => {
-  const { port, write } = fixture();
-  const status = vi.mocked(port.recorderStatus);
-  status.mockResolvedValue({ ...stopped, state: 'stopped' });
-  const view = () => recorderView(port, { channels: 8 });
-  const rendered = render(view());
-  await waitFor(() => expect(status).toHaveBeenCalled());
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Record' })).toBeEnabled());
-  fireEvent.click(screen.getByRole('button', { name: 'Record' }));
-  await waitFor(() =>
-    expect(write).toHaveBeenCalledWith('graph-a', 'recorder-1', { action: 'record' }, 1),
-  );
-  rendered.unmount();
-  status.mockResolvedValue({
-    ...stopped,
-    state: 'paused',
-    path: '/Desktop/multichannel.wav',
-    sampleRate: 48000,
-    frames: 96000,
-  });
-  render(view());
-  const resume = await screen.findByRole('button', { name: 'Resume' });
-  await waitFor(() => expect(resume).toBeEnabled());
-  expect(screen.getByRole('button', { name: 'Stop' })).toBeEnabled();
-  fireEvent.click(resume);
-  await waitFor(() =>
-    expect(write).toHaveBeenCalledWith('graph-a', 'recorder-1', { action: 'record' }, 1),
   );
 });

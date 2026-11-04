@@ -1,10 +1,12 @@
 import { type KeyboardEvent, type ReactNode, useState } from 'react';
 import {
+  type EqualizerBand,
+  equalizerDragChange,
+  equalizerKeyChange,
   equalizerPlot,
   frequencyPosition,
   gainPosition,
-  plotFrequency,
-  plotGain,
+  resolveEqualizerBands,
   responsePath,
 } from './equalizerResponse';
 import styles from './GraphicEqualizer.module.css';
@@ -25,21 +27,7 @@ interface Props {
   onChange: (id: string, value: number) => void;
   onParametersChange?: (updates: readonly { id: string; value: number }[]) => void;
 }
-interface ResolvedBand {
-  id: string;
-  label: string;
-  frequency: ParameterFieldControl;
-  gain: ParameterFieldControl;
-  q: ParameterFieldControl;
-}
-function resolveBands(props: Props): ResolvedBand[] {
-  return props.contract.bands.flatMap((band) => {
-    const frequency = props.controls.find((control) => control.id === band.frequencyId);
-    const gain = props.controls.find((control) => control.id === band.gainId);
-    const q = props.controls.find((control) => control.id === band.qId);
-    return frequency && gain && q ? [{ id: band.id, label: band.label, frequency, gain, q }] : [];
-  });
-}
+type ResolvedBand = EqualizerBand<ParameterFieldControl>;
 /** Dragging a band's handle moves its frequency and gain together, as one batch. */
 function useGraphDrag(props: Props, bands: ResolvedBand[], select: (id: string) => void) {
   return useCapturedPointerDrag<ResolvedBand>({
@@ -57,43 +45,28 @@ function useGraphDrag(props: Props, bands: ResolvedBand[], select: (id: string) 
     },
     update(band, event) {
       const bounds = event.currentTarget.getBoundingClientRect();
-      props.onParametersChange?.([
-        {
-          id: band.frequency.id,
-          value: plotFrequency(
-            ((event.clientX - bounds.left) / bounds.width) * equalizerPlot.width,
-          ),
-        },
-        {
-          id: band.gain.id,
-          value: plotGain(((event.clientY - bounds.top) / bounds.height) * equalizerPlot.height),
-        },
-      ]);
+      props.onParametersChange?.(
+        equalizerDragChange(
+          band,
+          (event.clientX - bounds.left) / bounds.width,
+          (event.clientY - bounds.top) / bounds.height,
+        ),
+      );
     },
   });
 }
 function handleBandKey(event: KeyboardEvent<HTMLButtonElement>, props: Props, band: ResolvedBand) {
   if (props.disabled) return;
-  const changes: Record<string, [ParameterFieldControl, number]> = {
-    ArrowLeft: [band.frequency, band.frequency.value - band.frequency.step],
-    ArrowRight: [band.frequency, band.frequency.value + band.frequency.step],
-    ArrowUp: [band.gain, band.gain.value + band.gain.step],
-    ArrowDown: [band.gain, band.gain.value - band.gain.step],
-  };
-  const change = changes[event.key];
+  const change = equalizerKeyChange(event.key, band);
   if (!change) return;
   event.preventDefault();
   event.stopPropagation();
-  const [control, value] = change;
-  props.onChange(
-    control.id,
-    Math.max(control.minimum, Math.min(control.maximum, Number(value.toPrecision(12)))),
-  );
+  props.onChange(change.id, change.value);
 }
 
 /** Graphic base face with nine equivalent value editors composed through the shared node disclosure. */
 export function GraphicEqualizer(props: Props) {
-  const bands = resolveBands(props);
+  const bands = resolveEqualizerBands(props.contract.bands, props.controls);
   const [selected, setSelected] = useState('');
   const selectedBand = bands.find((band) => band.id === selected) ?? bands[0];
   const drag = useGraphDrag(props, bands, setSelected);

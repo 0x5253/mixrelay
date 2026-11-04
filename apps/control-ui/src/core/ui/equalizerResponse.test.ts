@@ -1,11 +1,14 @@
 import { expect, it } from 'vitest';
 import {
+  equalizerDragChange,
+  equalizerKeyChange,
   equalizerPlot,
   equalizerResponse,
   frequencyPosition,
   gainPosition,
   plotFrequency,
   plotGain,
+  resolveEqualizerBands,
   responsePath,
 } from './equalizerResponse';
 
@@ -66,4 +69,57 @@ it('maps graph positions to exact parameter units, with finite bounded SVG at th
       expect(y).toBeLessThanOrEqual(equalizerPlot.bottom);
     }
   }
+});
+
+const control = (id: string, value: number, step: number, minimum: number, maximum: number) => ({
+  id,
+  value,
+  step,
+  minimum,
+  maximum,
+});
+const band = {
+  id: 'mid',
+  label: 'Mid',
+  frequency: control('midFrequencyHz', 1000, 1, 20, 20_000),
+  gain: control('midDb', 0, 0.1, -24, 24),
+  q: control('midQ', 0.707, 0.001, 0.1, 10),
+};
+
+it('steps frequency with Left/Right and gain with Up/Down by one control step, within range', () => {
+  expect(
+    ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].map((key) => equalizerKeyChange(key, band)),
+  ).toEqual([
+    { id: 'midFrequencyHz', value: 999 },
+    { id: 'midFrequencyHz', value: 1001 },
+    { id: 'midDb', value: 0.1 },
+    { id: 'midDb', value: -0.1 },
+  ]);
+  expect(equalizerKeyChange('Tab', band)).toBeUndefined();
+  const top = { ...band, gain: control('midDb', 24, 0.1, -24, 24) };
+  expect(equalizerKeyChange('ArrowUp', top)).toEqual({ id: 'midDb', value: 24 });
+  // Decimal steps land on the step grid rather than accumulating float error.
+  const fine = { ...band, gain: control('midDb', 0.2, 0.1, -24, 24) };
+  expect(equalizerKeyChange('ArrowUp', fine)).toEqual({ id: 'midDb', value: 0.3 });
+});
+
+it('maps a dragged point to frequency and gain together', () => {
+  const x = frequencyPosition(2200) / equalizerPlot.width;
+  const y = gainPosition(6) / equalizerPlot.height;
+  expect(equalizerDragChange(band, x, y)).toEqual([
+    { id: 'midFrequencyHz', value: 2200 },
+    { id: 'midDb', value: 6 },
+  ]);
+  expect(equalizerDragChange(band, -1, 2)).toEqual([
+    { id: 'midFrequencyHz', value: 20 },
+    { id: 'midDb', value: -24 },
+  ]);
+});
+
+it('resolves only bands whose three controls exist', () => {
+  const bands = [
+    { id: 'mid', label: 'Mid', frequencyId: 'midFrequencyHz', gainId: 'midDb', qId: 'midQ' },
+    { id: 'high', label: 'High', frequencyId: 'highFrequencyHz', gainId: 'highDb', qId: 'highQ' },
+  ];
+  expect(resolveEqualizerBands(bands, [band.frequency, band.gain, band.q])).toEqual([band]);
 });

@@ -511,13 +511,7 @@ function GraphSidebar({
 
 function driverRoutingActions(session: DriverSession | undefined) {
   return {
-    settings: session?.snapshot
-      ? {
-          ...session.snapshot.settings,
-          canCreate: session.snapshot.settings.canCreate,
-          canRename: session.snapshot.settings.canRename,
-        }
-      : undefined,
+    settings: session?.snapshot?.settings,
     enabled: session?.snapshot?.state === 'ready' && !session.busy,
     error: session?.error ? { endpointId: session.endpointId, message: session.error } : null,
     change: (

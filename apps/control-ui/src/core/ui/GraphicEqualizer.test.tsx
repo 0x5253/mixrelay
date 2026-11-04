@@ -94,21 +94,15 @@ it('shows all nine exact values, distinct band names, vector axes and native sel
   fireEvent.click(screen.getByRole('button', { name: /1 Low, 150 Hz/ }));
   expect(screen.getByRole('button', { name: '1 Low' })).toHaveAttribute('aria-pressed', 'true');
 });
-it('executes real-unit graph arrows through the same parameters as exact numeric entry', () => {
+// Each arrow's step and range are unit-tested in equalizerResponse.test.ts.
+it('executes graph arrows through the same parameters as exact numeric entry', () => {
   const { change } = setup();
   const mid = screen.getByRole('button', { name: /2 Mid, 1000 Hz/ });
   fireEvent.focus(mid);
-  for (const [key, id, value] of [
-    ['ArrowLeft', 'midFrequencyHz', 999],
-    ['ArrowRight', 'midFrequencyHz', 1001],
-    ['ArrowUp', 'midDb', 0.1],
-    ['ArrowDown', 'midDb', -0.1],
-  ] as const) {
-    fireEvent.keyDown(mid, { key });
-    expect(change).toHaveBeenLastCalledWith(id, value);
-  }
+  fireEvent.keyDown(mid, { key: 'ArrowRight' });
+  expect(change).toHaveBeenLastCalledWith('midFrequencyHz', 1001);
   fireEvent.keyDown(mid, { key: 'Tab' });
-  expect(change).toHaveBeenCalledTimes(4);
+  expect(change).toHaveBeenCalledOnce();
   const input = screen.getByRole('textbox', { name: '2 Mid Q' });
   fireEvent.focus(input);
   fireEvent.change(input, { target: { value: '2.003' } });

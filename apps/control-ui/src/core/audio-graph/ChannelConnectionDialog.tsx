@@ -1,11 +1,7 @@
 import { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  type ChannelConnectionPlan,
-  type ChannelConnectionRequest,
-  planChannelConnections,
-} from '../domain/graph/channelConnections';
-import { type GraphConnection, graphConnectionRejection } from '../domain/graph/topology';
+import type { ChannelConnectionPlan } from '../domain/graph/channelConnections';
+import type { GraphConnection } from '../domain/graph/topology';
 import { ActionButton } from '../ui/ActionButton';
 import { Dialog } from '../ui/Dialog';
 import { FormActions } from '../ui/FormActions';
@@ -14,7 +10,17 @@ import { SelectField } from '../ui/SelectField';
 import { Stack } from '../ui/Stack';
 import { Text } from '../ui/Text';
 import styles from './ChannelConnectionDialog.module.css';
-import { type AudioGraphModel, type AudioGraphNode, audioGraphNodeTitle } from './model';
+import {
+  acceptedConnections,
+  availableChannels,
+  type ChannelRange,
+  channelConnectionForm,
+  initialChoices,
+  type NamedPort,
+  rangeFromSelection,
+  rangeStartingAt,
+} from './channelConnectionForm';
+import type { AudioGraphModel, AudioGraphNode } from './model';
 import { namedAudioPorts } from './portNames';
 
 export interface ChannelConnectionDialogProps {
@@ -27,11 +33,6 @@ export interface ChannelConnectionDialogProps {
   onConnect: (connections: GraphConnection[]) => void;
 }
 
-interface Range {
-  startPortId: string;
-  count: number;
-}
-
 /** Keyboard equivalent of dragging cables: the same mapping as a pointer drag, with
  * each source channel's destination and every skipped channel stated before commit. */
 export function ChannelConnectionDialog({
@@ -42,49 +43,25 @@ export function ChannelConnectionDialog({
   onConnect,
 }: ChannelConnectionDialogProps) {
   const { t } = useTranslation();
-  const source = model.nodes.find((node) => node.id === sourceNodeId);
-  const outputs = source ? namedAudioPorts(source.outputPorts) : [];
-  const selection = outputs.filter(({ port }) => sourcePortIds?.includes(port.id));
-  const [range, setRange] = useState<Range | null>(() =>
-    selection.length ? null : { startPortId: outputs[0]?.port.id ?? '', count: outputs.length },
-  );
-  const [targetNodeId, setTargetNodeId] = useState<string | null>(null);
-  const [targetStartPortId, setTargetStartPortId] = useState<string | null>(null);
-  const targets = targetOptions(model, sourceNodeId);
-  const target = model.nodes.find((node) => node.id === targetNodeId);
-  const inputs = target ? namedAudioPorts(target.inputPorts) : [];
-  // Default to the first input only until the user picks one; a picked channel that
-  // disappears must be chosen again rather than silently moving the cables.
-  const targetAnchor =
-    targetStartPortId === null
-      ? inputs[0]?.port.id
-      : inputs.find(({ port }) => port.id === targetStartPortId)?.port.id;
-  // A canvas selection whose channels have all disappeared falls back to choosing a range.
-  const sourceRange = range ?? (selection.length ? null : { startPortId: '', count: 1 });
-  const request = connectionRequest({
-    sourceNodeId,
-    ports: sourceRange ? rangePorts(outputs, sourceRange) : selection,
-    targetNodeId: target?.id,
-    targetAnchorPortId: targetAnchor,
-  });
-  const plan = request ? planChannelConnections(model, request) : emptyPlan;
+  const [choices, setChoices] = useState(() => initialChoices(model, sourceNodeId, sourcePortIds));
+  const form = channelConnectionForm(model, sourceNodeId, sourcePortIds, choices);
+  const { outputs, selection, sourceRange, targets, target, inputs, plan } = form;
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    // The graph can change while the dialog is open; commit only what is valid now.
-    const accepted = request ? planChannelConnections(model, request).accepted : [];
+    const accepted = acceptedConnections(model, form.request);
     if (accepted.length) onConnect(accepted);
   };
   return (
     <Dialog opened onClose={onCancel} title={t('routing.connect.title')} withCloseButton={false}>
       <form onSubmit={submit}>
         <Stack>
-          <Text kind="supporting">
-            {t('routing.connect.source', {
-              node: source ? audioGraphNodeTitle(source) : sourceNodeId,
-            })}
-          </Text>
+          <Text kind="supporting">{t('routing.connect.source', { node: form.sourceTitle })}</Text>
           {sourceRange ? (
-            <SourceRange outputs={outputs} range={sourceRange} onChange={setRange} />
+            <SourceRange
+              outputs={outputs}
+              range={sourceRange}
+              onChange={(range) => setChoices((current) => ({ ...current, range }))}
+            />
           ) : (
             <Stack gap="tight">
               <Text kind="supporting">
@@ -95,7 +72,12 @@ export function ChannelConnectionDialog({
               <FormActions align="start">
                 <ActionButton
                   type="button"
-                  onClick={() => setRange(rangeFromSelection(outputs, selection))}
+                  onClick={() =>
+                    setChoices((current) => ({
+                      ...current,
+                      range: rangeFromSelection(outputs, selection),
+                    }))
+                  }
                 >
                   {t('routing.connect.useRange')}
                 </ActionButton>
@@ -110,10 +92,9 @@ export function ChannelConnectionDialog({
               placeholder={t('routing.connect.chooseTarget')}
               value={target ? target.id : null}
               data={targets}
-              onChange={(value) => {
-                setTargetNodeId(value);
-                setTargetStartPortId(null);
-              }}
+              onChange={(targetNodeId) =>
+                setChoices((current) => ({ ...current, targetNodeId, targetStartPortId: null }))
+              }
             />
           ) : (
             <InlineNotice>{t('routing.connect.noTargets')}</InlineNotice>
@@ -121,17 +102,19 @@ export function ChannelConnectionDialog({
           {target ? (
             <SelectField
               label={t('routing.connect.targetStart')}
-              value={targetAnchor ?? null}
+              value={form.targetAnchorPortId}
               placeholder={t('routing.connect.chooseChannel')}
               data={inputs.map(portOption)}
-              onChange={setTargetStartPortId}
+              onChange={(targetStartPortId) =>
+                setChoices((current) => ({ ...current, targetStartPortId }))
+              }
             />
           ) : null}
           <ConnectionPreview
             plan={plan}
             model={model}
             sourceNodeId={sourceNodeId}
-            pending={!request}
+            pending={!form.request}
           />
         </Stack>
         <FormActions>
@@ -147,81 +130,8 @@ export function ChannelConnectionDialog({
   );
 }
 
-type NamedPort = ReturnType<typeof namedAudioPorts>[number];
-
-const emptyPlan: ChannelConnectionPlan = { accepted: [], skipped: [] };
-
 function portOption({ port, name, channel }: NamedPort) {
   return { value: port.id, label: `${name}, CH ${channel}` };
-}
-
-/** A node can feed itself only across a host boundary, e.g. a virtual device's
- * system-side output into its own system-side input. */
-function acceptsSelfConnection(model: AudioGraphModel, node: AudioGraphNode) {
-  return node.outputPorts.some((output) =>
-    node.inputPorts.some(
-      (input) =>
-        graphConnectionRejection(model, {
-          sourceNodeId: node.id,
-          sourcePortId: output.id,
-          targetNodeId: node.id,
-          targetPortId: input.id,
-        }) !== 'invalid',
-    ),
-  );
-}
-
-/** Nodes with inputs that a connection could reach; repeated titles get an ordinal so
- * each option is distinct. */
-function targetOptions(model: AudioGraphModel, sourceNodeId: string) {
-  const nodes = model.nodes.filter((node) =>
-    node.id === sourceNodeId ? acceptsSelfConnection(model, node) : node.inputPorts.length,
-  );
-  const titles = nodes.map(audioGraphNodeTitle);
-  return nodes.map((node, index) => {
-    const title = titles[index] as string;
-    const repeats = titles.filter((other) => other === title).length;
-    const ordinal = titles.slice(0, index).filter((other) => other === title).length + 1;
-    return { value: node.id, label: repeats > 1 ? `${title} (${ordinal})` : title };
-  });
-}
-
-function rangeFromSelection(outputs: readonly NamedPort[], selection: readonly NamedPort[]): Range {
-  const indexes = selection.map((entry) => outputs.indexOf(entry));
-  const first = Math.min(...indexes);
-  return {
-    // Called only with a non-empty selection drawn from `outputs`.
-    startPortId: (outputs[first] as NamedPort).port.id,
-    count: Math.max(...indexes) - first + 1,
-  };
-}
-
-/** The outputs a range covers; empty when its first channel no longer exists. */
-function rangePorts(outputs: readonly NamedPort[], range: Range) {
-  const start = outputs.findIndex(({ port }) => port.id === range.startPortId);
-  return start < 0 ? [] : outputs.slice(start, start + range.count);
-}
-
-function connectionRequest({
-  sourceNodeId,
-  ports,
-  targetNodeId,
-  targetAnchorPortId,
-}: {
-  sourceNodeId: string;
-  ports: readonly NamedPort[];
-  targetNodeId: string | undefined;
-  targetAnchorPortId: string | undefined;
-}): ChannelConnectionRequest | null {
-  const anchor = ports[0];
-  if (!anchor || !targetNodeId || !targetAnchorPortId) return null;
-  return {
-    sourceNodeId,
-    sourcePortIds: ports.map(({ port }) => port.id),
-    sourceAnchorPortId: anchor.port.id,
-    targetNodeId,
-    targetAnchorPortId,
-  };
 }
 
 function SourceRange({
@@ -230,25 +140,21 @@ function SourceRange({
   onChange,
 }: {
   outputs: readonly NamedPort[];
-  range: Range;
-  onChange: (range: Range) => void;
+  range: ChannelRange;
+  onChange: (range: ChannelRange) => void;
 }) {
   const { t } = useTranslation();
-  const start = outputs.findIndex(({ port }) => port.id === range.startPortId);
   // A first channel that disappeared stays unselected until the user picks another.
-  const available = start < 0 ? 0 : outputs.length - start;
+  const available = availableChannels(outputs, range);
   return (
     <>
       <SelectField
         autoFocus
         label={t('routing.connect.sourceStart')}
-        value={start < 0 ? null : range.startPortId}
+        value={available ? range.startPortId : null}
         placeholder={t('routing.connect.chooseChannel')}
         data={outputs.map(portOption)}
-        onChange={(startPortId) => {
-          const next = outputs.findIndex(({ port }) => port.id === startPortId);
-          onChange({ startPortId, count: Math.min(range.count, outputs.length - next) });
-        }}
+        onChange={(startPortId) => onChange(rangeStartingAt(outputs, range, startPortId))}
       />
       <SelectField
         label={t('routing.connect.count')}
