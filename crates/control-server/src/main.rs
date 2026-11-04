@@ -1,6 +1,6 @@
 use std::{future::Future, io};
 
-use mixrelay_control_server::{ControlOperations, bounded_listener};
+use mixrelay_control_server::{ControlOperations, SocketLimits, bounded_listener};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -14,7 +14,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let listener = mixrelay_local_socket::AuthorizedListener::new(listener, socket, vec![uid]);
     let operations = ControlOperations::new(Box::new(mixrelay_time::StdClock::new()));
     let result = axum::serve(
-        bounded_listener(listener),
+        bounded_listener(listener, SocketLimits::default()),
         mixrelay_control_server::router(operations.clone()),
     )
     .with_graceful_shutdown(stop_admission_on_signal(

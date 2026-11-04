@@ -15,7 +15,7 @@ use std::{
 };
 
 use axum::{Router, routing::get, serve::Listener};
-use mixrelay_control_server::bounded_listener;
+use mixrelay_control_server::{SocketLimits, bounded_listener};
 use tokio::{
     io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader},
     net::{TcpListener, TcpStream},
@@ -58,7 +58,7 @@ async fn saturated_listener_resumes_http_service_after_one_client_disconnects() 
     let (stop, stopped) = oneshot::channel();
     let server = tokio::spawn(async move {
         axum::serve(
-            bounded_listener(listener),
+            bounded_listener(listener, SocketLimits::default()),
             Router::new().route("/health", get(|| async { "healthy" })),
         )
         .with_graceful_shutdown(async {
@@ -106,7 +106,7 @@ async fn saturated_idle_connections_do_not_hold_graceful_shutdown_open() {
     let (stop, stopped) = oneshot::channel();
     let server = tokio::spawn(async move {
         axum::serve(
-            bounded_listener(listener),
+            bounded_listener(listener, SocketLimits::default()),
             Router::new().route("/health", get(|| async { "healthy" })),
         )
         .with_graceful_shutdown(async {
@@ -137,7 +137,7 @@ async fn retained_connections_under_identical_128_client_load() {
         .expect("the expected count must be numeric");
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let address = listener.local_addr().unwrap();
-    let mut listener = bounded_listener(listener);
+    let mut listener = bounded_listener(listener, SocketLimits::default());
     let accepted = Arc::new(AtomicUsize::new(0));
     let observed = Arc::clone(&accepted);
     let (stop, mut stopped) = oneshot::channel();

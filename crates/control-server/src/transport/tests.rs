@@ -1,4 +1,4 @@
-use super::ControlListener;
+use super::{ControlListener, SocketLimits};
 use axum::serve::Listener;
 use std::{
     io,
@@ -16,7 +16,16 @@ async fn test_listener(capacity: usize) -> (ControlListener<TcpListener>, Socket
     let address = listener
         .local_addr()
         .expect("test listener should have an address");
-    (ControlListener::with_capacity(listener, capacity), address)
+    (
+        ControlListener::new(
+            listener,
+            SocketLimits {
+                accepted: capacity,
+                ..SocketLimits::default()
+            },
+        ),
+        address,
+    )
 }
 
 async fn connect(address: SocketAddr) -> tokio::net::TcpStream {

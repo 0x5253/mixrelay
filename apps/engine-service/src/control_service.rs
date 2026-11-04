@@ -11,7 +11,7 @@ use std::{
 
 use axum::Router;
 use mixrelay_control_server::{
-    ControlBackend, ControlOperations, bounded_listener, router_with_backend,
+    ControlBackend, ControlOperations, SocketLimits, bounded_listener, router_with_backend,
 };
 use mixrelay_local_socket::AuthorizedListener;
 use thiserror::Error;
@@ -104,11 +104,14 @@ impl ControlService {
         stop_observing: impl FnOnce(),
     ) -> Result<(), ControlServiceError> {
         let (stop, stopped) = oneshot::channel::<()>();
-        let serving = axum::serve(bounded_listener(self.listener), router)
-            .with_graceful_shutdown(async move {
-                let _ = stopped.await;
-            })
-            .into_future();
+        let serving = axum::serve(
+            bounded_listener(self.listener, SocketLimits::default()),
+            router,
+        )
+        .with_graceful_shutdown(async move {
+            let _ = stopped.await;
+        })
+        .into_future();
         tokio::pin!(serving);
         let result = tokio::select! {
             result = &mut serving => {

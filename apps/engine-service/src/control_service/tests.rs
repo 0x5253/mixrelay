@@ -344,9 +344,16 @@ async fn accepted_transaction_finishes_after_observation_stops() {
 async fn incomplete_ingress_cannot_hold_any_platform_service_open() {
     let entered = Arc::new(Notify::new());
     let observed = Arc::clone(&entered);
-    let router = mixrelay_control_server::router(ControlOperations::new(Box::new(
-        mixrelay_time::ManualClock::new(mixrelay_time::Instant::from_origin(Duration::ZERO)),
-    )))
+    // A short body deadline keeps the drain fast; the product default is two seconds.
+    let router = mixrelay_control_server::router(
+        ControlOperations::new(Box::new(mixrelay_time::ManualClock::new(
+            mixrelay_time::Instant::from_origin(Duration::ZERO),
+        )))
+        .with_timings(mixrelay_control_server::OperationTimings {
+            body_deadline: Duration::from_millis(50),
+            ..mixrelay_control_server::OperationTimings::default()
+        }),
+    )
     .layer(middleware::from_fn(move |request, next: Next| {
         let observed = Arc::clone(&observed);
         async move {

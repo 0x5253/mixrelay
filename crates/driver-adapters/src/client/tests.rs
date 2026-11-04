@@ -101,7 +101,11 @@ async fn lifecycle_client_stops_real_http_inventory_and_reactivates_retained_set
     )
     .unwrap();
     let expected = observed.lock().settings.devices.clone();
-    let (client, service) = serve(&fixture, crate::router(manager)).await;
+    let (client, service) = serve(
+        &fixture,
+        crate::router(manager, crate::InventoryIntervals::default()),
+    )
+    .await;
     let stopped = client.set_active(false).await.unwrap();
     assert!(stopped.settings.devices.is_empty());
     assert!(observed.lock().settings.devices.is_empty());
@@ -122,7 +126,11 @@ async fn absent_native_driver_can_quit_without_attempting_a_stop() {
         mixrelay_driver_core::test_runtime::runtime(),
     )
     .unwrap();
-    let (client, service) = serve(&fixture, crate::router(manager)).await;
+    let (client, service) = serve(
+        &fixture,
+        crate::router(manager, crate::InventoryIntervals::default()),
+    )
+    .await;
     let absent = client.set_active(false).await.unwrap();
     assert_eq!(
         absent.state,
@@ -164,7 +172,11 @@ async fn blocking_and_async_clients_share_socket_inventory_and_revision_errors()
         mixrelay_driver_core::test_runtime::runtime(),
     )
     .unwrap();
-    let (client, service) = serve(&fixture, crate::router(manager)).await;
+    let (client, service) = serve(
+        &fixture,
+        crate::router(manager, crate::InventoryIntervals::default()),
+    )
+    .await;
     let initial = client.snapshot().await.unwrap();
     let worker = client.clone();
     let stopped = tokio::task::spawn_blocking(move || {

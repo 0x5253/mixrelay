@@ -107,8 +107,11 @@ async fn run() -> Result<()> {
     tracing::info!("Driver control API starting; native readiness is reported separately");
     axum::serve(
         listener,
-        mixrelay_driver_adapters::router(manager)
-            .into_make_service_with_connect_info::<mixrelay_local_socket::Peer>(),
+        mixrelay_driver_adapters::router(
+            manager,
+            mixrelay_driver_adapters::InventoryIntervals::default(),
+        )
+        .into_make_service_with_connect_info::<mixrelay_local_socket::Peer>(),
     )
     .with_graceful_shutdown(async move {
         tokio::select! {

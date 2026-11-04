@@ -28,8 +28,8 @@ mod transport;
 mod workspace;
 pub use control_backend::ControlBackend;
 use control_backend::processor_unavailable;
-pub use operations::ControlOperations;
-pub use transport::bounded_listener;
+pub use operations::{ControlOperations, OperationTimings};
+pub use transport::{SocketLimits, bounded_listener};
 
 pub const HEALTH_ROUTE: &str = "/health";
 pub const STATUS_ROUTE: &str = "/api/v1/status";

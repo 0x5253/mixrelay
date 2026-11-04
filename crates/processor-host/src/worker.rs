@@ -56,7 +56,8 @@ pub fn run_plugin_worker(arguments: &[String]) -> Result<(), String> {
     };
     let shutdown = Arc::new(AtomicBool::new(false));
     let _stdin_guard =
-        dsp_lifecycle::watch_parent(Arc::clone(&shutdown)).map_err(|error| error.to_string())?;
+        dsp_lifecycle::watch_parent(Arc::clone(&shutdown), dsp_lifecycle::PARENT_GRACE)
+            .map_err(|error| error.to_string())?;
     prepare_plugin_process()?;
     let locator = RackLocator::decode(encoded_locator)?;
     let (mut audio_shared, editor_shared) = shared_transport::worker(Path::new(shared_path))?;
