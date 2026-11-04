@@ -226,7 +226,7 @@ fn application_capture_reports_actual_impulse_delay_after_src_rate_change() {
 
 fn assert_application(rates: &[u32]) {
     let nanos = Arc::new(AtomicU64::new(0));
-    let registry = SourceRegistry::with_clock_and_storage(
+    let registry = SourceRegistry::with_storage(
         Box::new(SchedulingClock {
             nanos: Arc::clone(&nanos),
         }),

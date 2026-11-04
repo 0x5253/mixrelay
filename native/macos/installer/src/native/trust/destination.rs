@@ -5,7 +5,7 @@ use std::{fs::File, path::Path};
 use rustix::fs::Uid;
 
 use super::{
-    APP_DIRECTORY, admin_gid,
+    APP_DIRECTORY, LAUNCH_DAEMONS_DIRECTORY, admin_gid,
     anchored::{
         inspect, inspect_path, inspect_path_if_present, io_error, open_child_directory,
         open_or_create_root_directory, open_protected_directory, open_root, require_root_directory,
@@ -19,7 +19,6 @@ use crate::{
 };
 
 const HAL_DIRECTORY: &str = "/Library/Audio/Plug-Ins/HAL";
-const LAUNCH_DAEMONS_DIRECTORY: &str = "/Library/LaunchDaemons";
 
 /// Creates the system HAL plug-in directory when it is missing. A fresh macOS has no
 /// `/Library/Audio/Plug-Ins/HAL` until some audio driver installs one. Missing levels are

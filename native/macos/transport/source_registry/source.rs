@@ -19,7 +19,7 @@ use std::{
 };
 
 pub(super) struct Source {
-    pub(super) id: Vec<u8>,
+    id: Vec<u8>,
     pub(super) token: u64,
     pub(super) capacity: u32,
     pub(super) channels: u32,

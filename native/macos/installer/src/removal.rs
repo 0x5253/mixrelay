@@ -16,7 +16,8 @@ use std::{
 
 use crate::{
     REMOVAL_LAUNCHD_PATH, ReleasePayloadVerifier, ServiceAccount, SigningTeam, UNINSTALLER_PATH,
-    native::launchctl, require_root,
+    native::{REMOVAL_HELPER, RegistrationState, bootout, bootstrap, inspect},
+    require_root,
 };
 use anyhow::{Context, Result, ensure};
 
@@ -190,7 +191,7 @@ fn register_verified_helper() -> Result<()> {
         "could not register removal operation authorization: {status}"
     );
     if !helper_is_registered()? {
-        launchctl::bootstrap(&launchctl::REMOVAL_HELPER)?;
+        bootstrap(&REMOVAL_HELPER)?;
     }
     Ok(())
 }
@@ -201,7 +202,7 @@ fn register_verified_helper() -> Result<()> {
 pub fn unregister_helper() -> Result<()> {
     require_root()?;
     if helper_is_registered()? {
-        launchctl::bootout(&launchctl::REMOVAL_HELPER)?;
+        bootout(&REMOVAL_HELPER)?;
     }
     Ok(())
 }
@@ -222,8 +223,8 @@ pub fn remove_right() -> Result<()> {
 
 fn helper_is_registered() -> Result<bool> {
     Ok(matches!(
-        launchctl::inspect(&launchctl::REMOVAL_HELPER)?,
-        launchctl::RegistrationState::Loaded { .. }
+        inspect(&REMOVAL_HELPER)?,
+        RegistrationState::Loaded { .. }
     ))
 }
 

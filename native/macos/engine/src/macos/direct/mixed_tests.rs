@@ -1,5 +1,5 @@
 //! A driver duplex endpoint captured and rendered in the same callback.
-use super::{Binding, renderer::RenderSignals, tests};
+use super::{Binding, supervision::RenderSignals, tests};
 use mixrelay_audio_graph::{GraphDocument, NodeConfig, NodeControl};
 use mixrelay_render::{BlockProcessor, ProcessorExchange, RenderPlan, RuntimeControlUpdate};
 use std::sync::{Arc, atomic::Ordering};

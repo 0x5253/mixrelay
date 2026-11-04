@@ -203,7 +203,7 @@ fn adaptive_rebuffer_holds_numbered_pcm_cursor_without_replay_or_allocation() {
     let consume = |output: &mut [f32]| {
         // Explicit separated scheduling bursts, without sleeping in a test.
         unsafe {
-            (*source.timeline.get()).previous_read = None;
+            (*source.timeline.get()).separate_next_read();
         }
         registry.read_audio(source.token, output, 128, 48_000)
     };

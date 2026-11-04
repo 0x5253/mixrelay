@@ -13,7 +13,7 @@ impl MonotonicClock for FixedClock {
 #[test]
 fn application_age_measures_consumed_coordinates_and_unknown_never_borrows_newer_time() {
     for timestamp in [Some(1_000_000_000_u64), None, Some(3_000_000_000)] {
-        let registry = SourceRegistry::with_clock_and_storage(
+        let registry = SourceRegistry::with_storage(
             Box::new(FixedClock(Instant::from_origin(std::time::Duration::ZERO))),
             timebase(),
             storage,

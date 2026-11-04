@@ -47,7 +47,7 @@ mod tests {
     use super::super::{
         buffers::Buffers,
         callback_io::CallbackIo,
-        renderer::RenderSignals,
+        supervision::RenderSignals,
         tests::{processor_at, status, stereo_bindings, stereo_list, unclocked},
     };
     use super::*;

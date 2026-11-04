@@ -586,7 +586,7 @@ fn local_registry() -> crate::source_registry::SourceRegistry {
         file.set_len(u64::try_from(bytes).unwrap())?;
         Ok(file.into())
     }
-    SourceRegistry::with_clock_and_storage(
+    SourceRegistry::with_storage(
         Box::new(Clock(Instant::from_origin(std::time::Duration::ZERO))),
         mixrelay_realtime::Timebase::from_ratio(
             std::num::NonZeroU32::new(1).unwrap(),

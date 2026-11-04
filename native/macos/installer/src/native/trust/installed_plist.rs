@@ -8,13 +8,13 @@ use rustix::{
 };
 
 use super::{
+    LAUNCH_DAEMONS_DIRECTORY,
     anchored::{errno_error, inspect, io_error, open_protected_directory},
     policy::{self, MAX_LAUNCHD_PLIST_BYTES},
     require, wheel_group,
 };
 use crate::{LAUNCHD_PATH, native::NativeError};
 
-const LAUNCH_DAEMONS: &str = "/Library/LaunchDaemons";
 const PLIST_NAME: &str = "io.mixrelay.audio.driver.plist";
 
 /// Reads the fixed installed launchd plist through a trusted directory descriptor.
@@ -22,7 +22,7 @@ const PLIST_NAME: &str = "io.mixrelay.audio.driver.plist";
 /// remain errors so callers never fall back to a different console identity.
 pub(in crate::native) fn read_installed_launchd_plist() -> Result<Option<Vec<u8>>, NativeError> {
     let path = Path::new(LAUNCHD_PATH);
-    let parent = open_protected_directory(Path::new(LAUNCH_DAEMONS))?;
+    let parent = open_protected_directory(Path::new(LAUNCH_DAEMONS_DIRECTORY))?;
     let wheel = wheel_group()?;
     let file = match openat(
         &parent,

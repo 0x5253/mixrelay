@@ -92,7 +92,7 @@ impl SourceRegistry {
     /// Injects test backing storage while retaining the production mapping and IPC layout.
     #[cfg(any(test, feature = "test-observation"))]
     #[must_use]
-    pub fn with_clock_and_storage(
+    pub fn with_storage(
         clock: Box<dyn MonotonicClock>,
         timebase: mixrelay_realtime::Timebase,
         storage: TestStorage,

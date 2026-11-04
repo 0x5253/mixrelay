@@ -24,7 +24,7 @@ pub(super) struct ReadWindow {
 #[derive(Default)]
 pub(super) struct Timeline {
     pub(super) policy: Latency,
-    pub(super) previous_read: Option<Instant>,
+    previous_read: Option<Instant>,
     previous_frames: u32,
 }
 
@@ -34,6 +34,12 @@ impl Timeline {
         self.policy.started = false;
         self.previous_read = None;
         self.policy.next = 0;
+    }
+
+    /// Makes the next read start a new scheduling burst, as after a long pause.
+    #[cfg(test)]
+    pub(super) fn separate_next_read(&mut self) {
+        self.previous_read = None;
     }
 
     pub(super) fn observe(

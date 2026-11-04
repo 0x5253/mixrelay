@@ -92,7 +92,7 @@ pub(super) fn open_or_create_root_directory(
 }
 
 /// Existing children are returned unchanged; callers validate them.
-pub(super) fn open_or_create_directory_as(
+fn open_or_create_directory_as(
     parent: &File,
     name: &str,
     path: &Path,

@@ -267,7 +267,7 @@ fn worker_start_failure_reclaims_the_prepared_source_and_backlog_before_retry() 
 
 #[test]
 fn clear_wakes_and_joins_a_prepared_worker_with_no_client_queues() {
-    let owner = VirtualPcm::<ThreadWorker>::with_sources(SourceRegistry::with_clock_and_storage(
+    let owner = VirtualPcm::<ThreadWorker>::with_sources(SourceRegistry::with_storage(
         Box::new(FixedClock),
         mixrelay_realtime::Timebase::current(),
         test_storage::create,

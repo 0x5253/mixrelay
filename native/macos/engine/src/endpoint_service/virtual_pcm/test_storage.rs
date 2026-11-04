@@ -13,7 +13,7 @@ pub(in super::super) fn create(bytes: usize) -> std::io::Result<std::os::fd::Own
 pub(in super::super) fn registry(
     clock: Box<dyn mixrelay_time::MonotonicClock>,
 ) -> mixrelay_macos_transport::source_registry::SourceRegistry {
-    mixrelay_macos_transport::source_registry::SourceRegistry::with_clock_and_storage(
+    mixrelay_macos_transport::source_registry::SourceRegistry::with_storage(
         clock,
         mixrelay_realtime::Timebase::current(),
         create,

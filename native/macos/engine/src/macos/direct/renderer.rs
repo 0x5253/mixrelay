@@ -1,7 +1,9 @@
 //! The IOProc-side renderer: runs the graph synchronously inside each native
 //! callback, splitting the native quantum into graph blocks. Nothing here
 //! allocates, locks or waits.
-use super::{Binding, DirectPlan, buffers::Buffers, callback_io::CallbackIo};
+use super::{
+    Binding, DirectPlan, buffers::Buffers, callback_io::CallbackIo, supervision::RenderSignals,
+};
 use crate::macos::AudioContext;
 use mixrelay_audio_io::{
     process::{ClockDomain, ProcessCycle},
@@ -13,20 +15,11 @@ use mixrelay_render::{BlockProcessor, RenderPlan};
 use std::{
     ffi::c_void,
     panic::{AssertUnwindSafe, catch_unwind},
-    sync::atomic::{AtomicBool, AtomicU64, Ordering},
+    sync::atomic::Ordering,
 };
 
 /// The largest native callback quantum the renderer accepts.
 const MAX_CALLBACK_FRAMES: u32 = 4096;
-
-/// Outcomes the renderer reports to its control-side supervisor.
-#[derive(Default)]
-pub(super) struct RenderSignals {
-    pub(super) progress: AtomicU64,
-    pub(super) failed: AtomicBool,
-    pub(super) invalid: AtomicBool,
-    pub(super) rebind: AtomicBool,
-}
 
 pub(super) struct Renderer<'a> {
     pub(super) timebase: mixrelay_realtime::Timebase,
@@ -48,11 +41,16 @@ pub(super) struct Renderer<'a> {
 pub(super) struct GraphActivation<'a> {
     pub(super) installed: &'a RenderPlan,
     pub(super) context: AudioContext<'a>,
-    pub(super) rebind: &'a AtomicBool,
 }
 
 impl GraphActivation<'_> {
-    pub(super) fn activate(&self, processor: &mut Box<BlockProcessor>) -> bool {
+    /// Activates a pending plan that fits the installed geometry. Any other plan stays
+    /// pending and raises `signals.rebind`.
+    pub(super) fn activate(
+        &self,
+        processor: &mut Box<BlockProcessor>,
+        signals: &RenderSignals,
+    ) -> bool {
         if !self.context.exchange.has_pending() && !self.context.exchange.has_pending_latency() {
             return true;
         }
@@ -64,7 +62,7 @@ impl GraphActivation<'_> {
                     let compatible = !self.context.devices.has_pending()
                         && same_external_geometry(self.installed, next);
                     if !compatible {
-                        self.rebind.store(true, Ordering::Release);
+                        signals.rebind.store(true, Ordering::Release);
                     }
                     compatible
                 },
@@ -74,7 +72,7 @@ impl GraphActivation<'_> {
     }
 }
 
-pub(super) fn same_external_geometry(installed: &RenderPlan, next: &RenderPlan) -> bool {
+fn same_external_geometry(installed: &RenderPlan, next: &RenderPlan) -> bool {
     installed.format() == next.format()
         && installed.source_bindings() == next.source_bindings()
         && installed.sink_bindings() == next.sink_bindings()
@@ -158,7 +156,7 @@ impl Renderer<'_> {
         if self
             .activation
             .as_ref()
-            .is_some_and(|activation| !activation.activate(self.processor))
+            .is_some_and(|activation| !activation.activate(self.processor, self.signals))
         {
             return false;
         }

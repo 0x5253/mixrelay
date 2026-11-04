@@ -1,9 +1,9 @@
 //! Control-side supervision of an installed direct renderer: it watches the
 //! renderer's signals and lifetime requests, and never moves PCM itself.
-use super::{DirectPlan, renderer::RenderSignals};
+use super::DirectPlan;
 use crate::macos::AudioContext;
 use std::{
-    sync::atomic::Ordering,
+    sync::atomic::{AtomicBool, AtomicU64, Ordering},
     thread,
     time::{Duration, Instant},
 };
@@ -19,6 +19,15 @@ pub(super) fn log_route(plan: &DirectPlan, rate: u32, buffer: u32) {
         bindings = plan.bindings.len(),
         "CoreAudio direct renderer starting"
     );
+}
+
+/// Outcomes the renderer reports to its control-side supervisor.
+#[derive(Default)]
+pub(super) struct RenderSignals {
+    pub(super) progress: AtomicU64,
+    pub(super) failed: AtomicBool,
+    pub(super) invalid: AtomicBool,
+    pub(super) rebind: AtomicBool,
 }
 
 impl RenderSignals {

@@ -61,7 +61,7 @@ pub(super) struct MetadataFingerprint {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(super) struct FilesystemIdentity {
     device: u64,
-    pub(super) inode: u64,
+    inode: u64,
 }
 
 pub(super) fn fingerprint(metadata: &Metadata) -> MetadataFingerprint {

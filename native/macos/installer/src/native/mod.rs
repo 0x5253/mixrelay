@@ -4,7 +4,7 @@ mod account;
 mod audio_probe;
 mod command;
 mod hal_reload;
-pub(crate) mod launchctl;
+mod launchctl;
 mod privilege;
 mod service;
 mod trust;
@@ -12,6 +12,7 @@ mod user_data;
 
 pub use account::{ResolvedServiceAccount, resolve_console_account};
 pub use audio_probe::{check_coreaudio_response, hal_is_loaded};
+pub(crate) use launchctl::{REMOVAL_HELPER, RegistrationState, bootout, bootstrap, inspect};
 pub use privilege::require_root;
 pub use service::{NativeServiceLifecycle, NativeServiceRegistration, NativeServiceSnapshot};
 pub(crate) use trust::destination::{create_product_directory, validate_destination_ancestors};

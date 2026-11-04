@@ -20,8 +20,9 @@ use super::AudioContext;
 use crate::macos_devices::direct::{Binding, Descriptor, DirectPlan};
 use mixrelay_render::BlockProcessor;
 use ownership::PreparedRenderer;
-use renderer::{GraphActivation, RenderSignals, Renderer};
+use renderer::{GraphActivation, Renderer};
 use std::{sync::Arc, time::Instant};
+use supervision::RenderSignals;
 
 /// Renders `processor` from `plan`'s master callback until the lifetime ends.
 pub(super) fn run(
@@ -36,7 +37,6 @@ pub(super) fn run(
         activation: Some(GraphActivation {
             installed: &installed_plan,
             context,
-            rebind: &signals.rebind,
         }),
         ..Renderer::for_plan(plan, processor, context.runtime_status, &signals)
     };

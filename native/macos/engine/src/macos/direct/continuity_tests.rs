@@ -1,6 +1,7 @@
 //! Compatible graph replacements activate inside the callback without a rebind.
 use super::{
-    renderer::{GraphActivation, RenderSignals, Renderer, same_external_geometry},
+    renderer::{GraphActivation, Renderer},
+    supervision::RenderSignals,
     tests,
 };
 use crate::macos::AudioContext;
@@ -12,7 +13,7 @@ use mixrelay_engine_core::{RuntimeStatusBackend, session::AdapterRuntimeStatus};
 use mixrelay_render::ProcessorExchange;
 use mixrelay_render::{BlockProcessor, RenderPlan};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::Ordering;
 
 struct ControlFixture {
     status: Arc<AdapterRuntimeStatus>,
@@ -113,7 +114,6 @@ fn internal_add_remove_keeps_callback_pcm_and_frame_epoch_continuous() {
         activation: Some(GraphActivation {
             installed: &installed,
             context: control.context(),
-            rebind: &signals.rebind,
         }),
         ..tests::unclocked(&mut processor, &bindings, &control.status, &signals, 19)
     };
@@ -140,54 +140,60 @@ fn latency_only_publication_passes_the_direct_callback_guard_without_rebind() {
     let control = ControlFixture::new();
     let mut processor = processor_with_internal_node(1, false);
     let installed = Arc::clone(processor.plan());
-    let rebind = AtomicBool::new(false);
+    let signals = RenderSignals::default();
     let activation = GraphActivation {
         installed: &installed,
         context: control.context(),
-        rebind: &rebind,
     };
     control.exchange.observe_plan(Arc::clone(&installed));
     assert!(control.exchange.refresh_latency().unwrap());
     assert!(!control.exchange.has_pending());
     assert!(control.exchange.has_pending_latency());
     let before = control.exchange.revisions();
-    assert!(activation.activate(&mut processor));
+    assert!(activation.activate(&mut processor, &signals));
     assert!(!control.exchange.has_pending_latency());
-    assert!(!rebind.load(Ordering::Acquire));
+    assert!(!signals.rebind.load(Ordering::Acquire));
     assert_eq!(control.exchange.revisions(), before);
     assert!(Arc::ptr_eq(processor.plan(), &installed));
 }
 
-#[test]
-fn incompatible_format_is_left_pending_for_native_rebind() {
+/// Offers `next` to the callback activation of a fresh fixture. Returns whether it
+/// asked for a native rebind; a refused plan stays pending behind the installed one.
+fn activation_requests_rebind(installed: Box<BlockProcessor>, next: Box<BlockProcessor>) -> bool {
     let control = ControlFixture::new();
-    let mut processor = tests::processor_at(32, 48_000);
+    let mut processor = installed;
     let installed = Arc::clone(processor.plan());
-    let rebind = AtomicBool::new(false);
+    let signals = RenderSignals::default();
     let activation = GraphActivation {
         installed: &installed,
         context: control.context(),
-        rebind: &rebind,
     };
-    control
-        .exchange
-        .submit(prepare(&document_with_internal_node(2, false), 96_000))
-        .unwrap();
-    assert!(activation.activate(&mut processor));
-    assert!(rebind.load(Ordering::Acquire));
-    assert!(control.exchange.has_pending());
-    assert!(Arc::ptr_eq(processor.plan(), &installed));
+    control.exchange.submit(next).unwrap();
+    assert!(activation.activate(&mut processor, &signals));
+    let rebind = signals.rebind.load(Ordering::Acquire);
+    assert_eq!(control.exchange.has_pending(), rebind);
+    assert_eq!(Arc::ptr_eq(processor.plan(), &installed), rebind);
+    rebind
+}
+
+#[test]
+fn incompatible_format_is_left_pending_for_native_rebind() {
+    assert!(activation_requests_rebind(
+        tests::processor_at(32, 48_000),
+        prepare(&document_with_internal_node(2, false), 96_000),
+    ));
 }
 
 #[test]
 fn changed_external_identity_or_channels_require_new_native_mapping() {
-    let original = processor_with_internal_node(1, false);
     for index in 0..2 {
         let mut document = document_with_internal_node(2, false);
         document.edges.clear();
         document.nodes[index].id = "replacement".into();
-        let changed = prepare(&document, 48_000);
-        assert!(!same_external_geometry(original.plan(), changed.plan()));
+        assert!(activation_requests_rebind(
+            processor_with_internal_node(1, false),
+            prepare(&document, 48_000),
+        ));
 
         document.nodes[index].id = if index == 0 { "input" } else { "output" }.into();
         match &mut document.nodes[index].config {
@@ -195,7 +201,9 @@ fn changed_external_identity_or_channels_require_new_native_mapping() {
             NodeConfig::AudioDeviceOutput(config) => config.input_channels = 1,
             _ => unreachable!("fixture contains only hardware endpoints"),
         }
-        let changed = prepare(&document, 48_000);
-        assert!(!same_external_geometry(original.plan(), changed.plan()));
+        assert!(activation_requests_rebind(
+            processor_with_internal_node(1, false),
+            prepare(&document, 48_000),
+        ));
     }
 }

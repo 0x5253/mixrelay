@@ -1,7 +1,10 @@
 //! Ownership and mode checks for the fixed native install paths.
 //!
-//! `policy` decides from inode facts; the other modules read those facts through
-//! descriptors that never follow links, and create only missing fixed levels.
+//! `policy` decides from inode facts. Directory walks and the installed plist read
+//! open each level with `O_NOFOLLOW` and create only missing fixed levels. Single-path
+//! checks, such as the engine directory and owned targets, read `symlink_metadata` by
+//! path: a link is reported as itself and rejected, but the check is not anchored to
+//! an opened parent descriptor.
 
 mod anchored;
 pub(super) mod destination;
@@ -17,6 +20,7 @@ use rustix::fs::Gid;
 use super::{NativeError, account::group_id_for_name};
 
 const APP_DIRECTORY: &str = "/Library/Application Support/MixRelay";
+const LAUNCH_DAEMONS_DIRECTORY: &str = "/Library/LaunchDaemons";
 
 /// Attaches the path to a rejected trust decision.
 fn require(path: &Path, decision: policy::Decision) -> Result<(), NativeError> {

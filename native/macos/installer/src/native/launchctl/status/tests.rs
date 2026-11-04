@@ -1,16 +1,8 @@
 use super::*;
 
-const DRIVER: ServiceIdentity = ServiceIdentity {
-    label: "io.mixrelay.audio.driver",
-    program: crate::contract::DRIVER_PATH,
-    invocation: Invocation::Executable,
-};
-
-const ENGINE: ServiceIdentity = ServiceIdentity {
-    label: "io.mixrelay.audio.engine",
-    program: crate::RUNTIME_ENGINE_PATH,
-    invocation: Invocation::Executable,
-};
+const DRIVER: ServiceIdentity = super::super::DRIVER.identity;
+const ENGINE: ServiceIdentity = super::super::ENGINE.identity;
+const REMOVAL_HELPER: ServiceIdentity = super::super::REMOVAL_HELPER.identity;
 
 fn loaded(bytes: &[u8], identity: ServiceIdentity) -> Result<RegistrationState, NativeError> {
     classify(Some(0), bytes, b"", identity)
@@ -40,11 +32,7 @@ fn launchctl_runtime_status_shape_is_parsed_without_inventing_disk_policy_fields
 
 #[test]
 fn removal_registration_accepts_only_its_fixed_invocation_and_a_valid_team() {
-    let identity = ServiceIdentity {
-        label: crate::removal::SERVICE,
-        program: crate::REMOVAL_HELPER_PATH,
-        invocation: Invocation::RemovalHelper,
-    };
+    let identity = REMOVAL_HELPER;
     let label = identity.label;
     let program = identity.program;
     let status = format!(
