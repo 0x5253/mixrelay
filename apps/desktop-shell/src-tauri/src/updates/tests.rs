@@ -1,44 +1,59 @@
 use super::{MAX_RESPONSE_BYTES, UpdateError, read_response};
+use mixrelay_desktop_core::updates::{Platform, Product, UpdateState, product_update};
+use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+
+/// Answers one HTTP request with `head` and then `body`, from a local fixture server.
+async fn serve_once(head: String, body: Vec<u8>) -> (String, tokio::task::JoinHandle<()>) {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("local fixture");
+    let address = listener.local_addr().expect("fixture address");
+    let server = tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.expect("fixture connection");
+        let mut request = [0; 1024];
+        let received = socket.read(&mut request).await.expect("fixture request");
+        assert!(
+            received > 0,
+            "client sent a request before the fixture response"
+        );
+        socket
+            .write_all(head.as_bytes())
+            .await
+            .expect("fixture header");
+        // The client may close once it has seen enough; that is an expected boundary.
+        let _ = socket.write_all(&body).await;
+    });
+    (format!("http://{address}"), server)
+}
+
+/// The production client settings, without HTTPS, for the local fixture.
+fn fixture_client() -> reqwest::Client {
+    super::client_builder()
+        .no_proxy()
+        .build()
+        .expect("fixture client")
+}
 
 #[tokio::test]
 async fn response_body_limit_checks_declared_and_streamed_size() {
-    use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
-
+    let length = MAX_RESPONSE_BYTES + 1;
     for declared in [true, false] {
-        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
-            .await
-            .expect("local fixture");
-        let address = listener.local_addr().expect("fixture address");
-        let server = tokio::spawn(async move {
-            let (mut socket, _) = listener.accept().await.expect("fixture connection");
-            let mut request = [0; 1024];
-            let received = socket.read(&mut request).await.expect("fixture request");
-            assert!(
-                received > 0,
-                "client sent a request before the fixture response"
-            );
-            let length = MAX_RESPONSE_BYTES + 1;
-            let header = if declared {
-                format!("HTTP/1.1 200 OK\r\nContent-Length: {length}\r\n\r\n")
-            } else {
-                format!("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n{length:x}\r\n")
-            };
-            socket
-                .write_all(header.as_bytes())
-                .await
-                .expect("fixture header");
-            if !declared {
-                // The client may close once it crosses the limit; that is the expected boundary.
-                let _ = socket.write_all(&vec![b' '; length]).await;
-                let _ = socket.write_all(b"\r\n0\r\n\r\n").await;
-            }
-        });
-        let response = reqwest::Client::builder()
-            .no_proxy()
-            .timeout(std::time::Duration::from_secs(5))
-            .build()
-            .expect("fixture client")
-            .get(format!("http://{address}"))
+        let (head, body) = if declared {
+            (
+                format!("HTTP/1.1 200 OK\r\nContent-Length: {length}\r\n\r\n"),
+                Vec::new(),
+            )
+        } else {
+            let mut body = vec![b' '; length];
+            body.extend_from_slice(b"\r\n0\r\n\r\n");
+            (
+                format!("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n{length:x}\r\n"),
+                body,
+            )
+        };
+        let (url, server) = serve_once(head, body).await;
+        let response = fixture_client()
+            .get(url)
             .send()
             .await
             .expect("fixture response");
@@ -47,6 +62,67 @@ async fn response_body_limit_checks_declared_and_streamed_size() {
             Err(UpdateError::ResponseTooLarge)
         ));
         server.await.expect("fixture server");
+    }
+}
+
+async fn fetch(head: &str, body: Vec<u8>) -> Result<super::Catalog, UpdateError> {
+    let (url, server) = serve_once(head.to_owned(), body).await;
+    let catalog = super::fetch_catalog(&fixture_client(), &url, Product::MixRelay).await;
+    server.await.expect("fixture server");
+    catalog
+}
+
+fn update(
+    catalog: Result<super::Catalog, UpdateError>,
+) -> mixrelay_desktop_core::updates::ProductUpdate {
+    let platform = Platform::from_identity("macos", "aarch64", None).unwrap();
+    product_update(Product::MixRelay, Some("1.2.9".into()), platform, catalog)
+}
+
+#[tokio::test]
+async fn a_missing_release_means_nothing_is_published_yet() {
+    let catalog = fetch(
+        "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n",
+        Vec::new(),
+    )
+    .await;
+    assert_eq!(update(catalog).state(), UpdateState::NotPublished);
+}
+
+#[tokio::test]
+async fn redirects_and_server_errors_fail_the_check_instead_of_being_followed() {
+    for head in [
+        "HTTP/1.1 302 Found\r\nLocation: https://example.com/\r\nContent-Length: 0\r\n\r\n",
+        "HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\n\r\n",
+        "HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\n\r\n",
+    ] {
+        assert!(
+            matches!(fetch(head, Vec::new()).await, Err(UpdateError::Unavailable)),
+            "{head}"
+        );
+    }
+}
+
+#[tokio::test]
+async fn a_published_release_offers_the_newer_package_for_this_platform() {
+    let body = serde_json::to_vec(&github_release()).unwrap();
+    let head = format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n", body.len());
+    let update = update(fetch(&head, body).await);
+    assert_eq!(update.state(), UpdateState::Available);
+    assert_eq!(update.latest_version(), Some("1.2.10"));
+}
+
+#[tokio::test]
+async fn opening_a_download_rejects_anything_but_a_plain_https_link_before_any_request() {
+    for url in [
+        "http://github.com/0x5253/mixrelay/releases/download/v1.2.10/MixRelay-Installer-1.2.10.pkg",
+        "https://user@github.com/0x5253/mixrelay/releases/download/v1.2.10/a.pkg",
+        "not a url",
+    ] {
+        assert!(matches!(
+            super::updates_open_download(Product::MixRelay, url.into()).await,
+            Err(UpdateError::InvalidDownload)
+        ));
     }
 }
 
@@ -68,7 +144,6 @@ fn github_release() -> serde_json::Value {
 
 #[test]
 fn github_publication_selects_the_native_package_and_preserves_its_github_digest() {
-    use mixrelay_desktop_core::updates::{Platform, Product, UpdateState, product_update};
     for (os, arch, distro, filename) in [
         ("macos", "aarch64", None, "MixRelay-Installer-1.2.10.pkg"),
         ("macos", "x86_64", None, "MixRelay-Installer-1.2.10.pkg"),
@@ -136,7 +211,6 @@ fn github_publication_selects_the_native_package_and_preserves_its_github_digest
 
 #[test]
 fn github_catalog_rejects_unstable_incomplete_or_misdirected_publications() {
-    use mixrelay_desktop_core::updates::Product;
     use serde_json::json;
     for (pointer, value) in [
         ("/tag_name", json!("1.2.10")),
@@ -212,7 +286,6 @@ fn github_catalog_rejects_unstable_incomplete_or_misdirected_publications() {
 
 #[test]
 fn github_catalog_rejects_duplicate_missing_or_oversized_assets() {
-    use mixrelay_desktop_core::updates::Product;
     for duplicate in [false, true] {
         let mut release = github_release();
         let assets = release["assets"].as_array_mut().unwrap();
