@@ -17,7 +17,7 @@ case "$ID" in
     fi
     apt-get "${apt_options[@]}" update
     apt-get "${apt_options[@]}" install -y --no-install-recommends \
-      build-essential ca-certificates clang libclang-rt-dev cmake curl git pkg-config rpm rsync ripgrep \
+      build-essential ca-certificates clang libarchive-tools libclang-rt-dev cmake curl git pkg-config rpm rsync ripgrep \
       libasound2-dev liblilv-dev lv2-dev libpipewire-0.3-dev libssl-dev \
       libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev \
       librsvg2-dev libx11-dev libxrandr-dev libxi-dev \

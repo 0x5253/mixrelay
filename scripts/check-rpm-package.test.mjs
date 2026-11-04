@@ -1,37 +1,40 @@
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
-import { chmodSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
-import { compareRpmToDeb, extractedFiles, rpmFiles } from './check-rpm-package.mjs';
+import { compareRpmToDeb, debModes, normalizedContent, payloadDigests, rpmModes } from './check-rpm-package.mjs';
 
-const digest = 'a'.repeat(64);
 const scripts = { PREIN: 'pre\n', PREUN: 'preun\n', POSTIN: 'post\n', POSTUN: 'postun\n' };
 const sources = {
   'driver-before-change.sh': 'pre', 'driver-rpm-pre-remove.sh': 'preun',
   'driver-after-install.sh': 'post', 'driver-after-remove.sh': 'postun',
 };
 const policy = {
-  deb: { version: '0.2.0-1', architecture: 'arm64' }, homepage: 'https://rawsector.com/products/mixrelay',
+  version: '0.2.0', architecture: 'arm64', homepage: 'https://rawsector.com/products/mixrelay',
   dependencies: ['pipewire', 'alsa-lib'], source: file => sources[file],
 };
-const payload = () => new Map([
-  ['usr/bin/mixrelay-desktop', { mode: '-rwxr-xr-x', digest }],
-  ['usr/share/doc/mix-relay/LICENSE.txt', { mode: '-rw-r--r--', digest: 'b'.repeat(64) }],
+const desktop = type => Buffer.from(`ELF…__TAURI_BUNDLE_TYPE_VAR_${type}…code`);
+const modes = () => new Map([['usr/bin/mixrelay-desktop', '-rwxr-xr-x'], ['usr/share/doc/mix-relay/LICENSE.txt', '-rw-r--r--']]);
+const digests = type => new Map([
+  ['usr/bin/mixrelay-desktop', normalizedContent(desktop(type), type)],
+  ['usr/share/doc/mix-relay/LICENSE.txt', normalizedContent(Buffer.from('licence'), type)],
 ]);
 const rpm = (overrides = {}) => ({
   metadata: { name: 'mix-relay', version: '0.2.0', release: '1', arch: 'aarch64', url: policy.homepage },
   requires: ['pipewire', 'alsa-lib', 'rpmlib(CompressedFileNames) <= 3.0.4-1'],
-  scripts, rpm: payload(), deb: payload(), ...overrides,
+  scripts,
+  modes: { rpm: modes(), deb: modes() },
+  digests: { rpm: digests('RPM'), deb: digests('DEB') },
+  ...overrides,
 });
 
-test('an RPM carrying the checked DEB payload, metadata and scriptlets passes', () => {
+test('an RPM of the checked DEB payload, differing only in its package-type marker, passes', () => {
   assert.deepEqual(compareRpmToDeb(rpm(), policy),
     { name: 'mix-relay', version: '0.2.0', release: '1', arch: 'aarch64', url: policy.homepage, files: 2 });
 });
 
-test('metadata, requirements, scriptlets and every payload difference fail', () => {
+test('metadata, requirements and scriptlets must match the product', () => {
   for (const [change, message] of [
     [{ metadata: { ...rpm().metadata, arch: 'x86_64' } }, /RPM arch is x86_64, expected aarch64/],
     [{ metadata: { ...rpm().metadata, version: '0.1.0' } }, /RPM version/],
@@ -40,48 +43,66 @@ test('metadata, requirements, scriptlets and every payload difference fail', () 
     [{ scripts: { ...scripts, PREUN: 'other' } }, /mismatched RPM scriptlet: PREUN/],
     [{ scripts: { ...scripts, POSTUN: undefined } }, /mismatched RPM scriptlet: POSTUN/],
   ]) assert.throws(() => compareRpmToDeb(rpm(change), policy), message);
-  const missing = payload();
-  missing.delete('usr/bin/mixrelay-desktop');
-  assert.throws(() => compareRpmToDeb(rpm({ rpm: missing }), policy), /RPM payload lacks usr\/bin\/mixrelay-desktop/);
-  assert.throws(() => compareRpmToDeb(rpm({ deb: missing }), policy), /DEB payload lacks usr\/bin\/mixrelay-desktop/);
-  for (const entry of [{ mode: '-rw-r--r--', digest }, { mode: '-rwxr-xr-x', digest: 'c'.repeat(64) }]) {
-    const changed = payload().set('usr/bin/mixrelay-desktop', entry);
-    assert.throws(() => compareRpmToDeb(rpm({ rpm: changed }), policy), /RPM payload differs from the DEB: usr\/bin\/mixrelay-desktop/);
-  }
 });
 
-test('RPM header listings keep files and links, skip directories and require root ownership', () => {
-  const files = rpmFiles([
-    `drwxr-xr-x\troot:root\t\t/usr/bin`,
-    `-rwxr-xr-x\troot:root\t${digest}\t/usr/bin/mixrelay-desktop`,
-    `lrwxrwxrwx\troot:root\t\t/usr/bin/mixrelay`,
+test('any payload difference beyond the package-type marker fails', () => {
+  const missing = modes();
+  missing.delete('usr/share/doc/mix-relay/LICENSE.txt');
+  assert.throws(() => compareRpmToDeb(rpm({ modes: { rpm: missing, deb: modes() } }), policy),
+    /RPM payload lacks usr\/share\/doc\/mix-relay\/LICENSE.txt/);
+  assert.throws(() => compareRpmToDeb(rpm({ modes: { rpm: modes(), deb: missing } }), policy),
+    /DEB payload lacks usr\/share\/doc\/mix-relay\/LICENSE.txt/);
+  const writable = modes().set('usr/bin/mixrelay-desktop', '-rwxrwxrwx');
+  assert.throws(() => compareRpmToDeb(rpm({ modes: { rpm: writable, deb: modes() } }), policy), /differs from the DEB: usr\/bin/);
+  const changed = digests('RPM').set('usr/bin/mixrelay-desktop', normalizedContent(Buffer.from('ELF…other code'), 'RPM'));
+  assert.throws(() => compareRpmToDeb(rpm({ digests: { rpm: changed, deb: digests('DEB') } }), policy), /differs from the DEB: usr\/bin/);
+  // A DEB-marked binary in the RPM would misreport its package type at runtime.
+  const unmarked = digests('RPM').set('usr/bin/mixrelay-desktop', normalizedContent(desktop('DEB'), 'RPM'));
+  assert.throws(() => compareRpmToDeb(rpm({ digests: { rpm: unmarked, deb: digests('DEB') } }), policy), /differs from the DEB/);
+});
+
+test('the RPM desktop binary must record its package type exactly once', () => {
+  const twice = Buffer.concat([desktop('RPM'), desktop('RPM')]);
+  const both = {
+    rpm: digests('RPM').set('usr/bin/mixrelay-desktop', normalizedContent(twice, 'RPM')),
+    deb: digests('DEB').set('usr/bin/mixrelay-desktop', normalizedContent(Buffer.concat([desktop('DEB'), desktop('DEB')]), 'DEB')),
+  };
+  assert.throws(() => compareRpmToDeb(rpm({ digests: both }), policy), /record its package type once/);
+});
+
+test('marker normalisation leaves other bytes intact and counts markers', () => {
+  const normalized = normalizedContent(desktop('RPM'), 'RPM');
+  assert.deepEqual(normalized, normalizedContent(desktop('DEB'), 'DEB'));
+  assert.equal(normalized.markers, 1);
+  assert.equal(normalizedContent(Buffer.from('plain'), 'RPM').markers, 0);
+  assert.notEqual(normalizedContent(desktop('RPM'), 'DEB').digest, normalized.digest);
+});
+
+test('RPM header and DEB listings yield root-owned file modes and skip directories', () => {
+  assert.deepEqual([...rpmModes([
+    'drwxr-xr-x\troot:root\t/usr/bin',
+    '-rwxr-xr-x\troot:root\t/usr/bin/mixrelay-desktop',
+    'lrwxrwxrwx\troot:root\t/usr/bin/mixrelay',
     '',
-  ].join('\n'));
-  assert.deepEqual([...files], [
-    ['usr/bin/mixrelay-desktop', { mode: '-rwxr-xr-x', digest }],
-    ['usr/bin/mixrelay', { mode: 'lrwxrwxrwx', digest: '' }],
-  ]);
-  assert.throws(() => rpmFiles(`-rw-r--r--\tuser:user\t${digest}\t/etc/x`), /not owned by root: \/etc\/x/);
-  assert.throws(() => rpmFiles(`-rw-r--r--\troot:root\t${digest}\tetc/x`), /Invalid RPM file entry/);
-  assert.throws(() => rpmFiles(`-rw-r--r--\troot:root\t${digest}\t/etc/x\n-rw-r--r--\troot:root\t${digest}\t/etc/x`),
-    /Invalid RPM file entry/);
+  ].join('\n'))], [['usr/bin/mixrelay-desktop', '-rwxr-xr-x'], ['usr/bin/mixrelay', 'lrwxrwxrwx']]);
+  assert.throws(() => rpmModes('-rw-r--r--\tuser:user\t/etc/x'), /not owned by root: etc\/x/);
+  assert.throws(() => rpmModes('-rw-r--r--\troot:root\tetc/x'), /Invalid package file entry/);
+  assert.throws(() => rpmModes('-rw-r--r--\troot:root\t/etc/x\n-rw-r--r--\troot:root\t/etc/x'), /Invalid package file entry/);
+  assert.deepEqual([...debModes([
+    'drwxr-xr-x root/root         0 2026-11-04 01:00 ./',
+    'drwxr-xr-x root/root         0 2026-11-04 01:00 ./usr/bin/',
+    '-rwxr-xr-x root/root  28000000 2026-11-04 01:00 ./usr/bin/mixrelay-desktop',
+    'lrwxrwxrwx root/root         0 2026-11-04 01:00 ./usr/bin/mixrelay -> mixrelay-desktop',
+  ].join('\n'))], [['usr/bin/mixrelay-desktop', '-rwxr-xr-x'], ['usr/bin/mixrelay', 'lrwxrwxrwx']]);
+  assert.throws(() => debModes('garbage line'), /Unrecognized DEB listing entry/);
 });
 
-test('an extracted DEB yields file modes and SHA-256 digests in RPM form', t => {
+test('extracted payload digests cover regular files only', t => {
   const directory = mkdtempSync(join(tmpdir(), 'mixrelay-rpm-test-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   mkdirSync(join(directory, 'usr/bin'), { recursive: true });
-  writeFileSync(join(directory, 'usr/bin/tool'), 'tool');
-  chmodSync(join(directory, 'usr/bin/tool'), 0o755);
-  writeFileSync(join(directory, 'usr/bin/data'), '');
-  chmodSync(join(directory, 'usr/bin/data'), 0o644);
-  symlinkSync('tool', join(directory, 'usr/bin/link'));
-  const files = extractedFiles(directory);
-  assert.deepEqual(files.get('usr/bin/tool'),
-    { mode: '-rwxr-xr-x', digest: createHash('sha256').update('tool').digest('hex') });
-  assert.equal(files.get('usr/bin/data').mode, '-rw-r--r--');
-  assert.equal(files.get('usr/bin/data').digest, 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
-  assert.equal(files.get('usr/bin/link').mode[0], 'l');
-  assert.equal(files.get('usr/bin/link').digest, '');
-  assert.equal(files.has('usr/bin'), false);
+  writeFileSync(join(directory, 'usr/bin/mixrelay-desktop'), desktop('RPM'));
+  const files = payloadDigests(directory, 'RPM');
+  assert.deepEqual([...files.keys()], ['usr/bin/mixrelay-desktop']);
+  assert.deepEqual(files.get('usr/bin/mixrelay-desktop'), normalizedContent(desktop('DEB'), 'DEB'));
 });
