@@ -66,7 +66,7 @@ fn aligned_capture_converts_the_current_packet_once_in_the_same_native_callback(
         }
     });
     assert_eq!(allocated.count_total, 0);
-    assert_eq!(context.native.pcm_metrics.work_calls(), 3);
+    assert_eq!(context.native.pcm_metrics.work_timing().calls, 3);
     assert!(context.native.pcm.failure().is_none());
 }
 
@@ -136,7 +136,7 @@ fn input_off_and_unprepared_formats_never_accumulate_or_overflow_capture_pcm() {
             }
         });
         assert_eq!(allocated.count_total, 0);
-        assert_eq!(context.native.pcm_metrics.work_calls(), 600);
+        assert_eq!(context.native.pcm_metrics.work_timing().calls, 600);
         for graph in [false, true] {
             assert_eq!(queued(&context, graph), 0);
         }
@@ -210,7 +210,7 @@ fn capture_sanitizes_before_copy_or_sinc_and_reports_faults_once_without_stoppin
         assert_eq!(allocated.count_total, 0);
         assert!(context.native.pcm.failure().is_none());
         assert!(context.bridge_ready.load(Ordering::Acquire));
-        assert_eq!(context.native.pcm_metrics.work_calls(), 65);
+        assert_eq!(context.native.pcm_metrics.work_timing().calls, 65);
     }
 }
 

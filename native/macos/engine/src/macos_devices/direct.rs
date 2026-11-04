@@ -513,7 +513,7 @@ mod tests {
             );
         }
         assert_eq!(probe.calls.load(Ordering::Acquire), 1);
-        assert_eq!(slot.metrics.missed_count(), 1);
+        assert_eq!(slot.metrics.take_window().missed, 1);
         slot.publish(std::ptr::null_mut());
         assert!(!slot.drained());
         probe.release.store(true, Ordering::Release);
@@ -533,7 +533,8 @@ mod tests {
             });
         }
         assert!(slot.drained());
-        assert_eq!(slot.metrics.missed_count(), 1);
+        // Dispatches after the drain are not misses.
+        assert_eq!(slot.metrics.take_window().missed, 0);
     }
 
     #[test]
