@@ -51,7 +51,7 @@ test('one version command updates app, HAL and locked workspace crate metadata t
   // A fixture with its own version, vendored crates and a registry crate at the old number keep theirs.
   assert.equal(lockedVersion(lockAfter, 'mixrelay-native-clap-fixture'), '0.1.0');
   assert.equal(lockedVersion(lockAfter, 'truce-rack-core'), '1.1.5');
-  assert.match(lockAfter, /^name = "jiff-core"\nversion = "0\.1\.0"\nsource = "registry\+/m);
+  assert.match(lockAfter, /^name = "vswhom"\nversion = "0\.1\.0"\nsource = "registry\+/m);
   assert.equal(setVersion('0.1.0', directory), '0.1.0');
   assert.equal(readFileSync(join(directory, 'Cargo.lock'), 'utf8'), lockBefore);
 });

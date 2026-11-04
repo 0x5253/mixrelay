@@ -50,12 +50,13 @@ jobs:
       macos: ${{ steps.groups.outputs.macos }}
       linux: ${{ steps.groups.outputs.linux }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.19.0
+          package-manager-cache: false
       - name: Mark full installed qualification pending on the tested commit
         if: inputs.targets == ''
         env:
@@ -89,7 +90,7 @@ jobs:
           pnpm install --frozen-lockfile
       - name: Qualify the packed Stream Deck bytes without running Stream Deck
         run: node scripts/streamdeck-artifact.mjs qualify --directory candidate --output streamdeck-evidence
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           overwrite: true
           name: installed-target-streamdeck-plugin
@@ -143,7 +144,7 @@ jobs:
           jq -e '.include | all(.os == "macos" or .os == "linux")' <<< "$MATRIX" > /dev/null
           printf 'macos=%s\n' "$(jq -c '{include: [.include[] | select(.os == "macos")]}' <<< "$MATRIX")" >> "$GITHUB_OUTPUT"
           printf 'linux=%s\n' "$(jq -c '{include: [.include[] | select(.os == "linux")]}' <<< "$MATRIX")" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           overwrite: true
           name: installed-candidate
@@ -163,13 +164,14 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 150
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.19.0
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+          package-manager-cache: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: installed-candidate
           path: candidate
@@ -189,7 +191,7 @@ jobs:
         if: always()
         run: node scripts/e2e/collect-macos.mjs --output evidence
       - if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           overwrite: true
           name: installed-target-${{ matrix.id }}
@@ -214,13 +216,14 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 150
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.19.0
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+          package-manager-cache: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: installed-candidate
           path: candidate
@@ -234,7 +237,7 @@ jobs:
           MIXRELAY_E2E_CONTROL_TRACE: ${{ inputs.linux_control_trace }}
         run: node scripts/e2e/github-vm.mjs --target "$TARGET" --directory candidate --output evidence
       - if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           overwrite: true
           name: installed-target-${{ matrix.id }}
@@ -254,17 +257,18 @@ jobs:
       actions: read
       statuses: write
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.19.0
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+          package-manager-cache: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: installed-candidate
           path: candidate
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: installed-target-*
           path: qualification
@@ -274,7 +278,7 @@ jobs:
         run: node scripts/qualification.mjs inventory --directory candidate --candidate candidate/mix-relay.candidate.json --reports qualification --output inventory.md
       - name: Preserve exact candidate and raw results
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           overwrite: true
           name: installed-e2e-evidence

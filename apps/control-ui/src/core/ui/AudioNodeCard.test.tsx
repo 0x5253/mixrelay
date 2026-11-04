@@ -666,7 +666,9 @@ it('includes content-box padding and borders and rejects incomplete DOM measurem
       height: '20px',
       paddingTop: '2px',
       paddingBottom: '3px',
+      borderTopStyle: 'solid',
       borderTopWidth: '1px',
+      borderBottomStyle: 'solid',
       borderBottomWidth: '1px',
     });
     emit(controls, 27);
