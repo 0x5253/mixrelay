@@ -143,3 +143,18 @@ fn processor_retry_proxy_preserves_opaque_identity_and_revision_contract() {
         assert!(processor_retry_body(&invalid).is_err());
     }
 }
+
+#[test]
+fn processor_retry_keeps_the_editors_operation_id_for_receipt_resolution() {
+    let body = processor_retry_body(&serde_json::json!({
+        "clientOperationId": "ui-retry",
+        "expectedCatalogRevision": 6,
+        "expectedInstanceId": "1",
+        "expectedRevision": 3,
+        "graphId": "graph-a",
+        "nodeId": "provider-a",
+    }))
+    .expect("the editor's retry request validates");
+    assert_eq!(body["clientOperationId"], "ui-retry");
+    assert_eq!(body["expectedRevision"], 3);
+}

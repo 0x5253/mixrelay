@@ -456,12 +456,16 @@ struct ProcessorRetryRequest {
 
 /// Validates a retry against the engine's contract, keeping the editor's operation ID.
 fn processor_retry_body(request: &Value) -> Result<Value, String> {
-    let parsed: ProcessorRetryRequest = serde_json::from_value(request.clone())
+    let mut retry = request.clone();
+    let operation = retry
+        .as_object_mut()
+        .and_then(|fields| fields.remove("clientOperationId"));
+    let parsed: ProcessorRetryRequest = serde_json::from_value(retry)
         .map_err(|error| format!("invalid processor retry request: {error}"))?;
     let mut body = serde_json::to_value(parsed)
         .map_err(|error| format!("processor retry request could not be encoded: {error}"))?;
-    if let Some(id) = request.get("clientOperationId") {
-        body["clientOperationId"] = id.clone();
+    if let Some(id) = operation {
+        body["clientOperationId"] = id;
     }
     Ok(body)
 }
