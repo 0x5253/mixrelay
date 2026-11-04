@@ -63,6 +63,7 @@ pub trait SessionFormatBackend: Send + Sync {
     /// applies the native graph format between the two, and publishes DSP before resuming.
     /// # Errors
     /// Returns an unsupported format, a preference that cannot be staged, or a failed suspension.
+    #[must_use = "commit the prepared format, or drop it to cancel the change"]
     fn prepare_format(
         &self,
         _requested: RenderFormat,
@@ -75,9 +76,11 @@ pub trait SessionFormatBackend: Send + Sync {
 
 /// A session format change staged while processing is suspended.
 pub trait PreparedSessionFormat: Send {
-    /// Saves the change once the native graph accepted it. It cannot fail: the audio already
-    /// runs at the new format, so an unsaved preference is reported as a session issue.
-    fn commit(self: Box<Self>);
+    /// Publishes the staged preference and accepts the format. A preference that cannot be
+    /// published is also reported as a session issue; it never reverts audio.
+    /// # Errors
+    /// Returns the publication failure, for callers whose only effect was the save.
+    fn commit(self: Box<Self>) -> Result<(), HostAudioBackendError>;
 }
 
 /// One native owner implements all three contracts so a format transaction cannot combine

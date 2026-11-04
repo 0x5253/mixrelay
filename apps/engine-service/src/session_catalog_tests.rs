@@ -51,7 +51,11 @@ fn every_catalog_pair_persists_restores_and_follows_external_rate() {
                 sample_rate: rate,
                 block_frames: frames,
             };
-            configured.prepare_format(requested).unwrap().commit();
+            configured
+                .prepare_format(requested)
+                .unwrap()
+                .commit()
+                .unwrap();
             configured.activate_format(requested);
             configured.resume();
             let saved = SessionFormat {

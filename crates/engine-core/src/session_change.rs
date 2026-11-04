@@ -194,7 +194,9 @@ impl EngineGraphController {
         }
         let prepared = self.runtime_status.prepare_format(next)?;
         resources.configure_native()?;
-        prepared.commit();
+        // Audio already runs at `next`; an unpublished preference is reported as
+        // PreferencesUnavailable rather than reverting the accepted native change.
+        let _ = prepared.commit();
         Ok(())
     }
 
@@ -207,10 +209,11 @@ impl EngineGraphController {
     ) -> Result<GraphApplyResponse, ProtocolError> {
         // Saving/recovering the same format must not recreate plug-ins or invalidate history.
         if origin == SessionChangeOrigin::User {
+            // Saving is this request's only effect, so a failed save is its error.
             let result = self
                 .runtime_status
                 .prepare_format(format)
-                .map(PreparedSessionFormat::commit);
+                .and_then(PreparedSessionFormat::commit);
             self.resume_session(pause_owner);
             result.map_err(|error| session_error(&error.to_string()))?;
         }

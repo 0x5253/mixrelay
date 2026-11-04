@@ -101,7 +101,11 @@ fn hardware_buffer_persists_without_rewriting_virtual_rate_preference() {
             sample_rate: 96_000,
             block_frames: frames,
         };
-        status.prepare_routing_buffer(requested).unwrap().commit();
+        status
+            .prepare_routing_buffer(requested)
+            .unwrap()
+            .commit()
+            .unwrap();
         status.activate_format(requested);
         status.resume();
         let saved = status
@@ -152,6 +156,39 @@ fn routing_buffer_persistence_error_is_not_reported_as_success() {
             })
             .is_err()
     );
+}
+
+#[test]
+fn routing_buffer_adopts_the_hardware_clock_even_when_its_preference_cannot_be_published() {
+    let directory = mixrelay_test_support::FixtureDir::new("routing-commit-failure").unwrap();
+    let path = directory.join("session.json");
+    // A directory where the document belongs makes publication fail after staging.
+    std::fs::create_dir(&path).unwrap();
+    let mut status = runtime();
+    status.test_set_preferences(Ok(std::sync::Arc::new(
+        mixrelay_engine_host::session_preferences::SessionPreferences::at(
+            path.clone(),
+            AudioBackendKind::CoreAudio,
+        ),
+    )));
+    let status = Arc::new(status);
+    let _worker = worker(&status);
+    let requested = RenderFormat {
+        sample_rate: 96_000,
+        block_frames: 64,
+    };
+    assert!(
+        status
+            .prepare_routing_buffer(requested)
+            .unwrap()
+            .commit()
+            .is_err()
+    );
+    status.resume();
+    let session = status.status(requested).audio_session.unwrap();
+    assert_eq!(session.observed_device_sample_rate, Some(96_000));
+    assert_eq!(session.issue, Some(SessionIssue::PreferencesUnavailable));
+    assert!(path.is_dir());
 }
 
 #[test]

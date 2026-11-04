@@ -51,7 +51,9 @@ impl SessionFormatBackend for NativeNegotiationFixture {
 /// The fixture accepts every format immediately; there is no preference to save.
 struct Accepted;
 impl mixrelay_engine_core::PreparedSessionFormat for Accepted {
-    fn commit(self: Box<Self>) {}
+    fn commit(self: Box<Self>) -> Result<(), HostAudioBackendError> {
+        Ok(())
+    }
 }
 
 /// A virtual-endpoint backend for graphs that publish no native endpoint.

@@ -18,7 +18,7 @@ struct PreparedFormat<'a> {
 }
 
 impl PreparedSessionFormat for PreparedFormat<'_> {
-    fn commit(self: Box<Self>) {
+    fn commit(self: Box<Self>) -> Result<(), HostAudioBackendError> {
         let status = self.status;
         let saved = self.staged.map_or(Ok(()), StagedSessionPreferences::commit);
         if let Err(error) = &saved {
@@ -35,6 +35,9 @@ impl PreparedSessionFormat for PreparedFormat<'_> {
             status.observe_routing_clock(true, Some(rate));
         }
         status.failed.store(false, Ordering::Release);
+        saved.map_err(|error| HostAudioBackendError::BackendFailure {
+            message: format!("session preferences could not be committed: {error}"),
+        })
     }
 }
 
@@ -190,6 +193,7 @@ impl AdapterRuntimeStatus {
     /// # Errors
     /// Rejects unsupported geometry, a preference that cannot be staged, or a processing
     /// owner that does not acknowledge suspension.
+    #[must_use = "commit the prepared buffer, or drop it to cancel the change"]
     pub fn prepare_routing_buffer(
         &self,
         requested: RenderFormat,

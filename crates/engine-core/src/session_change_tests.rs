@@ -15,6 +15,8 @@ struct Runtime {
     /// Formats prepared, and the subset whose preference was then saved.
     negotiated: Mutex<Vec<RenderFormat>>,
     saved: Mutex<Vec<RenderFormat>>,
+    /// The preference store rejects every publication.
+    unsavable: AtomicBool,
 }
 
 struct SavedFormat<'a> {
@@ -22,8 +24,12 @@ struct SavedFormat<'a> {
     format: RenderFormat,
 }
 impl crate::PreparedSessionFormat for SavedFormat<'_> {
-    fn commit(self: Box<Self>) {
+    fn commit(self: Box<Self>) -> Result<(), HostAudioBackendError> {
+        if self.runtime.unsavable.load(Ordering::Acquire) {
+            return Err(failure());
+        }
         self.runtime.saved.lock().push(self.format);
+        Ok(())
     }
 }
 impl RuntimeStatusBackend for Runtime {
@@ -94,6 +100,7 @@ fn fixture() -> (EngineGraphController, Arc<Runtime>) {
         fail: AtomicBool::new(false),
         negotiated: Mutex::new(Vec::new()),
         saved: Mutex::new(Vec::new()),
+        unsavable: AtomicBool::new(false),
     });
     controller.runtime_status = runtime.clone();
     controller.endpoint_backend = Arc::new(ObservedEndpoint {
@@ -443,6 +450,45 @@ fn accepted_format_change_saves_its_preference_once_after_native_resources_accep
     assert_eq!(*runtime.saved.lock(), [requested]);
     assert_eq!(committed.load(Ordering::Acquire), 1);
     assert_eq!(controller.context.read().format, requested);
+}
+
+#[test]
+fn an_accepted_change_stands_but_a_resave_reports_a_preference_that_cannot_be_saved() {
+    let (mut controller, runtime) = fixture();
+    controller.graph_resources = Arc::new(Resources {
+        committed: Arc::new(AtomicU32::new(0)),
+        cancelled: Arc::new(AtomicU32::new(0)),
+        fail: false,
+    });
+    runtime.unsavable.store(true, Ordering::Release);
+    let request = |format: RenderFormat, revision| SessionReconfigureRequest {
+        expected_revision: revision,
+        format: mixrelay_audio_io::session::SessionFormat {
+            sample_rate: format.sample_rate,
+            block_frames: format.block_frames,
+        },
+    };
+    let requested = RenderFormat {
+        sample_rate: 44_100,
+        block_frames: 64,
+    };
+    // A native change already applied is kept; its unsaved preference is a session issue.
+    controller
+        .change_session(request(requested, controller.graph().revision))
+        .expect("format change");
+    assert_eq!(controller.context.read().format, requested);
+    assert!(runtime.saved.lock().is_empty());
+
+    // Re-saving the current format only saves, so a failed save is that request's error.
+    let (controller, runtime) = fixture();
+    runtime.unsavable.store(true, Ordering::Release);
+    let current = controller.context.read().format;
+    assert!(
+        controller
+            .change_session(request(current, controller.graph().revision))
+            .is_err()
+    );
+    assert!(runtime.saved.lock().is_empty());
 }
 
 #[test]
