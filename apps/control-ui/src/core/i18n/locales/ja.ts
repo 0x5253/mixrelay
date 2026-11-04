@@ -227,16 +227,12 @@ export const ja = {
         '保存済みのオーディオ設定を読み書きできませんでした。エンジンは引き続き利用できます。対応する形式を適用して、保存をやり直してください。',
       endpoint_preferences_unavailable:
         '仮想デバイスの設定を復元または保存できませんでした。現在のグラフは引き続き利用できます。デバイス設定を変更して、保存をやり直してください。',
-      stored_format_unavailable:
-        '起動時にデバイスが保存済みの設定を受け入れませんでした。対応するサンプルレートとバッファーサイズを再適用してください。',
       reconfiguration_failed:
         'デバイス設定を元に戻せませんでした。オーディオは中断したままです。対応する形式を再適用して復旧してください。',
       device_unavailable:
         'オーディオデバイスを利用できないか、そのストリームが停止しました。エンジンには引き続き接続できます。',
       sample_rate_mismatch:
         '仮想デバイスのサンプルレート変更に追従できませんでした。対応するサンプルレートを再適用してください。',
-      block_size_mismatch:
-        '仮想デバイスのバッファーサイズ変更に追従できませんでした。対応するバッファーサイズを再適用してください。',
       clock_not_synchronized: 'オーディオクロックが同期していません。',
       invalid_format: '無効なオーディオ形式です。',
     },
@@ -321,12 +317,10 @@ export const ja = {
         application_ambiguous: 'セッション: アプリを特定できません',
         device_unavailable: 'セッション: デバイスを利用できません',
         sample_rate_mismatch: 'セッション: サンプルレートが一致していません',
-        block_size_mismatch: 'セッション: バッファーサイズが一致していません',
         clock_not_synchronized: 'セッション: クロックが同期していません',
         invalid_format: 'セッション: 無効な形式',
         reconfiguration_failed: 'セッション: 設定変更に失敗',
         preferences_unavailable: 'セッション: 設定が保存されていません',
-        stored_format_unavailable: 'セッション: 保存済みの形式を利用できません',
       },
     },
     nodeName: {

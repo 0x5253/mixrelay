@@ -209,12 +209,9 @@ export const zhHans = {
         '无法读取或写入已保存的音频设置。引擎仍可使用；请应用受支持的格式以重新保存。',
       endpoint_preferences_unavailable:
         '无法恢复或保存虚拟设备设置。当前音频图仍可使用；请更改设备设置以重新尝试保存。',
-      stored_format_unavailable:
-        '设备在启动时未接受已保存的设置。请重新应用受支持的采样率和缓冲区大小。',
       reconfiguration_failed: '设备回退失败。音频仍处于中断状态；请重新应用受支持的格式以恢复。',
       device_unavailable: '音频设备不可用或其流已停止。仍可连接到引擎。',
       sample_rate_mismatch: '无法跟随虚拟设备的采样率变化。请重新应用受支持的采样率。',
-      block_size_mismatch: '无法跟随虚拟设备的缓冲区大小变化。请重新应用受支持的缓冲区大小。',
       clock_not_synchronized: '音频时钟未同步。',
       invalid_format: '音频格式无效。',
     },
@@ -298,12 +295,10 @@ export const zhHans = {
         application_ambiguous: '会话：应用选择不明确',
         device_unavailable: '会话：设备不可用',
         sample_rate_mismatch: '会话：采样率不匹配',
-        block_size_mismatch: '会话：缓冲区大小不匹配',
         clock_not_synchronized: '会话：时钟未同步',
         invalid_format: '会话：格式无效',
         reconfiguration_failed: '会话：重新配置失败',
         preferences_unavailable: '会话：设置未保存',
-        stored_format_unavailable: '会话：已保存的格式不可用',
       },
     },
     nodeName: {

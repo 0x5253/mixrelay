@@ -22,9 +22,6 @@ use std::sync::{
 #[path = "session_catalog_tests.rs"]
 mod catalog_tests;
 #[cfg(test)]
-#[path = "session_native_format_tests.rs"]
-mod native_format_tests;
-#[cfg(test)]
 #[path = "session_rate_tests.rs"]
 mod rate_tests;
 #[cfg(test)]

@@ -35,7 +35,7 @@ pub trait ProcessingControlBackend: Send + Sync {
     fn resume(&self) {}
 }
 
-/// Observes and negotiates native format on the control plane.
+/// Follows an external endpoint rate and changes the session format on the control plane.
 pub trait SessionFormatBackend: Send + Sync {
     /// Reads an explicitly selected external clock without writing its rate.
     fn external_sample_rate(&self) -> Option<u32> {
@@ -58,15 +58,11 @@ pub trait SessionFormatBackend: Send + Sync {
         })
     }
 
-    /// Negotiates native format while processing is suspended. Failure must restore the
-    /// old format or retain suspension. The caller publishes DSP before resuming.
+    /// Accepts a new session format while processing is suspended. A rollback is another
+    /// call with the previous format. The caller publishes DSP before resuming.
     /// # Errors
-    /// Returns native negotiation or rollback failures.
-    fn reconfigure(
-        &self,
-        _current: RenderFormat,
-        _requested: RenderFormat,
-    ) -> Result<(), HostAudioBackendError> {
+    /// Returns an unsupported format or a failed suspension.
+    fn reconfigure(&self, _requested: RenderFormat) -> Result<(), HostAudioBackendError> {
         Err(HostAudioBackendError::CapabilityUnavailable {
             capability: "live format reconfiguration".into(),
         })

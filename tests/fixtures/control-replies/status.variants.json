@@ -16,12 +16,10 @@
     "application_unavailable",
     "application_ambiguous",
     "sample_rate_mismatch",
-    "block_size_mismatch",
     "clock_not_synchronized",
     "invalid_format",
     "reconfiguration_failed",
-    "preferences_unavailable",
-    "stored_format_unavailable"
+    "preferences_unavailable"
   ],
   "audioSession.processingState": [
     "idle",

@@ -108,7 +108,7 @@ it('stacks native and request errors and allows retry of the same single support
       <MixRelayProvider>
         <AudioSessionSettings
           controlPort={controlPort}
-          session={{ ...session, issue: 'stored_format_unavailable' }}
+          session={{ ...session, issue: 'reconfiguration_failed' }}
           sessionAlerts={['Native format failed', 'Preferences unavailable']}
           onApplied={vi.fn()}
           onBusyChange={vi.fn()}

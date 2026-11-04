@@ -151,7 +151,7 @@ it.each(
         preferredFormat,
         clockAuthority: 'engine_timer',
         observedDeviceSampleRate: 48000,
-        issue: 'stored_format_unavailable',
+        issue: 'reconfiguration_failed',
         transportLatencyFrames: null,
         capabilities: {
           backend: 'core_audio',
@@ -219,7 +219,7 @@ it.each(
       expect(screen.queryByText(label)).not.toBeInTheDocument();
     // Simplification must not hide a failed application or change the stored/runtime values.
     expect(
-      screen.getByText(i18n.t('audioSession.issues.stored_format_unavailable')),
+      screen.getByText(i18n.t('audioSession.issues.reconfiguration_failed')),
     ).toBeInTheDocument();
     expect(status.audioSession?.preferredFormat).toEqual(preferredFormat);
     expect(status.audioSession?.format).toEqual({ sampleRate: 48000, blockFrames: 256 });
@@ -228,7 +228,7 @@ it.each(
 
 it.each(
   ['en', 'ko-KR', 'pseudo'].flatMap((language) =>
-    ([null, 'clock_not_synchronized', 'block_size_mismatch'] as const).map((issue) => ({
+    ([null, 'clock_not_synchronized', 'sample_rate_mismatch'] as const).map((issue) => ({
       language,
       issue,
     })),
@@ -241,8 +241,7 @@ it.each(
       endpointPreferencesUnavailable: true,
       format: { sampleRate: 48000, blockFrames: 128 },
       clockAuthority: 'engine_timer',
-      observedDeviceSampleRate: null,
-      observedDeviceBufferFrames: issue === 'block_size_mismatch' ? 512 : null,
+      observedDeviceSampleRate: issue === 'sample_rate_mismatch' ? 44100 : null,
       issue,
       transportLatencyFrames: null,
       capabilities: {

@@ -226,16 +226,12 @@ export const it = {
         'Impossibile leggere o scrivere le impostazioni audio salvate. Il motore resta disponibile; applica un formato supportato per salvare di nuovo.',
       endpoint_preferences_unavailable:
         'Impossibile ripristinare o salvare le impostazioni del dispositivo virtuale. Il grafo attuale resta disponibile; modifica le impostazioni del dispositivo per riprovare a salvare.',
-      stored_format_unavailable:
-        'Il dispositivo non ha accettato le impostazioni salvate all’avvio. Riapplica frequenza di campionamento e dimensione del buffer supportate.',
       reconfiguration_failed:
         'Ripristino del dispositivo non riuscito. L’audio resta sospeso; riapplica un formato supportato per ripristinarlo.',
       device_unavailable:
         'Un dispositivo audio non è disponibile o il suo flusso si è fermato. Il motore è ancora raggiungibile.',
       sample_rate_mismatch:
         'Impossibile seguire la modifica della frequenza del dispositivo virtuale. Riapplica una frequenza di campionamento supportata.',
-      block_size_mismatch:
-        'Impossibile seguire la modifica del buffer del dispositivo virtuale. Riapplica una dimensione del buffer supportata.',
       clock_not_synchronized: 'Gli orologi audio non sono sincronizzati.',
       invalid_format: 'Formato audio non valido.',
     },
@@ -322,12 +318,10 @@ export const it = {
         application_ambiguous: 'Sessione: selezione dell’applicazione ambigua',
         device_unavailable: 'Sessione: dispositivo non disponibile',
         sample_rate_mismatch: 'Sessione: frequenze di campionamento diverse',
-        block_size_mismatch: 'Sessione: dimensioni del buffer diverse',
         clock_not_synchronized: 'Sessione: orologi non sincronizzati',
         invalid_format: 'Sessione: formato non valido',
         reconfiguration_failed: 'Sessione: riconfigurazione non riuscita',
         preferences_unavailable: 'Sessione: impostazioni non salvate',
-        stored_format_unavailable: 'Sessione: formato salvato non disponibile',
       },
     },
     nodeName: {

@@ -10,7 +10,7 @@ impl AdapterRuntimeStatus {
     pub(super) fn session_issue(
         &self,
         format: RenderFormat,
-        observed: RenderFormat,
+        observed_rate: u32,
         worker_state: WorkerState,
         clock_issue: Option<SessionIssue>,
     ) -> Option<SessionIssue> {
@@ -22,18 +22,13 @@ impl AdapterRuntimeStatus {
             Some(SessionIssue::ApplicationAmbiguous)
         } else if self.application_state.load(Ordering::Acquire) == 1 {
             Some(SessionIssue::ApplicationUnavailable)
-        } else if self.restore_failed.load(Ordering::Acquire) && self.routing_clock_rate().is_none()
-        {
-            Some(SessionIssue::StoredFormatUnavailable)
         } else if self.preferences_error.load(Ordering::Acquire) {
             Some(SessionIssue::PreferencesUnavailable)
         } else if self.profile.requires_observed_device_rate {
-            if observed.sample_rate == 0 {
+            if observed_rate == 0 {
                 Some(SessionIssue::DeviceUnavailable)
-            } else if observed.sample_rate != format.sample_rate {
+            } else if observed_rate != format.sample_rate {
                 Some(SessionIssue::SampleRateMismatch)
-            } else if observed.block_frames != 0 && observed.block_frames != format.block_frames {
-                Some(SessionIssue::BlockSizeMismatch)
             } else {
                 clock_issue
             }
@@ -77,22 +72,15 @@ impl RuntimeStatusBackend for AdapterRuntimeStatus {
         } else {
             format
         };
-        let observed = self.routing_clock_rate().map_or_else(
-            || unpack_format(self.observed_device_format.load(Ordering::Acquire)),
-            |sample_rate| RenderFormat {
-                sample_rate,
-                block_frames: 0,
-            },
-        );
+        let observed_rate = self
+            .routing_clock_rate()
+            .unwrap_or_else(|| self.observed_device_rate.load(Ordering::Acquire));
         let worker_state = self.processing.state();
         let clock = ClockObservation::unpack(self.clock_observation.load(Ordering::Acquire));
         let clock_issue =
             (!clock.idle && !clock.synchronized).then_some(SessionIssue::ClockNotSynchronized);
-        let observed_device_sample_rate =
-            (observed.sample_rate != 0).then_some(observed.sample_rate);
-        let observed_device_buffer_frames =
-            (observed.block_frames != 0).then_some(observed.block_frames);
-        let issue = self.session_issue(format, observed, worker_state, clock_issue);
+        let observed_device_sample_rate = (observed_rate != 0).then_some(observed_rate);
+        let issue = self.session_issue(format, observed_rate, worker_state, clock_issue);
         let process = self.telemetry.snapshot();
         let capabilities = self.capabilities(format);
         AppStatus {
@@ -139,7 +127,6 @@ impl RuntimeStatusBackend for AdapterRuntimeStatus {
                 preferred_format: self.preferred_format(),
                 clock_authority: clock.authority,
                 observed_device_sample_rate,
-                observed_device_buffer_frames,
                 issue,
                 transport_latency_frames: self.profile.transport_latency_frames,
                 capabilities,

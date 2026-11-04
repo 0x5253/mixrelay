@@ -209,13 +209,10 @@ export const zhHant = {
         '無法讀取或寫入已儲存的音訊設定。引擎仍可使用；請套用支援的格式以重新儲存。',
       endpoint_preferences_unavailable:
         '無法還原或儲存虛擬裝置設定。目前的音訊圖仍可使用；請變更裝置設定以重新嘗試儲存。',
-      stored_format_unavailable:
-        '裝置啟動時未接受已儲存的設定。請重新套用支援的取樣率和緩衝區大小。',
       reconfiguration_failed:
         '無法將裝置設定回復到先前狀態。音訊仍處於中斷狀態；請重新套用支援的格式以恢復。',
       device_unavailable: '音訊裝置無法使用或其串流已停止。仍可連線至引擎。',
       sample_rate_mismatch: '無法跟隨虛擬裝置的取樣率變更。請重新套用支援的取樣率。',
-      block_size_mismatch: '無法跟隨虛擬裝置的緩衝區大小變更。請重新套用支援的緩衝區大小。',
       clock_not_synchronized: '音訊時鐘未同步。',
       invalid_format: '音訊格式無效。',
     },
@@ -299,12 +296,10 @@ export const zhHant = {
         application_ambiguous: '工作階段：應用程式選擇不明確',
         device_unavailable: '工作階段：裝置無法使用',
         sample_rate_mismatch: '工作階段：取樣率不一致',
-        block_size_mismatch: '工作階段：緩衝區大小不一致',
         clock_not_synchronized: '工作階段：時鐘未同步',
         invalid_format: '工作階段：格式無效',
         reconfiguration_failed: '工作階段：重新配置失敗',
         preferences_unavailable: '工作階段：設定未儲存',
-        stored_format_unavailable: '工作階段：已儲存的格式無法使用',
       },
     },
     nodeName: {

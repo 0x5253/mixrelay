@@ -61,14 +61,6 @@ const cases: Case[] = [
     'routing.nodeStatus.issues.clock_not_synchronized',
   ],
   [
-    'native buffer mismatch',
-    {
-      ...healthy,
-      audioSession: { ...session, observedDeviceBufferFrames: 512, issue: 'block_size_mismatch' },
-    },
-    'routing.nodeStatus.issues.block_size_mismatch',
-  ],
-  [
     'missing app',
     { ...healthy, audioSession: { ...session, issue: 'application_unavailable' } },
     'routing.nodeStatus.issues.application_unavailable',

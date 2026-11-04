@@ -674,11 +674,7 @@ impl SessionFormatBackend for MacDevices {
         }
         self.status.adopt_external_format(requested)
     }
-    fn reconfigure(
-        &self,
-        current: RenderFormat,
-        requested: RenderFormat,
-    ) -> Result<(), HostAudioBackendError> {
+    fn reconfigure(&self, requested: RenderFormat) -> Result<(), HostAudioBackendError> {
         if self.follows_hardware() {
             if self.routing_rate() != Some(requested.sample_rate) {
                 return Err(backend_error(
@@ -687,7 +683,7 @@ impl SessionFormatBackend for MacDevices {
             }
             return self.status.reconfigure_routing_buffer(requested);
         }
-        self.status.reconfigure(current, requested)
+        self.status.reconfigure(requested)
     }
 }
 

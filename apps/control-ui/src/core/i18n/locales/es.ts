@@ -225,16 +225,12 @@ export const es = {
         'No se pudieron leer o escribir los ajustes de audio guardados. El motor sigue disponible; aplique un formato compatible para volver a guardar.',
       endpoint_preferences_unavailable:
         'No se pudieron restaurar o guardar los ajustes del dispositivo virtual. El grafo actual sigue disponible; cambie los ajustes del dispositivo para volver a intentar guardarlos.',
-      stored_format_unavailable:
-        'El dispositivo no aceptó los ajustes guardados al iniciar. Vuelva a aplicar una frecuencia de muestreo y un tamaño de búfer compatibles.',
       reconfiguration_failed:
         'No se pudieron restaurar los ajustes anteriores del dispositivo. El audio sigue suspendido; vuelva a aplicar un formato compatible para recuperarlo.',
       device_unavailable:
         'Un dispositivo de audio no está disponible o su flujo se detuvo. Todavía se puede conectar con el motor.',
       sample_rate_mismatch:
         'No se pudo seguir el cambio de frecuencia de muestreo del dispositivo virtual. Vuelva a aplicar una frecuencia compatible.',
-      block_size_mismatch:
-        'No se pudo seguir el cambio de tamaño del búfer del dispositivo virtual. Vuelva a aplicar un tamaño de búfer compatible.',
       clock_not_synchronized: 'Los relojes de audio no están sincronizados.',
       invalid_format: 'Formato de audio no válido.',
     },
@@ -322,12 +318,10 @@ export const es = {
         application_ambiguous: 'Sesión: selección de aplicación ambigua',
         device_unavailable: 'Sesión: dispositivo no disponible',
         sample_rate_mismatch: 'Sesión: frecuencias de muestreo distintas',
-        block_size_mismatch: 'Sesión: tamaños de búfer distintos',
         clock_not_synchronized: 'Sesión: relojes no sincronizados',
         invalid_format: 'Sesión: formato no válido',
         reconfiguration_failed: 'Sesión: error de reconfiguración',
         preferences_unavailable: 'Sesión: ajustes no guardados',
-        stored_format_unavailable: 'Sesión: formato guardado no disponible',
       },
     },
     nodeName: {

@@ -102,7 +102,6 @@ fn session() -> AudioSessionStatus {
         preferred_format: Some(SESSION_FORMAT),
         clock_authority: ClockAuthority::Device,
         observed_device_sample_rate: Some(48_000),
-        observed_device_buffer_frames: Some(128),
         issue: None,
         transport_latency_frames: Some(256),
         capabilities: AudioSessionCapabilities {
@@ -389,12 +388,10 @@ fn status_variants() -> BTreeMap<String, Value> {
                 ApplicationUnavailable,
                 ApplicationAmbiguous,
                 SampleRateMismatch,
-                BlockSizeMismatch,
                 ClockNotSynchronized,
                 InvalidFormat,
                 ReconfigurationFailed,
                 PreferencesUnavailable,
-                StoredFormatUnavailable,
             })),
         ),
         (

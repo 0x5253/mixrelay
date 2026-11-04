@@ -37,11 +37,7 @@ impl RuntimeStatusBackend for NativeNegotiationFixture {
 impl ProcessingControlBackend for NativeNegotiationFixture {}
 
 impl SessionFormatBackend for NativeNegotiationFixture {
-    fn reconfigure(
-        &self,
-        _: RenderFormat,
-        requested: RenderFormat,
-    ) -> Result<(), HostAudioBackendError> {
+    fn reconfigure(&self, requested: RenderFormat) -> Result<(), HostAudioBackendError> {
         self.accepted.lock().unwrap().push(requested.sample_rate);
         self.profile.activate_format(requested);
         Ok(())

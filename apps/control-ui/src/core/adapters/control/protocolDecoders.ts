@@ -122,7 +122,6 @@ const audioSessionStatus = object<AudioSessionStatus>({
   preferredFormat: optional(nullable(sessionFormat)),
   clockAuthority: literal('engine_timer', 'device', 'audio_server', 'host'),
   observedDeviceSampleRate: nullable(nonNegativeInteger),
-  observedDeviceBufferFrames: optional(nullable(nonNegativeInteger)),
   issue: nullable(
     literal(
       'processing_failed',
@@ -130,12 +129,10 @@ const audioSessionStatus = object<AudioSessionStatus>({
       'application_ambiguous',
       'device_unavailable',
       'sample_rate_mismatch',
-      'block_size_mismatch',
       'clock_not_synchronized',
       'invalid_format',
       'reconfiguration_failed',
       'preferences_unavailable',
-      'stored_format_unavailable',
     ),
   ),
   transportLatencyFrames: nullable(nonNegativeInteger),

@@ -1,10 +1,10 @@
-//! Session preference storage consumed by native format transactions.
+//! Session preference storage consumed by session format changes.
 use mixrelay_audio_io::session::SessionFormat;
 use std::io;
 
 /// A prepared preference replacement. Dropping it cancels unpublished storage.
 pub trait StagedSessionPreferences: Send {
-    /// Publishes the staged document after native negotiation succeeds.
+    /// Publishes the staged document once processing has suspended for the change.
     /// # Errors
     /// Returns the storage failure without accepting a different document.
     fn commit(self: Box<Self>) -> io::Result<()>;

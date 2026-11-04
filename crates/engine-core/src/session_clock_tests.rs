@@ -125,11 +125,6 @@ fn idle_or_synchronized_clock_does_not_hide_worker_format_or_availability_errors
             session(&status).issue,
             Some(SessionIssue::PreferencesUnavailable)
         );
-        status.restore_failed.store(true, Ordering::Release);
-        assert_eq!(
-            session(&status).issue,
-            Some(SessionIssue::StoredFormatUnavailable)
-        );
         status.observe_application_state(ApplicationRuntimeState::Waiting);
         assert_eq!(
             session(&status).issue,

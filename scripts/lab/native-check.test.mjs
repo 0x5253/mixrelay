@@ -287,7 +287,7 @@ test("pass and failure reports identify development checks, not installed plugin
   }
 });
 
-for (const fixturePackage of ["mixrelay-service", "mixrelay-macos-engine"]) {
+for (const fixturePackage of ["mixrelay-engine-service", "mixrelay-macos-engine"]) {
 test(`macOS ${fixturePackage} fixture checks capture exact HOST Cargo artifacts and preserve the requested target/argv`, t => {
   const fixture = nativeFixture(t);
   const calls = [];
