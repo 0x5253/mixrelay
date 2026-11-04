@@ -305,8 +305,4 @@ impl EngineGraphController {
 }
 
 #[cfg(test)]
-fn load(files: &dyn DocumentFiles, path: &Path) -> Result<Catalog, ProtocolError> {
-    load_fingerprinted(files, path).map(|(catalog, _, _)| catalog)
-}
-#[cfg(test)]
 mod tests;

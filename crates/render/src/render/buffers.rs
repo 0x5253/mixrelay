@@ -3,7 +3,7 @@ use super::{PortSlot, RenderPlanError, sample_count};
 
 pub(super) fn reserve<T>(length: usize) -> Result<Vec<T>, RenderPlanError> {
     #[cfg(test)]
-    if length != 0 && reservation_should_fail() {
+    if length != 0 && fault_injection::reservation_should_fail() {
         return Err(RenderPlanError::BufferPreparation(
             "injected reservation failure".into(),
         ));
@@ -16,43 +16,6 @@ pub(super) fn filled(length: usize, value: f32) -> Result<Box<[f32]>, RenderPlan
     let mut samples = reserve(length)?;
     samples.resize(length, value);
     Ok(samples.into_boxed_slice())
-}
-
-#[cfg(test)]
-std::thread_local! {
-    static RESERVATIONS_BEFORE_FAILURE: std::cell::Cell<Option<usize>> = const {
-        std::cell::Cell::new(None)
-    };
-}
-
-#[cfg(test)]
-fn reservation_should_fail() -> bool {
-    RESERVATIONS_BEFORE_FAILURE.with(|remaining| match remaining.get() {
-        Some(0) => {
-            remaining.set(None);
-            true
-        }
-        Some(count) => {
-            remaining.set(Some(count - 1));
-            false
-        }
-        None => false,
-    })
-}
-
-#[cfg(test)]
-pub(super) fn fail_after<T>(count: usize, work: impl FnOnce() -> T) -> T {
-    struct Reset;
-    impl Drop for Reset {
-        fn drop(&mut self) {
-            RESERVATIONS_BEFORE_FAILURE.with(|remaining| remaining.set(None));
-        }
-    }
-    RESERVATIONS_BEFORE_FAILURE.with(|remaining| {
-        assert!(remaining.replace(Some(count)).is_none());
-    });
-    let _reset = Reset;
-    work()
 }
 
 pub(super) fn port_pair(
@@ -79,3 +42,6 @@ pub(super) fn port_pair(
         )
     }
 }
+
+#[cfg(test)]
+pub(super) mod fault_injection;

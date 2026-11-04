@@ -39,12 +39,6 @@ impl InstanceIds {
             next: AtomicU64::new(1),
         }
     }
-    #[cfg(test)]
-    pub(super) fn final_available() -> Self {
-        Self {
-            next: AtomicU64::new(u64::MAX),
-        }
-    }
 
     pub(super) fn issue(&self) -> Result<InstanceId, InstancesExhausted> {
         // Identity allocation orders no shared data; the CAS only reserves a unique number.

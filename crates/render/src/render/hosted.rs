@@ -168,11 +168,6 @@ impl HostedRack {
         self.processors[index].suspend_processing();
     }
 
-    #[cfg(test)]
-    pub(super) fn scratch_samples(&self) -> usize {
-        self.scratch.len()
-    }
-
     pub(super) fn process(
         &mut self,
         arena: &mut [f32],

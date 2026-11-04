@@ -69,13 +69,6 @@ impl ProcessFaults {
         // Counters publish no PCM or ownership; each independent diagnostic needs only atomicity.
         self.counts[kind as usize].fetch_add(1, Ordering::Relaxed);
     }
-
-    #[cfg(test)]
-    pub(super) fn total(&self) -> u64 {
-        self.counts.iter().fold(0_u64, |total, counter| {
-            total.saturating_add(counter.load(Ordering::Relaxed))
-        })
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -126,6 +119,18 @@ impl FaultObserver {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    impl ProcessFaults {
+        /// Every fault recorded so far, as a fresh observer first reports them.
+        pub(crate) fn total(&self) -> u64 {
+            FaultObserver::default()
+                .observe(self)
+                .into_iter()
+                .flatten()
+                .map(|delta| delta.total)
+                .sum()
+        }
+    }
 
     #[test]
     fn observer_reports_each_kind_once_and_preserves_later_deltas() {

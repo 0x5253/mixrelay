@@ -1,4 +1,6 @@
 use super::*;
+use mixrelay_audio_graph::GraphCompiler;
+use mixrelay_render::BlockProcessor;
 
 /// Acts as the audio owner's block-boundary acknowledgement and returns the
 /// submitted processor for PCM assertions. Never starts a second preparation

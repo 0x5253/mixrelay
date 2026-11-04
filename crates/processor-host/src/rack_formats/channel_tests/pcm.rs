@@ -191,7 +191,9 @@ fn process_preserves_every_channel_at_supported_boundaries() {
     for channels in [1, 2, 8, 64] {
         let mut worker = worker(channels, 256);
         for frames in [1, 32, 256] {
-            worker.clear_outputs();
+            for output in &mut worker.output_storage {
+                output.fill(0.0);
+            }
             worker.process(frames).unwrap();
             for (input, output) in worker.input_storage.iter().zip(&worker.output_storage) {
                 assert_eq!(&input[..frames], &output[..frames]);

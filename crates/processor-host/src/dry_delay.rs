@@ -43,24 +43,6 @@ pub(crate) struct DryDelay {
 }
 
 impl DryDelay {
-    /// Build a flat-prefix dry-delay fixture for unit tests.
-    ///
-    /// Input and output slices passed to [`Self::advance`] are frame-interleaved: each frame
-    /// contains all channels in channel order. The ring stores the shared leading channels;
-    /// extra outputs are filled with silence. Production callers must use [`Self::for_ports`]
-    /// so dry routing follows the declared main-bus topology.
-    ///
-    /// # Errors
-    /// Rejects invalid or oversized dimensions and reports a failed history allocation.
-    #[cfg(test)]
-    pub(crate) fn new(
-        input_channels: usize,
-        output_channels: usize,
-        delay_frames: usize,
-    ) -> Result<Self, DryDelayError> {
-        Self::with_mapping(input_channels, output_channels, delay_frames, None)
-    }
-
     /// Create a delay whose dry channel routing follows the provider's main-bus topology.
     ///
     /// Each main output bus maps to the main input bus at the same main-bus ordinal, copying
@@ -389,10 +371,30 @@ fn checked_sample_bytes(channels: usize, frames: usize) -> Option<usize> {
 
 #[cfg(test)]
 mod tests {
-    use super::{DryDelay, MAX_DRY_DELAY_BYTES, checked_sizes, dry_channel_mapping};
+    use super::{DryDelay, DryDelayError, MAX_DRY_DELAY_BYTES, checked_sizes, dry_channel_mapping};
+
     use mixrelay_audio_graph::{
         ProviderBus, ProviderBusKind, ProviderChannelFormat, ProviderPorts,
     };
+
+    impl DryDelay {
+        /// Build a flat-prefix dry-delay fixture for unit tests.
+        ///
+        /// Input and output slices passed to [`Self::advance`] are frame-interleaved: each frame
+        /// contains all channels in channel order. The ring stores the shared leading channels;
+        /// extra outputs are filled with silence. Production callers must use [`Self::for_ports`]
+        /// so dry routing follows the declared main-bus topology.
+        ///
+        /// # Errors
+        /// Rejects invalid or oversized dimensions and reports a failed history allocation.
+        pub(crate) fn new(
+            input_channels: usize,
+            output_channels: usize,
+            delay_frames: usize,
+        ) -> Result<Self, DryDelayError> {
+            Self::with_mapping(input_channels, output_channels, delay_frames, None)
+        }
+    }
 
     fn bus(id: &str, kind: ProviderBusKind, channels: u16) -> ProviderBus {
         ProviderBus {

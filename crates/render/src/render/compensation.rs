@@ -294,14 +294,6 @@ impl CompensationTopology {
         Err(ArrivalError::Contended)
     }
 
-    /// Holds the acknowledgement open (odd sequence) as the audio thread does mid-write.
-    #[cfg(test)]
-    pub(super) fn acknowledging(&self, active: bool) {
-        if active == (self.applied_sequence.load(Ordering::SeqCst) & 1 == 0) {
-            self.applied_sequence.fetch_add(1, Ordering::SeqCst);
-        }
-    }
-
     /// One consistent read, or `None` when it overlapped an acknowledgement.
     fn read_arrivals(
         &self,
@@ -639,6 +631,15 @@ impl DelayStorage {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    impl CompensationTopology {
+        /// Holds the acknowledgement open (odd sequence) as the audio thread does mid-write.
+        pub(in crate::render) fn acknowledging(&self, active: bool) {
+            if active == (self.applied_sequence.load(Ordering::SeqCst) & 1 == 0) {
+                self.applied_sequence.fetch_add(1, Ordering::SeqCst);
+            }
+        }
+    }
 
     #[test]
     fn complete_history_and_scratch_share_one_budget() {
