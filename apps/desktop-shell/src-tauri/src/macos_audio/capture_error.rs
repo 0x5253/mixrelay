@@ -1,8 +1,11 @@
 //! Native capture errors retain the platform, caller operation and original OS status.
 
+use mixrelay_macos_process_tap::TapError;
 use std::fmt;
 
-pub(super) use mixrelay_macos_process_tap::TapError as NativeError;
+pub(super) const NATIVE_OK: u32 = 0;
+pub(super) const NATIVE_INVALID_ARGUMENT: u32 = 1;
+pub(super) const NATIVE_RESOURCE_BUSY: u32 = 9;
 
 #[derive(Clone, Copy, Debug)]
 pub(super) enum CaptureOperation {
@@ -30,11 +33,11 @@ impl CaptureOperation {
 #[derive(Debug)]
 pub(super) struct CaptureProbeError {
     operation: CaptureOperation,
-    native: NativeError,
+    native: TapError,
 }
 
 impl CaptureProbeError {
-    pub(super) const fn new(operation: CaptureOperation, native: NativeError) -> Self {
+    pub(super) const fn new(operation: CaptureOperation, native: TapError) -> Self {
         Self { operation, native }
     }
 }
@@ -59,8 +62,8 @@ impl std::error::Error for CaptureProbeError {
 
 fn native_error_name(code: u32) -> &'static str {
     match code {
-        0 => "ok",
-        1 => "invalid_argument",
+        NATIVE_OK => "ok",
+        NATIVE_INVALID_ARGUMENT => "invalid_argument",
         2 => "unsupported_system",
         3 => "application_not_found",
         4 => "core_audio_failure",
@@ -68,7 +71,7 @@ fn native_error_name(code: u32) -> &'static str {
         6 => "out_of_memory",
         7 => "already_running",
         8 => "not_running",
-        9 => "resource_busy",
+        NATIVE_RESOURCE_BUSY => "resource_busy",
         _ => "unknown_native_error",
     }
 }
@@ -79,7 +82,7 @@ mod tests {
 
     #[test]
     fn identical_native_errors_identify_each_capture_operation() {
-        let native = NativeError {
+        let native = TapError {
             code: 4,
             os_status: -10863,
         };
@@ -106,6 +109,6 @@ mod tests {
                 expected
             );
         }
-        assert_eq!(size_of::<NativeError>(), 8);
+        assert_eq!(size_of::<TapError>(), 8);
     }
 }

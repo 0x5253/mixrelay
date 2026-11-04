@@ -1,12 +1,11 @@
 //! Converted shared PCM owns graph credit independently of the tap's raw backlog.
-use super::super::*;
 use super::*;
 use mixrelay_macos_transport::{
     application_source_transport::mr_application_source_transport_attach,
     source_control::{SourceAttachment, SourceRequest},
     source_registry::{SourceRegistry, mr_engine_source_id_token},
 };
-use std::os::fd::IntoRawFd;
+use std::{ffi::c_char, os::fd::IntoRawFd};
 
 fn source() -> (SourceRegistry, ApplicationSourceTransport, u64) {
     let registry = SourceRegistry::new(
@@ -50,7 +49,7 @@ fn source() -> (SourceRegistry, ApplicationSourceTransport, u64) {
 #[test]
 fn raw_capture_backlog_cannot_authorize_unwritten_source_pcm() {
     let (registry, mut transport, token) = source();
-    let mut health = CaptureProbeStats {
+    let mut health = TapStats {
         callback_count: 480,
         captured_frames: 245_760,
         dropped_frames: 512,

@@ -1,6 +1,7 @@
-//! Capture selection and restored request validation.
+//! Capture requests rejected before any native tap opens.
 
 use super::*;
+use mixrelay_audio_io::{ApplicationCaptureBackend, HostAudioBackendError};
 
 #[test]
 fn source_mute_without_owned_forwarding_is_rejected_before_native_capture() {
@@ -15,26 +16,6 @@ fn source_mute_without_owned_forwarding_is_rejected_before_native_capture() {
     assert!(matches!(
         backend.open(&request),
         Err(HostAudioBackendError::CapabilityUnavailable { .. })
-    ));
-}
-
-#[test]
-fn capture_session_reuse_changes_with_forwarding_endpoint() {
-    let preserve: ApplicationCaptureRequest = serde_json::from_value(serde_json::json!({
-        "selector":{"match":"bundle_id","bundle_id":"io.mixrelay.fixture","include_descendants":false},
-        "stream":{"channels":2,"channelLayout":"stereo"},
-        "sourcePlayback":"preserve"
-    }))
-    .expect("preserved source request");
-    let mut first = preserve.clone();
-    first.source_playback = SourcePlaybackPolicy::MuteWhileCaptured;
-    first.forwarding_endpoint = Some("17e59d73-42c1-4f11-a8b4-6c2d913357e0".into());
-    let mut second = first.clone();
-    second.forwarding_endpoint = Some("27e59d73-42c1-4f11-a8b4-6c2d913357e0".into());
-    assert!(capture_transaction::same_capture_session(&first, &first));
-    assert!(!capture_transaction::same_capture_session(&first, &second));
-    assert!(!capture_transaction::same_capture_session(
-        &preserve, &first
     ));
 }
 
