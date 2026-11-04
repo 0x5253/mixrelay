@@ -4,13 +4,13 @@ import type { AudioGraphModel } from '../../core/audio-graph/model';
 import { useUndoHistory } from '../../core/history/useUndoHistory';
 
 import { graphHistoryGroup } from './graphHistoryGroup';
+import { addRoutingNode } from './routingNodeCreation';
 import {
-  addRoutingNode,
-  runtimeGraphToAudioGraph,
   updateRoutingNodeGain,
   updateRoutingNodeParameter,
   updateRoutingNodeParameters,
-} from './model';
+} from './routingNodeParameters';
+import { runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 
 it('gives each control on one compressor its own history group', () => {
   const before = addRoutingNode(

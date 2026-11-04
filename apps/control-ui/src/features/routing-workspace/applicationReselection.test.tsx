@@ -9,13 +9,10 @@ import type { AudioGraphModel } from '../../core/audio-graph/model';
 import { i18n } from '../../core/i18n';
 import { MixRelayProvider } from '../../core/theme/MixRelayProvider';
 import { AudioNodeCard } from '../../core/ui/AudioNodeCard';
-import {
-  addRoutingNode,
-  audioGraphToRuntimeGraph,
-  runtimeGraphToAudioGraph,
-  updateRoutingNodeGain,
-} from './model';
 import { RoutingWorkspace } from './RoutingWorkspace';
+import { addRoutingNode } from './routingNodeCreation';
+import { updateRoutingNodeGain } from './routingNodeParameters';
+import { audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 import { presentApplicationReselection } from './virtualNodeStatus';
 
 vi.mock('../../core/audio-graph/AudioGraphCanvas', () => ({

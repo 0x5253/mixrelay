@@ -1,7 +1,7 @@
 import { expect, it, vi } from 'vitest';
 import type { AudioGraphModel } from '../../core/audio-graph/model';
 import { GraphEditSession, type GraphEditTargets, type GraphHistoryStep } from './GraphEditSession';
-import { updateRoutingNodeParameter } from './model';
+import { updateRoutingNodeParameter } from './routingNodeParameters';
 
 const processor: AudioGraphModel = {
   revision: 4,

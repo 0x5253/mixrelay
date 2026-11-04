@@ -14,8 +14,9 @@ import { ActionButton } from '../../core/ui/ActionButton';
 import { ContentSection } from '../../core/ui/ContentSection';
 import { renderRecorderNode } from '../../screens/recorderNodeView';
 import type { ChainKind } from './builtinEffects';
-import { addRoutingNode, audioGraphToRuntimeGraph } from './model';
 import { RoutingWorkspace, type RoutingWorkspaceProps } from './RoutingWorkspace';
+import { addRoutingNode } from './routingNodeCreation';
+import { audioGraphToRuntimeGraph } from './runtimeGraphProjection';
 import { deviceActivityFixture, deviceActivitySession } from './virtualEndpointFixtures';
 
 const graph: RuntimeGraphDocument = {

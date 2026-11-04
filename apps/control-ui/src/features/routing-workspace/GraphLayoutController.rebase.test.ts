@@ -7,7 +7,7 @@ import type {
 } from '../../core/domain/control/catalog';
 import { ControlPortError } from '../../core/domain/control/errors';
 import { catalogOf, graphWithNodes } from '../../test-support/portDefaults';
-import { routingLayoutProjection } from './model';
+import { routingLayoutProjection } from './runtimeGraphProjection';
 
 /** Every node the layouts in this file place. */
 const layoutGraph = graphWithNodes(['a', 'b', 'concurrent', 'fresh', 'input', 'output']);

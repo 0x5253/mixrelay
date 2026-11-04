@@ -5,7 +5,8 @@ import type { GraphLayoutResponse } from '../../core/domain/control/catalog';
 import type { RuntimeGraphDocument } from '../../core/domain/control/graph';
 import { graphWriterDefaults } from '../../test-support/portDefaults';
 import { workspaceRuntime } from '../../test-support/workspaceRuntime';
-import { addRoutingNode, audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './model';
+import { addRoutingNode } from './routingNodeCreation';
+import { audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 
 const empty: RuntimeGraphDocument = { schemaVersion: 2, revision: 8, nodes: [], edges: [] };
 const flush = () => vi.advanceTimersByTimeAsync(0);

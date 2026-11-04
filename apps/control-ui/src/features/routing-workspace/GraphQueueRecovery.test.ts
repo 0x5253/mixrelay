@@ -11,7 +11,7 @@ import type {
 } from '../../core/domain/control/graph';
 import { graphWriterDefaults } from '../../test-support/portDefaults';
 import { workspaceRuntime } from '../../test-support/workspaceRuntime';
-import { runtimeGraphToAudioGraph } from './model';
+import { runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 
 const source: RuntimeGraphDocument = {
   schemaVersion: 2,

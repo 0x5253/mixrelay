@@ -2,10 +2,13 @@ import type {
   AudioDeviceDescriptor,
   CapturableApplication,
 } from '../../core/domain/control/inventory';
-import type { ExternalProcessorDescriptor } from '../../core/domain/control/processors';
+import type {
+  ExternalProcessorDescriptor,
+  ProviderPorts,
+} from '../../core/domain/control/processors';
+import type { VirtualEndpointSpec } from '../../core/domain/control/status';
 import { applicationInventorySelection } from './applicationIdentity';
-import { isChainKind, isEffectKind } from './builtinEffects';
-import type { RoutingNodeRequest } from './model';
+import { type ChainKind, type EffectKind, isChainKind, isEffectKind } from './builtinEffects';
 import { processorSelectionForMenuItem } from './processorCatalogMenu';
 import {
   audioInputItemId,
@@ -13,6 +16,24 @@ import {
   SYSTEM_AUDIO_EXCLUDED_BUNDLE_IDS,
   SYSTEM_AUDIO_ITEM_ID,
 } from './routingNodeMenus';
+
+/** A node the user asked to add, before it is placed in the graph. */
+export type RoutingNodeRequest =
+  | { kind: 'effect'; effect: EffectKind; parameters?: Record<string, number> }
+  | { kind: 'effect_chain'; preset: ChainKind }
+  | { kind: 'recorder' }
+  | {
+      kind: 'application';
+      selector: CapturableApplication['selector'];
+      title: string;
+    }
+  | { channels: number; kind: 'audio_input'; title: string; uid: string }
+  | { channels: number; kind: 'audio_output'; title: string; uid: string }
+  | { kind: 'compressor' }
+  | { kind: 'limiter' }
+  | { kind: 'provider'; ports: ProviderPorts; processor: ExternalProcessorDescriptor }
+  | { kind: 'virtual_input'; spec: VirtualEndpointSpec }
+  | { kind: 'virtual_output'; spec: VirtualEndpointSpec };
 
 /** What the add-node menu can offer at the moment an item is chosen. */
 export interface RoutingNodeInventory {

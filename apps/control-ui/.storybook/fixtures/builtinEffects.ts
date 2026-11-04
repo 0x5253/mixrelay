@@ -7,10 +7,8 @@ import {
   effectKinds,
   effectPresets,
 } from '../../src/features/routing-workspace/builtinEffects';
-import {
-  addRoutingNode,
-  audioGraphToRuntimeGraph,
-} from '../../src/features/routing-workspace/model';
+import { addRoutingNode } from '../../src/features/routing-workspace/routingNodeCreation';
+import { audioGraphToRuntimeGraph } from '../../src/features/routing-workspace/runtimeGraphProjection';
 
 export type BuiltinEffectFixtureKind = EffectKind | 'compressor' | 'limiter';
 export const builtinEffectFixtureKinds: readonly BuiltinEffectFixtureKind[] = [

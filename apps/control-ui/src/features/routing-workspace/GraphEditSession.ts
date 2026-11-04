@@ -3,8 +3,8 @@ import type { GraphApplicationQueue } from '../../core/application/workspace/Gra
 import type { AudioGraphChangeKind } from '../../core/audio-graph/AudioGraphCanvas';
 import type { AudioGraphModel } from '../../core/audio-graph/model';
 import { graphHistoryGroup } from './graphHistoryGroup';
-import { changedProcessorParameters } from './model';
 import type { PendingProcessorParameter } from './ProcessorParameterQueue';
+import { changedProcessorParameters } from './processorParameterChanges';
 
 export type GraphHistoryStep = HistoryStep<AudioGraphModel, AudioGraphChangeKind>;
 

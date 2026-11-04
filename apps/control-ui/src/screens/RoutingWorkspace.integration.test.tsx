@@ -18,7 +18,6 @@ import type { AudioGraphModel, AudioGraphNode } from '../core/audio-graph/model'
 import { GraphApplicationError } from '../core/domain/graph/WorkspaceEdits';
 import { i18n } from '../core/i18n';
 import { MixRelayProvider } from '../core/theme/MixRelayProvider';
-import type { VirtualEndpointUpdate } from '../features/routing-workspace/model';
 import { RoutingWorkspace } from '../features/routing-workspace/RoutingWorkspace';
 import {
   duplexReference,
@@ -26,6 +25,7 @@ import {
   virtualPolicy,
   virtualSpec,
 } from '../features/routing-workspace/virtualEndpointFixtures';
+import type { VirtualEndpointUpdate } from '../features/routing-workspace/virtualEndpointNodes';
 
 const stereoProcessorLayout: ProviderPorts = {
   layoutId: 'layout-v1:stereo',

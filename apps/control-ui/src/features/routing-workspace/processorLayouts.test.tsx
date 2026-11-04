@@ -7,8 +7,10 @@ import type {
 } from '../../core/domain/control/processors';
 import { connectGraphBatch } from '../../core/domain/graph/topology';
 import { i18n } from '../../core/i18n';
-import { addRoutingNode, changeProcessorLayout, defaultPresentation } from './model';
+import { defaultPresentation } from './graphPresentation';
 import { presentProcessorLayouts, useProcessorLayoutChange } from './processorLayouts';
+import { addRoutingNode } from './routingNodeCreation';
+import { changeProcessorLayout } from './routingNodeGeometry';
 
 function layout(layoutId: string, channels: number): ProviderPorts {
   const bus = {

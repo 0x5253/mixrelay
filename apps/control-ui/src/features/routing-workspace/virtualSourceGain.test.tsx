@@ -6,7 +6,8 @@ import { useUndoHistory } from '../../core/history/useUndoHistory';
 import { MixRelayProvider } from '../../core/theme/MixRelayProvider';
 import { AudioNodeCard } from '../../core/ui/AudioNodeCard';
 import { graphHistoryGroup } from './graphHistoryGroup';
-import { audioGraphToRuntimeGraph, runtimeGraphToAudioGraph, updateRoutingNodeGain } from './model';
+import { updateRoutingNodeGain } from './routingNodeParameters';
+import { audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 
 const document: RuntimeGraphDocument = {
   schemaVersion: 2,

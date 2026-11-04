@@ -6,7 +6,7 @@ import type { GraphApplyResponse, RuntimeGraphDocument } from '../../core/domain
 import { rebaseGraphEdit } from '../../core/domain/graph/rebaseGraphEdit';
 import { graphWriterDefaults } from '../../test-support/portDefaults';
 import { workspaceRuntime } from '../../test-support/workspaceRuntime';
-import { audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './model';
+import { audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 
 const base: RuntimeGraphDocument = {
   schemaVersion: 2,

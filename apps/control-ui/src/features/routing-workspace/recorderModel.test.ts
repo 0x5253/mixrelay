@@ -1,11 +1,8 @@
 import { expect, it } from 'vitest';
 import type { RuntimeGraphDocument } from '../../core/domain/control/graph';
-import {
-  addRoutingNode,
-  audioGraphToRuntimeGraph,
-  runtimeGraphToAudioGraph,
-  updateRecorderChannels,
-} from './model';
+import { addRoutingNode } from './routingNodeCreation';
+import { updateRecorderChannels } from './routingNodeGeometry';
+import { audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 
 it('adds a stereo recorder output and persists channels, never per-take settings', () => {
   const document: RuntimeGraphDocument = { schemaVersion: 2, revision: 1, nodes: [], edges: [] };

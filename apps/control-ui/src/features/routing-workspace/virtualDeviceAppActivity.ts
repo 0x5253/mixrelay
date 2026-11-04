@@ -4,7 +4,7 @@ import type { DeviceAppActivity } from '../../core/domain/control/inventory';
 import type { VirtualEndpointSettings } from '../../core/domain/control/status';
 import type { DeviceAppActivityProps } from '../../core/ui/DeviceAppActivity';
 import type { DeviceActivityObservation } from './application/DeviceActivitySession';
-import { virtualEndpointIdentity } from './model';
+import { virtualEndpointIdentity } from './virtualEndpointNodes';
 
 /** Bundle identity spans processes/devices; unbundled clients are identified only by PID. */
 function distinctApps(records: DeviceAppActivity[]) {

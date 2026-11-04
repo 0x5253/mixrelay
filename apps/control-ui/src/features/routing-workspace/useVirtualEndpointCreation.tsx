@@ -8,7 +8,8 @@ import type {
 } from '../../core/domain/control/status';
 import type { ControlPort } from '../../core/ports/control/ControlPort';
 import { NameDialog } from '../../core/ui/NameDialog';
-import { addRoutingNode, type GraphPresentation } from './model';
+import type { GraphPresentation } from './graphPresentation';
+import { addRoutingNode } from './routingNodeCreation';
 import {
   resolveVirtualEndpointAction,
   type VirtualNodeSide,

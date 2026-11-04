@@ -516,7 +516,7 @@ function driverRoutingActions(session: DriverSession | undefined) {
     error: session?.error ? { endpointId: session.endpointId, message: session.error } : null,
     change: (
       endpointId: string,
-      update: import('../features/routing-workspace/model').VirtualEndpointUpdate,
+      update: import('../features/routing-workspace/virtualEndpointNodes').VirtualEndpointUpdate,
     ) => {
       void session?.changeDevice(endpointId, update);
     },

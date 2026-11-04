@@ -3,7 +3,7 @@ import type { RuntimeGraphDocument } from '../../core/domain/control/graph';
 import { acknowledgedNodeControl } from '../../core/domain/graph/acknowledgedNodeControl';
 import { controlChanges } from '../../core/domain/graph/controlChanges';
 import { rebaseControls, rebaseControlsWithHistory } from './controlReconciliation';
-import { runtimeGraphToAudioGraph } from './model';
+import { runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 
 const before: RuntimeGraphDocument = {
   schemaVersion: 2,

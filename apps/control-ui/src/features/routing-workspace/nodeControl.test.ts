@@ -5,7 +5,7 @@ import type { RuntimeGraphDocument } from '../../core/domain/control/graph';
 import { acknowledgedNodeControl } from '../../core/domain/graph/acknowledgedNodeControl';
 import { graphWriterDefaults } from '../../test-support/portDefaults';
 import { workspaceRuntime } from '../../test-support/workspaceRuntime';
-import { audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './model';
+import { audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 
 const document: RuntimeGraphDocument = {
   schemaVersion: 2,

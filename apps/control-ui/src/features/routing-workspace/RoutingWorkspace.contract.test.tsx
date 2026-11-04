@@ -14,14 +14,11 @@ import { GraphApplicationError } from '../../core/domain/graph/WorkspaceEdits';
 import { I18nProvider, i18n } from '../../core/i18n';
 import { MixRelayProvider } from '../../core/theme/MixRelayProvider';
 import { advance, eventually, find } from '../../test-support/fakeTimerQueries';
-import {
-  addRoutingNode,
-  audioGraphToRuntimeGraph,
-  type RoutingNodeRequest,
-  runtimeGraphToAudioGraph,
-} from './model';
+import type { RoutingNodeRequest } from './nodeRequests';
 import { ProcessorParameterQueue } from './ProcessorParameterQueue';
 import { RoutingWorkspace, type RoutingWorkspaceProps } from './RoutingWorkspace';
+import { addRoutingNode } from './routingNodeCreation';
+import { audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 import { virtualPolicy, virtualSpec } from './virtualEndpointFixtures';
 
 const harness = vi.hoisted(() => ({ canvas: null as AudioGraphCanvasProps | null }));
@@ -34,6 +31,7 @@ vi.mock('../../core/audio-graph/AudioGraphCanvas', () => ({
           const controls = props.renderNodeControls?.(node);
           return (
             <div key={node.id}>
+              <button type="button">{node.appearance.title}</button>
               {controls?.power}
               {controls?.mute}
               {props.renderNodeContent?.(node)}
@@ -521,6 +519,8 @@ it('offers no endpoint edits without a Driver action and never authors them into
 });
 
 it('saves the current layout after a layout error through the dedicated controller', async () => {
+  // Layout saves settle after a 400 ms idle; fake time steps through it.
+  vi.useFakeTimers();
   const native = port(document({ kind: 'compressor' }));
   const save = vi
     .spyOn(native, 'setGraphLayout')
@@ -536,8 +536,8 @@ it('saves the current layout after a layout error through the dedicated controll
     ),
   );
   expect(screen.queryByRole('button', { name: 'Load saved layout' })).not.toBeInTheDocument();
-  fireEvent.click(await screen.findByRole('button', { name: 'Retry' }));
-  await waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+  fireEvent.click(await find('button', { name: 'Retry' }));
+  await eventually(() => expect(save).toHaveBeenCalledTimes(2));
   expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
   expect(canvas().model.nodes[0]?.position).toEqual({ x: 88, y: 77 });
   expect(audio).not.toHaveBeenCalled();
@@ -842,6 +842,8 @@ it('records duplicate completion callbacks for one layout gesture only once', as
 it.each(['read', 'save'])(
   'clears the layout problem once its retry succeeds after a %s failure',
   async (operation) => {
+    // Layout saves settle after a 400 ms idle; fake time steps through it.
+    vi.useFakeTimers();
     const native = port(document({ kind: 'compressor' }));
     vi.spyOn(
       native,
@@ -861,7 +863,7 @@ it.each(['read', 'save'])(
         ),
       );
     }
-    const recovery = await screen.findByRole('button', { name: 'Retry' });
+    const recovery = await find('button', { name: 'Retry' });
     expect(screen.queryByRole('button', { name: 'Load saved layout' })).not.toBeInTheDocument();
     if (operation === 'read')
       expect(screen.getByText(/node layout could not be loaded/u)).toHaveAttribute(
@@ -869,13 +871,15 @@ it.each(['read', 'save'])(
         'status',
       );
     fireEvent.click(recovery);
-    await waitFor(() =>
+    await eventually(() =>
       expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument(),
     );
   },
 );
 
 it('preserves a user focus move during an asynchronous layout retry', async () => {
+  // Layout saves settle after a 400 ms idle; fake time steps through it.
+  vi.useFakeTimers();
   const native = port(document({ kind: 'compressor' }));
   vi.spyOn(native, 'setGraphLayout').mockRejectedValueOnce(new Error('unknown acknowledgement'));
   render(
@@ -892,7 +896,7 @@ it('preserves a user focus move during an asynchronous layout retry', async () =
       'layout',
     ),
   );
-  const button = await screen.findByRole('button', { name: 'Retry' });
+  const button = await find('button', { name: 'Retry' });
   const saved = await native.getGraphLayout('graph-1');
   const pending = Promise.withResolvers<typeof saved>();
   vi.spyOn(native, 'getGraphLayout').mockReturnValueOnce(pending.promise);
@@ -934,4 +938,213 @@ it('shows microphone consent guidance for an accepted operation and ends promptl
   );
   expect(canvas().model.nodes).toHaveLength(1);
   rendered.unmount();
+});
+
+// GraphEditSession unit tests cover every owner transition; these check that the workspace
+// hands each canvas callback the owner it was created for.
+it.each([
+  ['parameter', 'loading'],
+  ['add', 'active'],
+] as const)(
+  'discards a previous canvas %s callback when the replacement engine is %s',
+  async (action, state) => {
+    const native = port(document({ kind: 'effect', effect: 'reverb' }));
+    const write = vi.spyOn(native, 'applyGraph');
+    const rendered = render(view(native));
+    await ready();
+    const stale = canvas();
+    const nodeId = stale.model.nodes[0]?.id ?? '';
+    const replacement = port();
+    const pending = Promise.withResolvers<RuntimeGraphDocument>();
+    vi.spyOn(replacement, 'getGraph').mockReturnValue(pending.promise);
+    const replacementWrite = vi.spyOn(replacement, 'applyGraph');
+    rendered.rerender(view(replacement));
+    await act(async () => Promise.resolve());
+    expect(screen.queryByRole('button', { name: 'Reverb' })).toBeNull();
+    if (state === 'active') {
+      await act(async () => pending.resolve(empty));
+      await ready();
+    }
+    act(() => {
+      if (action === 'add') stale.onAddNode?.('builtin:equalizer', { x: 44, y: 33 });
+      else stale.onNodeParameterChange?.(nodeId, 'decaySeconds', 2.3);
+    });
+    await act(async () => pending.resolve(empty));
+    await ready();
+    expect(canvas().model.nodes).toEqual([]);
+    fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
+    await act(async () => Promise.resolve());
+    expect(write).not.toHaveBeenCalled();
+    expect(replacementWrite).not.toHaveBeenCalled();
+  },
+);
+
+it('discards a late canvas callback after the workspace unmounts', async () => {
+  const native = port(document({ kind: 'effect', effect: 'reverb' }));
+  const write = vi.spyOn(native, 'applyGraph');
+  const parameter = vi.spyOn(native, 'setProcessorParameter');
+  const rendered = render(view(native));
+  await ready();
+  const stale = canvas();
+  rendered.unmount();
+  act(() => stale.onNodeParameterChange?.(stale.model.nodes[0]?.id ?? '', 'decaySeconds', 2.3));
+  await act(async () => Promise.resolve());
+  expect(write).not.toHaveBeenCalled();
+  expect(parameter).not.toHaveBeenCalled();
+});
+
+it('discards the previous graph owner callback while the current graph edits', async () => {
+  const native = port(document({ kind: 'effect', effect: 'reverb' }));
+  const write = vi.spyOn(native, 'applyGraph');
+  const rendered = render(view(native, { graphId: 'graph-1' }));
+  await ready();
+  const stale = canvas();
+  const catalog = await native.getGraphCatalog();
+  const replacement = await native.mutateGraphCatalog({
+    action: 'create',
+    name: 'Replacement',
+    expectedRevision: catalog.document.revision,
+    expectedCatalogRevision: catalog.catalogRevision,
+  });
+  const layout = vi.spyOn(native, 'setGraphLayout');
+  rendered.rerender(
+    view(native, { graphId: replacement.activeId, sessionDocument: replacement.document }),
+  );
+  await ready();
+  write.mockClear();
+  act(() => stale.onNodeParameterChange?.(stale.model.nodes[0]?.id ?? '', 'decaySeconds', 2.3));
+  await act(async () => Promise.resolve());
+  expect(canvas().model.nodes).toEqual([]);
+  fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
+  await act(async () => Promise.resolve());
+  expect(write).not.toHaveBeenCalled();
+  expect(layout).not.toHaveBeenCalled();
+  await act(async () => canvas().onAddNode?.('builtin:reverb', { x: 0, y: 0 }));
+  await waitFor(() => expect(write).toHaveBeenCalledTimes(1));
+  const nodeId = canvas().model.nodes[0]?.id ?? '';
+  await act(async () => canvas().onNodeParameterChange?.(nodeId, 'decaySeconds', 1.3));
+  await waitFor(() => expect(write).toHaveBeenCalledTimes(2));
+  const written = write.mock.lastCall?.[0];
+  expect(written?.nodes[0]?.config).toMatchObject({
+    effect: { parameters: { decaySeconds: 1.3 } },
+  });
+  expect(await native.getGraphCatalog()).toMatchObject({
+    activeId: replacement.activeId,
+    document: { nodes: written?.nodes },
+  });
+});
+
+it('presents translated effect names and parameter labels after a language change', async () => {
+  const native = port(document({ kind: 'effect', effect: 'equalizer' }));
+  const write = vi.spyOn(native, 'applyGraph');
+  render(view(native));
+  await ready();
+  const bands = () =>
+    canvas().model.nodes[0]?.appearance.equalizer?.bands.map((band) => band.label);
+  const english = bands();
+  await act(async () => i18n.changeLanguage('ko-KR'));
+  expect(bands()).toEqual(['lowDb', 'midDb', 'highDb'].map((key) => i18n.t(`effects.${key}`)));
+  expect(bands()).not.toEqual(english);
+  await act(async () => canvas().onAddNode?.('builtin:equalizer', { x: 0, y: 0 }));
+  await waitFor(() => expect(write).toHaveBeenCalledTimes(1));
+  expect(write.mock.lastCall?.[0].nodes[1]).toMatchObject({ label: i18n.t('effects.equalizer') });
+});
+
+it('keeps the canvas mounted and focus inside it while an edit applies', async () => {
+  const native = port(document({ kind: 'effect', effect: 'channel_utility' }));
+  const write = vi.spyOn(native, 'applyGraph');
+  render(view(native));
+  await ready();
+  const node = canvas().model.nodes[0];
+  if (!node) throw new Error('Expected channel utility');
+  const focused = screen.getByRole('button', { name: node.appearance.title });
+  act(() => focused.focus());
+  await act(async () => canvas().onNodeParameterChange?.(node.id, 'mode', 2));
+  await waitFor(() => expect(write).toHaveBeenCalledTimes(1));
+  expect(screen.getByRole('button', { name: node.appearance.title })).toBe(focused);
+  expect(focused).toHaveFocus();
+});
+
+it('applies every value of a fast gesture that arrives before the next render', async () => {
+  const native = port(document({ kind: 'effect', effect: 'equalizer' }));
+  const write = vi.spyOn(native, 'applyGraph');
+  render(view(native));
+  await ready();
+  const stale = canvas();
+  const id = stale.model.nodes[0]?.id ?? '';
+  act(() => {
+    for (const value of [0.708, 0.709, 0.71]) stale.onNodeParameterChange?.(id, 'midQ', value);
+  });
+  await waitFor(() =>
+    expect(write.mock.lastCall?.[0].nodes[0]?.config).toMatchObject({
+      effect: { parameters: { midQ: 0.71 } },
+    }),
+  );
+});
+
+it('applies both values of an EQ band gesture in one graph update', async () => {
+  const native = port(document({ kind: 'effect', effect: 'equalizer' }));
+  const write = vi.spyOn(native, 'applyGraph');
+  render(view(native));
+  await ready();
+  const id = canvas().model.nodes[0]?.id ?? '';
+  await act(async () =>
+    canvas().onNodeParametersChange?.(id, [
+      { id: 'midFrequencyHz', value: 1500 },
+      { id: 'midDb', value: 3 },
+    ]),
+  );
+  await waitFor(() => expect(write).toHaveBeenCalledTimes(1));
+  expect(write.mock.lastCall?.[0].nodes[0]?.config).toMatchObject({
+    effect: { parameters: { midFrequencyHz: 1500, midDb: 3, lowFrequencyHz: 150 } },
+  });
+});
+
+it('reads externally changed effect settings automatically, then edits those current values', async () => {
+  vi.useFakeTimers();
+  const native = port(document({ kind: 'effect', effect: 'reverb' }));
+  const write = vi.spyOn(native, 'applyGraph');
+  render(view(native, { graphId: 'graph-1' }));
+  await ready();
+  const engine = await native.getGraph();
+  const current = {
+    ...engine,
+    revision: engine.revision + 1,
+    nodes: engine.nodes.map((node) => ({
+      ...node,
+      config: {
+        ...(node.config as object),
+        effect: {
+          kind: 'reverb',
+          parameters: {
+            decaySeconds: 3,
+            damping: 0.6,
+            mix: 0.4,
+            algorithm: 0,
+            roomSize: 1,
+            preDelayMs: 0,
+          },
+        },
+      },
+    })),
+  };
+  await act(async () => {
+    await native.applyGraph(current);
+  });
+  const damping = () =>
+    canvas().model.nodes[0]?.appearance.parameterControls?.find(
+      (control) => control.id === 'damping',
+    )?.value;
+  await eventually(() => expect(damping()).toBe(0.6), { timeout: 2500 });
+  expect(
+    screen.queryByRole('button', { name: 'Overwrite engine with these edits' }),
+  ).not.toBeInTheDocument();
+  const id = canvas().model.nodes[0]?.id ?? '';
+  await act(async () => canvas().onNodeParameterChange?.(id, 'damping', 0.7));
+  await eventually(() =>
+    expect(write.mock.lastCall?.[0]).toMatchObject({
+      revision: current.revision + 1,
+      nodes: [{ config: { effect: { parameters: { damping: 0.7, mix: 0.4, decaySeconds: 3 } } } }],
+    }),
+  );
 });

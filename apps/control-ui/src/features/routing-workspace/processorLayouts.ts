@@ -8,12 +8,13 @@ import type {
   ProviderPorts,
 } from '../../core/domain/control/processors';
 import type { NodeChoiceControl } from '../../core/ui/AudioNodeCard';
-import { changeProcessorLayout, type GraphPresentation } from './model';
+import type { GraphPresentation } from './graphPresentation';
 import {
   processorLayoutDescription,
   processorLayoutLabel,
   selectableProcessorLayouts,
 } from './processorCatalogMenu';
+import { changeProcessorLayout } from './routingNodeGeometry';
 
 function providerConfig(node: AudioGraphModel['nodes'][number] | undefined) {
   return node?.runtime?.type === 'provider'

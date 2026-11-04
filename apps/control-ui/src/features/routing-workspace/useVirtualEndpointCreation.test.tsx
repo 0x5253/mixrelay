@@ -8,7 +8,7 @@ import type { VirtualEndpointSpec } from '../../core/domain/control/status';
 import { i18n } from '../../core/i18n';
 import type { ControlPort } from '../../core/ports/control/ControlPort';
 import { MixRelayProvider } from '../../core/theme/MixRelayProvider';
-import { audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './model';
+import { audioGraphToRuntimeGraph, runtimeGraphToAudioGraph } from './runtimeGraphProjection';
 import { useVirtualEndpointCreation } from './useVirtualEndpointCreation';
 import { virtualPolicy, virtualSpec } from './virtualEndpointFixtures';
 import { virtualEndpointItemId } from './virtualEndpointMenu';
