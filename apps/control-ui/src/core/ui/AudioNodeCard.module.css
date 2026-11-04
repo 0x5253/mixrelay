@@ -241,6 +241,10 @@
   gap: var(--space-half);
 }
 
+.ioSummary > :first-child {
+  flex: none;
+}
+
 .meterCell > :first-child {
   width: 6px;
   min-width: 3px;
@@ -443,10 +447,6 @@
   color: var(--node-channel-text);
   font: 400 var(--font-caption) var(--font-mono);
   line-height: var(--audio-node-row-height);
-}
-
-.ioSummary > :first-child {
-  flex: none;
 }
 
 .ioSummary {

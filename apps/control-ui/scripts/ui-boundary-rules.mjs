@@ -313,7 +313,7 @@ function isImportMetaGlob(callee) {
  * `import('…').T` or the pattern of `import.meta.glob()`. */
 function moduleSource(node) {
   if (declarations.has(node.type)) return staticString(node.source);
-  if (node.type === 'TSImportType') return staticString(node.argument?.literal ?? node.argument);
+  if (node.type === 'TSImportType') return staticString(node.source);
   if (node.type === 'TSExternalModuleReference') return staticString(node.expression);
   const call =
     node.type === 'CallExpression' &&
@@ -453,7 +453,7 @@ function checkCoreApi(ast, imports, violations) {
       );
     }
     if (node.typeName.name === 'Pick') {
-      const keys = node.typeParameters?.params[1];
+      const keys = node.typeArguments?.params[1];
       visit(keys, (key) => {
         if (
           key.type === 'StringLiteral' &&

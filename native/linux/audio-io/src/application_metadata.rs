@@ -146,7 +146,7 @@ fn png(path: &Path) -> Option<String> {
         bytes: 4 * 1024 * 1024,
     });
     let mut reader = decoder.read_info().ok()?;
-    let output_size = reader.output_buffer_size();
+    let output_size = reader.output_buffer_size()?;
     if output_size > 4 * 1024 * 1024 {
         return None;
     }
