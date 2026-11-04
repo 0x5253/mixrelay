@@ -10,7 +10,7 @@ use tower::ServiceExt;
 
 use super::*;
 use crate::{
-    CONTROL_TELEMETRY_ROUTE, METER_TELEMETRY_ROUTE, router_with_backend,
+    CONTROL_TELEMETRY_ROUTE, router_with_backend,
     test_support::{TestBackend, clock},
 };
 
@@ -76,7 +76,7 @@ async fn subscribe(router: &Router) -> Events {
     }
 }
 
-#[tokio::test]
+#[tokio::test(start_paused = true)]
 async fn reconnect_and_late_subscribers_get_full_state_from_the_shared_publisher() {
     let operations = ControlOperations::new(clock());
     let router = router_with_backend(backend(), operations.clone());
@@ -126,7 +126,7 @@ async fn failed_native_observation_ends_subscriptions_instead_of_freezing_state(
     operations.close_admission();
 }
 
-#[tokio::test]
+#[tokio::test(start_paused = true)]
 async fn deferred_observations_wait_for_initial_snapshot_and_keep_committed_state() {
     let mut backend = backend();
     Arc::get_mut(&mut backend).unwrap().incarnation = "deferred-observation".into();
@@ -145,7 +145,7 @@ async fn deferred_observations_wait_for_initial_snapshot_and_keep_committed_stat
     operations.close_admission();
 }
 
-#[tokio::test]
+#[tokio::test(start_paused = true)]
 async fn meter_telemetry_streams_every_window_until_admission_closes() {
     use futures_util::StreamExt as _;
     let backend = TestBackend::with_result(Ok(GraphApplyResponse {
@@ -158,7 +158,7 @@ async fn meter_telemetry_streams_every_window_until_admission_closes() {
     let response = router_with_backend(backend, operations.clone())
         .oneshot(
             Request::builder()
-                .uri(METER_TELEMETRY_ROUTE)
+                .uri(CONTROL_TELEMETRY_ROUTE)
                 .body(Body::empty())
                 .expect("request should build"),
         )

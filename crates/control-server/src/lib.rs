@@ -44,9 +44,6 @@ pub const GRAPH_LAYOUT_ROUTE: &str = "/api/v1/graphs/{id}/layout";
 pub const METERS_ROUTE: &str = "/api/v1/meters";
 /// Server-sent meter windows, one per publication window; a push alternative to polling.
 pub const CONTROL_TELEMETRY_ROUTE: &str = "/api/v1/telemetry";
-pub const METER_TELEMETRY_ROUTE: &str = CONTROL_TELEMETRY_ROUTE;
-/// The publication window pushed meters follow.
-const METER_TELEMETRY_INTERVAL: std::time::Duration = std::time::Duration::from_millis(50);
 pub const APPLICATION_CAPTURE_MANIFEST_ROUTE: &str = "/api/v1/application-capture/manifest";
 pub const APPLICATION_CAPTURE_PREVIEW_ROUTE: &str = "/api/v1/application-capture/preview";
 pub const PROCESSORS_ROUTE: &str = "/api/v1/processors";

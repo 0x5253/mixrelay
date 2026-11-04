@@ -3,15 +3,22 @@ mod publication;
 
 use publication::Publication;
 
-use crate::{ControlBackend, ControlOperations, ControlState, METER_TELEMETRY_INTERVAL};
+use crate::{ControlBackend, ControlOperations, ControlState};
+
 use axum::{
     extract::State,
     response::sse::{Event, Sse},
 };
 use futures_util::StreamExt as _;
 use mixrelay_control_protocol::{ControlTelemetry, TelemetryEncoder};
-use std::sync::{Arc, OnceLock};
+use std::{
+    sync::{Arc, OnceLock},
+    time::Duration,
+};
 use tokio::sync::{broadcast, watch};
+
+/// The publication window pushed meters follow.
+const METER_TELEMETRY_INTERVAL: Duration = Duration::from_millis(50);
 
 /// Windows a subscriber may fall behind by before its stream ends (and it resubscribes).
 const BACKLOG: usize = 64;
