@@ -367,9 +367,8 @@ pub(crate) async fn control_get_graph_layout(
     client: tauri::State<'_, ControlProxyClient>,
     graph_id: String,
 ) -> Result<ControlProxyResponse, String> {
-    client
-        .request(Method::GET, &routes::graph_layout(&graph_id), None)
-        .await
+    let route = routes::graph_layout(&graph_id).map_err(|error| error.to_string())?;
+    client.request(Method::GET, &route, None).await
 }
 
 #[tauri::command]
@@ -378,9 +377,8 @@ pub(crate) async fn control_set_graph_layout(
     graph_id: String,
     request: Value,
 ) -> Result<ControlProxyResponse, String> {
-    client
-        .request(Method::PUT, &routes::graph_layout(&graph_id), Some(request))
-        .await
+    let route = routes::graph_layout(&graph_id).map_err(|error| error.to_string())?;
+    client.request(Method::PUT, &route, Some(request)).await
 }
 
 #[cfg(target_os = "linux")]
@@ -410,9 +408,8 @@ pub(crate) async fn control_get_operation(
     client: tauri::State<'_, ControlProxyClient>,
     operation_id: String,
 ) -> Result<ControlProxyResponse, String> {
-    client
-        .request(Method::GET, &routes::operation(&operation_id), None)
-        .await
+    let route = routes::operation(&operation_id).map_err(|error| error.to_string())?;
+    client.request(Method::GET, &route, None).await
 }
 
 #[tauri::command]
@@ -492,10 +489,12 @@ pub(crate) async fn control_set_processor_parameter(
     value: f64,
     expected_revision: u64,
 ) -> Result<ControlProxyResponse, String> {
+    let route =
+        routes::processor_parameter(&node_id, parameter_id).map_err(|error| error.to_string())?;
     client
         .request(
             Method::PUT,
-            &routes::processor_parameter(&node_id, parameter_id),
+            &route,
             Some(serde_json::json!({ "value": value, "expectedRevision": expected_revision })),
         )
         .await
@@ -506,9 +505,8 @@ pub(crate) async fn control_get_processor_editor(
     client: tauri::State<'_, ControlProxyClient>,
     node_id: String,
 ) -> Result<ControlProxyResponse, String> {
-    client
-        .request(Method::GET, &routes::processor_editor(&node_id), None)
-        .await
+    let route = routes::processor_editor(&node_id).map_err(|error| error.to_string())?;
+    client.request(Method::GET, &route, None).await
 }
 
 #[tauri::command]
@@ -518,10 +516,11 @@ pub(crate) async fn control_set_processor_editor(
     open: bool,
     expected_revision: u64,
 ) -> Result<ControlProxyResponse, String> {
+    let route = routes::processor_editor(&node_id).map_err(|error| error.to_string())?;
     client
         .request(
             Method::PUT,
-            &routes::processor_editor(&node_id),
+            &route,
             Some(serde_json::json!({ "open": open, "expectedRevision": expected_revision })),
         )
         .await
@@ -532,9 +531,8 @@ pub(crate) async fn control_get_processor_editor_frame(
     client: tauri::State<'_, ControlProxyClient>,
     node_id: String,
 ) -> Result<ControlProxyResponse, String> {
-    client
-        .request(Method::GET, &routes::processor_editor_frame(&node_id), None)
-        .await
+    let route = routes::processor_editor_frame(&node_id).map_err(|error| error.to_string())?;
+    client.request(Method::GET, &route, None).await
 }
 
 #[tauri::command]
@@ -543,14 +541,11 @@ pub(crate) async fn control_send_processor_editor_input(
     node_id: String,
     input: Value,
 ) -> Result<ControlProxyResponse, String> {
-    client
-        .request(
-            Method::POST,
-            &routes::processor_editor_input(&node_id),
-            Some(input),
-        )
-        .await
+    let route = routes::processor_editor_input(&node_id).map_err(|error| error.to_string())?;
+    client.request(Method::POST, &route, Some(input)).await
 }
 
+#[cfg(test)]
+mod route_contract_tests;
 #[cfg(test)]
 mod tests;

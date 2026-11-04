@@ -10,9 +10,8 @@ pub(crate) async fn control_get_recorder_status(
     graph_id: String,
     node_id: String,
 ) -> Result<ControlProxyResponse, String> {
-    client
-        .request(Method::GET, &routes::recorder(&graph_id, &node_id), None)
-        .await
+    let route = routes::recorder(&graph_id, &node_id).map_err(|error| error.to_string())?;
+    client.request(Method::GET, &route, None).await
 }
 
 #[tauri::command]
@@ -46,12 +45,8 @@ impl ControlProxyClient {
             request["expectedRecording"] =
                 serde_json::json!({"state":status["state"],"path":status["path"]});
         }
-        self.request(
-            Method::PUT,
-            &routes::recorder(graph_id, node_id),
-            Some(request),
-        )
-        .await
+        let route = routes::recorder(graph_id, node_id).map_err(|error| error.to_string())?;
+        self.request(Method::PUT, &route, Some(request)).await
     }
 }
 

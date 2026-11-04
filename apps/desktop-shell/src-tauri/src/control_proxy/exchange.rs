@@ -118,7 +118,10 @@ impl<'a, T: AsyncDelay + Sync> Exchange<'a, T> {
         id: &str,
         error: &TransportFailure,
     ) -> Result<ControlProxyResponse, String> {
-        let Ok(response) = self.get(&routes::operation(id), RECEIPT_TIMEOUT).await else {
+        let Ok(route) = routes::operation(id) else {
+            return Ok(failed(path, error, true));
+        };
+        let Ok(response) = self.get(&route, RECEIPT_TIMEOUT).await else {
             return Ok(failed(path, error, true));
         };
         let engine = observe_engine(self.client, response.headers());
@@ -170,15 +173,14 @@ impl<'a, T: AsyncDelay + Sync> Exchange<'a, T> {
                 .wait_until(Deadline::after(self.timer.now(), RECEIPT_POLL_INTERVAL))
                 .await;
             stage = ControlStage::ReceiptObservation;
-            response = self
-                .get(&routes::operation(&id), RECEIPT_TIMEOUT)
-                .await
-                .map_err(|error| {
-                    ExchangeError::Transport(TransportFailure::at(
-                        ControlStage::ReceiptObservation,
-                        error,
-                    ))
-                })?;
+            let route = routes::operation(&id)
+                .map_err(|error| ExchangeError::Invalid(error.to_string()))?;
+            response = self.get(&route, RECEIPT_TIMEOUT).await.map_err(|error| {
+                ExchangeError::Transport(TransportFailure::at(
+                    ControlStage::ReceiptObservation,
+                    error,
+                ))
+            })?;
             accepted = Some(id);
         }
     }
@@ -198,7 +200,10 @@ impl<'a, T: AsyncDelay + Sync> Exchange<'a, T> {
     /// Lets the engine reclaim a stored result. A lost acknowledgement only delays that; it
     /// must never replace an already observed result with an error.
     async fn acknowledge(&self, id: &str) {
-        let url = format!("{}{}", self.origin, routes::operation(id));
+        let Ok(route) = routes::operation(id) else {
+            return;
+        };
+        let url = format!("{}{route}", self.origin);
         match self
             .client
             .client

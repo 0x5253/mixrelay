@@ -165,22 +165,13 @@ pub(crate) async fn save_recording_settings(
 }
 
 impl ControlProxyClient {
-    pub(super) fn recording_preferences(
-        &self,
-        graph: &str,
-        node: &str,
-    ) -> Result<RecordingSettings, String> {
-        self.recordings.preferences(graph, node)
-    }
-
     pub(super) async fn recording_status(
         &self,
         graph: &str,
         node: &str,
     ) -> Result<serde_json::Value, String> {
-        let response = self
-            .request(Method::GET, &routes::recorder(graph, node), None)
-            .await?;
+        let route = routes::recorder(graph, node).map_err(|error| error.to_string())?;
+        let response = self.request(Method::GET, &route, None).await?;
         if !response.is_success() {
             return Err(format!("recorder unavailable: {}", response.body));
         }
@@ -210,7 +201,7 @@ mod tests {
         let (directory, store) = fixture();
         let client = ControlProxyClient::with_socket(None);
         client.recordings.replace(store).unwrap();
-        let mut settings = client.recording_preferences("g", "n").unwrap();
+        let mut settings = client.recordings.preferences("g", "n").unwrap();
         settings.encoding = RecordingEncoding::Pcm24;
         let next = settings.clone();
         let recordings = Arc::clone(&client.recordings);
@@ -230,14 +221,14 @@ mod tests {
         caller.abort();
         assert!(caller.await.unwrap_err().is_cancelled());
         assert_eq!(
-            client.recording_preferences("g", "n").unwrap().encoding,
+            client.recordings.preferences("g", "n").unwrap().encoding,
             RecordingEncoding::Pcm16
         );
         assert!(client.recordings.gate.try_lock().is_err());
         client.close_admission();
         release.send(()).unwrap();
         client.drain().await.unwrap();
-        assert_eq!(client.recording_preferences("g", "n").unwrap(), settings);
+        assert_eq!(client.recordings.preferences("g", "n").unwrap(), settings);
         let loaded = load_store(
             directory.path().join("preferences.json"),
             directory.path().to_path_buf(),

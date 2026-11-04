@@ -8,9 +8,8 @@ pub(crate) async fn control_get_node_controls(
     client: tauri::State<'_, ControlProxyClient>,
     graph_id: String,
 ) -> Result<ControlProxyResponse, String> {
-    client
-        .request(Method::GET, &routes::node_controls(&graph_id), None)
-        .await
+    let route = routes::node_controls(&graph_id).map_err(|error| error.to_string())?;
+    client.request(Method::GET, &route, None).await
 }
 
 /// Applies node control through the shared capture reservation/publication path.
@@ -34,13 +33,8 @@ pub(crate) async fn control_update_node_control(
     #[cfg(target_os = "linux")]
     {
         let _ = app;
-        client
-            .request(
-                Method::PUT,
-                &routes::node_control(&graph_id, &node_id),
-                Some(request),
-            )
-            .await
+        let route = routes::node_control(&graph_id, &node_id).map_err(|error| error.to_string())?;
+        client.request(Method::PUT, &route, Some(request)).await
     }
 }
 
@@ -58,7 +52,7 @@ impl ControlProxyClient {
         let control: mixrelay_control_protocol::NodeControlRequest =
             serde_json::from_value(request.clone())
                 .map_err(|error| format!("invalid node control request: {error}"))?;
-        let route = routes::node_control(graph_id, node_id);
+        let route = routes::node_control(graph_id, node_id).map_err(|error| error.to_string())?;
         if control.enabled.is_none() {
             // Gain/mute cannot change tap ownership; avoid the capture transaction gate.
             return self.request(Method::PUT, &route, Some(request)).await;

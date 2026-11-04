@@ -229,7 +229,8 @@ impl LocalControl {
                     .client
                     .request(
                         Method::PUT,
-                        &routes::node_control(&target.graph_id, &target.node_id),
+                        &routes::node_control(&target.graph_id, &target.node_id)
+                            .map_err(|error| error.to_string())?,
                         Some(serde_json::to_value(request).map_err(|error| error.to_string())?),
                     )
                     .await;
@@ -270,7 +271,7 @@ impl LocalControl {
         let mut response = stamp_snapshot(response, &self.session)?;
         if response.is_success() {
             attach_recording_settings(&mut response.body, |graph, node| {
-                self.client.recording_preferences(graph, node)
+                self.client.recordings.preferences(graph, node)
             })?;
         }
         Ok(response)
