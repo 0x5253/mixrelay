@@ -955,7 +955,7 @@ export const screenRenderTests = new Set([
   'app/DriverNodeSettings.test.tsx',
   'features/routing-workspace/DeviceAppActivity.integration.test.tsx',
   'features/routing-workspace/ProcessorReport.integration.test.tsx',
-  'features/routing-workspace/RoutingWorkspace.builtinEffects.test.tsx',
+  'features/routing-workspace/RoutingWorkspace.focus.test.tsx',
   'features/routing-workspace/RoutingWorkspace.contract.test.tsx',
   'features/routing-workspace/applicationReselection.test.tsx',
   'features/routing-workspace/virtualNodeStatus.test.tsx',
