@@ -30,18 +30,40 @@ struct Control {
     operations: Arc<Semaphore>,
 }
 
+/// How often background maintenance revisits native inventory.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct InventoryIntervals {
+    /// The wait after a check that needed nothing or restored inventory.
+    pub recheck: Duration,
+    /// The wait after a failed check, so a broken device is not reapplied rapidly.
+    pub after_failure: Duration,
+}
+
+impl Default for InventoryIntervals {
+    /// The product cadence: one second, or five after a failure.
+    fn default() -> Self {
+        Self {
+            recheck: Duration::from_secs(1),
+            after_failure: Duration::from_secs(5),
+        }
+    }
+}
+
 /// Builds the independent Driver GET/PUT API with bounded ingress and no browser origins.
 /// The binary must use a peer-authorized Unix listener and own its lifetime.
 /// Native/file work is serialized outside the async reactor.
 /// Call from a Tokio runtime; startup inventory is initialized without client requests.
-pub fn router(manager: DriverManager) -> Router {
+pub fn router(manager: DriverManager, intervals: InventoryIntervals) -> Router {
     let state = Control {
         manager: Arc::new(Mutex::new(manager)),
 
         ingress: Arc::new(Semaphore::new(8)),
         operations: Arc::new(Semaphore::new(8)),
     };
-    tokio::spawn(maintain_inventory(Arc::downgrade(&state.manager)));
+    tokio::spawn(maintain_inventory(
+        Arc::downgrade(&state.manager),
+        intervals,
+    ));
     Router::new()
         .route(SNAPSHOT_ROUTE, get(snapshot).put(mutate))
         .route(
@@ -52,7 +74,7 @@ pub fn router(manager: DriverManager) -> Router {
         .with_state(state)
 }
 
-async fn maintain_inventory(manager: Weak<Mutex<DriverManager>>) {
+async fn maintain_inventory(manager: Weak<Mutex<DriverManager>>, intervals: InventoryIntervals) {
     let mut previous_error = None;
     loop {
         let owner = manager.clone();
@@ -71,7 +93,7 @@ async fn maintain_inventory(manager: Weak<Mutex<DriverManager>>) {
             Ok(Some(Ok(true))) => {
                 tracing::info!("Driver native inventory restored");
                 previous_error = None;
-                Duration::from_secs(1)
+                intervals.recheck
             }
             Ok(None) => return,
             Err(error) => {
@@ -80,7 +102,7 @@ async fn maintain_inventory(manager: Weak<Mutex<DriverManager>>) {
             }
             Ok(Some(Ok(false))) => {
                 previous_error = None;
-                Duration::from_secs(1)
+                intervals.recheck
             }
             // Native transactions already have bounded ACK/readback waits. Keep
             // their failure observable once and avoid rapid reapplication.
@@ -90,7 +112,7 @@ async fn maintain_inventory(manager: Weak<Mutex<DriverManager>>) {
                     tracing::error!(%error, "Driver inventory maintenance failed");
                     previous_error = Some(detail);
                 }
-                Duration::from_secs(5)
+                intervals.after_failure
             }
         };
         tokio::time::sleep(delay).await;

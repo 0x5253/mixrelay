@@ -21,7 +21,6 @@ use mixrelay_time::MonotonicClock;
 pub(super) const MAX_RECEIPTS: usize = 8;
 pub(super) const RESPONSE_LIMIT: usize = 16 * 1024 * 1024;
 const INGRESS_PERMITS: usize = 8;
-const OPERATION_WAIT: Duration = Duration::from_millis(100);
 const COMPLETED_TTL: Duration = Duration::from_mins(1);
 const OPERATION_HEADER: &str = "x-mixrelay-operation";
 const REQUEST_HEADER: &str = "x-mixrelay-operation-request";
@@ -49,6 +48,26 @@ pub(super) fn task_failure(code: ErrorCode, reason: &'static str) -> Response {
 #[derive(Clone)]
 pub struct ControlOperations {
     inner: Arc<Inner>,
+    timings: OperationTimings,
+}
+
+/// Time bounds of one operation owner.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct OperationTimings {
+    /// How long a client may take to send a request body before ingress rejects it.
+    pub body_deadline: Duration,
+    /// How long a mutation may run before its reply becomes a pollable pending operation.
+    pub completion_wait: Duration,
+}
+
+impl Default for OperationTimings {
+    /// The product bounds: a two-second body deadline and a 100 ms completion wait.
+    fn default() -> Self {
+        Self {
+            body_deadline: Duration::from_secs(2),
+            completion_wait: Duration::from_millis(100),
+        }
+    }
 }
 
 struct Inner {
@@ -96,7 +115,19 @@ impl ControlOperations {
                 wake: Notify::new(),
                 closing: tokio::sync::watch::Sender::new(false),
             }),
+            timings: OperationTimings::default(),
         }
+    }
+
+    /// Replaces the time bounds, for example short ones in a test harness.
+    #[must_use]
+    pub fn with_timings(mut self, timings: OperationTimings) -> Self {
+        self.timings = timings;
+        self
+    }
+
+    pub(crate) fn timings(&self) -> OperationTimings {
+        self.timings
     }
 
     /// Stops accepting new work while allowing all admitted handlers to finish.
@@ -339,7 +370,7 @@ async fn completion_after_wait(
     if matches!(operations.snapshot(id), Snapshot::Complete(_)) {
         return true;
     }
-    let _ = tokio::time::timeout(OPERATION_WAIT, notified).await;
+    let _ = tokio::time::timeout(operations.timings().completion_wait, notified).await;
     matches!(operations.snapshot(id), Snapshot::Complete(_))
 }
 
@@ -517,6 +548,18 @@ mod tests {
     use std::sync::atomic::{AtomicUsize, Ordering};
     use tower::ServiceExt;
 
+    /// Long enough for an immediate handler to complete inside the window on a loaded runner.
+    const COMPLETION_WAIT: Duration = Duration::from_millis(25);
+    /// A handler that outlasts the completion window and becomes a pending operation.
+    const SLOW_HANDLER: Duration = Duration::from_millis(60);
+
+    fn fast_operations() -> ControlOperations {
+        ControlOperations::new(crate::tests::clock()).with_timings(OperationTimings {
+            completion_wait: COMPLETION_WAIT,
+            ..OperationTimings::default()
+        })
+    }
+
     fn test_router(operations: ControlOperations, work: MethodRouter) -> Router {
         Router::new()
             .route("/work", work)
@@ -573,7 +616,7 @@ mod tests {
 
     #[tokio::test]
     async fn client_ids_retain_fast_results_and_deduplicate_even_when_admission_is_closed() {
-        let operations = ControlOperations::new(crate::tests::clock());
+        let operations = fast_operations();
         let calls = Arc::new(AtomicUsize::new(0));
         let handler_calls = calls.clone();
         let router = test_router(
@@ -622,7 +665,7 @@ mod tests {
 
     #[tokio::test]
     async fn duplicate_pending_id_does_not_execute_or_consume_another_slot() {
-        let operations = ControlOperations::new(crate::tests::clock());
+        let operations = fast_operations();
         let release = Arc::new(Notify::new());
         let calls = Arc::new(AtomicUsize::new(0));
         let handler_calls = calls.clone();
@@ -674,7 +717,7 @@ mod tests {
 
     #[tokio::test]
     async fn existing_ids_resolve_before_body_reads_with_saturated_full_middleware() {
-        let operations = ControlOperations::new(crate::tests::clock());
+        let operations = fast_operations();
         let release = Arc::new(tokio::sync::Semaphore::new(0));
         let calls = Arc::new(AtomicUsize::new(0));
         let handler_release = release.clone();
@@ -777,7 +820,7 @@ mod tests {
 
     #[tokio::test]
     async fn validates_client_ids_before_admission() {
-        let operations = ControlOperations::new(crate::tests::clock());
+        let operations = fast_operations();
         let router = test_router(
             operations.clone(),
             post(|| async { StatusCode::NO_CONTENT }),
@@ -831,7 +874,7 @@ mod tests {
 
     #[test]
     fn generated_ids_cannot_overwrite_client_records_and_ack_allows_reuse() {
-        let operations = ControlOperations::new(crate::tests::clock());
+        let operations = fast_operations();
         let id = format!("op-{:032x}-{:016x}", operations.inner.owner_nonce, 1);
         let client = operations.admit(Some(&id)).unwrap();
         let generated = operations.admit(None).unwrap();
@@ -844,7 +887,7 @@ mod tests {
 
     #[tokio::test]
     async fn fence_precedes_admission_and_does_not_create_a_receipt() {
-        let operations = ControlOperations::new(crate::tests::clock());
+        let operations = fast_operations();
         let router = test_router(
             operations.clone(),
             post(|| async { StatusCode::NO_CONTENT }),
@@ -919,8 +962,8 @@ mod tests {
 
     #[test]
     fn ids_change_between_owners_and_requests() {
-        let first = ControlOperations::new(crate::tests::clock());
-        let second = ControlOperations::new(crate::tests::clock());
+        let first = fast_operations();
+        let second = fast_operations();
         let first_id = first.admit(None).expect("first admission").id;
         let second_id = second.admit(None).expect("second admission").id;
         assert_ne!(first_id, second_id);
@@ -928,7 +971,7 @@ mod tests {
 
     #[test]
     fn admission_is_bounded_without_eviction_of_pending_work() {
-        let operations = ControlOperations::new(crate::tests::clock());
+        let operations = fast_operations();
         for _ in 0..MAX_RECEIPTS {
             operations.admit(None).expect("bounded admission");
         }
@@ -937,7 +980,7 @@ mod tests {
 
     #[tokio::test]
     async fn slow_success_is_polled_once_and_acknowledged() {
-        let operations = ControlOperations::new(crate::tests::clock());
+        let operations = fast_operations();
         let started = Arc::new(Notify::new());
         let release = Arc::new(Notify::new());
         let handler_started = started.clone();
@@ -969,7 +1012,7 @@ mod tests {
 
     #[tokio::test]
     async fn slow_original_error_keeps_result_identity() {
-        let operations = ControlOperations::new(crate::tests::clock());
+        let operations = fast_operations();
         let started = Arc::new(Notify::new());
         let release = Arc::new(Notify::new());
         let handler_started = started.clone();
@@ -998,7 +1041,7 @@ mod tests {
 
     #[tokio::test]
     async fn original_accepted_response_has_no_operation_header() {
-        let operations = ControlOperations::new(crate::tests::clock());
+        let operations = fast_operations();
         let router = test_router(
             operations,
             post(|| async { (StatusCode::ACCEPTED, Json(json!({"accepted": true}))) }),
@@ -1014,7 +1057,7 @@ mod tests {
 
     #[tokio::test]
     async fn disconnected_waiter_does_not_replay_work() {
-        let operations = ControlOperations::new(crate::tests::clock());
+        let operations = fast_operations();
         let started = Arc::new(Notify::new());
         let release = Arc::new(Notify::new());
         let calls = Arc::new(AtomicUsize::new(0));
@@ -1048,7 +1091,7 @@ mod tests {
 
     #[tokio::test]
     async fn quick_responses_reclaim_receipts() {
-        let operations = ControlOperations::new(crate::tests::clock());
+        let operations = fast_operations();
         let calls = Arc::new(AtomicUsize::new(0));
         let handler_calls = calls.clone();
         let router = test_router(
@@ -1071,7 +1114,7 @@ mod tests {
 
     #[tokio::test]
     async fn middleware_rejects_the_ninth_pending_request_before_handler() {
-        let operations = ControlOperations::new(crate::tests::clock());
+        let operations = fast_operations();
         let started = Arc::new(AtomicUsize::new(0));
         let release = Arc::new(Notify::new());
         let handler_started = started.clone();
@@ -1162,11 +1205,11 @@ mod tests {
 
     #[tokio::test]
     async fn blocking_task_panic_is_uncertain_without_result_header() {
-        let operations = ControlOperations::new(crate::tests::clock());
+        let operations = fast_operations();
         let router = test_router(
             operations.clone(),
             post(|| async {
-                tokio::time::sleep(Duration::from_millis(120)).await;
+                tokio::time::sleep(SLOW_HANDLER).await;
                 crate::catalog_task(|| panic!("fixture blocking task panic")).await
             }),
         );
@@ -1219,11 +1262,11 @@ mod tests {
 
     #[tokio::test]
     async fn panic_and_oversize_are_uncertain_without_result_header() {
-        let operations = ControlOperations::new(crate::tests::clock());
+        let operations = fast_operations();
         let router = test_router(
             operations.clone(),
             post(|| async {
-                tokio::time::sleep(Duration::from_millis(120)).await;
+                tokio::time::sleep(SLOW_HANDLER).await;
                 panic_status()
             }),
         );
@@ -1239,11 +1282,11 @@ mod tests {
         let body: Value = serde_json::from_slice(&body).expect("JSON");
         assert_eq!(body["parameters"]["operationOutcome"], "uncertain");
 
-        let operations = ControlOperations::new(crate::tests::clock());
+        let operations = fast_operations();
         let router = test_router(
             operations.clone(),
             post(|| async {
-                tokio::time::sleep(Duration::from_millis(120)).await;
+                tokio::time::sleep(SLOW_HANDLER).await;
                 Body::from(vec![b'x'; RESPONSE_LIMIT + 1])
             }),
         );

@@ -14,33 +14,54 @@ use tokio::{
     time::Sleep,
 };
 
-const WRITE_STALL_LIMIT: Duration = Duration::from_secs(2);
-const MAX_ACCEPTED_CONTROL_SOCKETS: usize = 64;
+/// Bounds on the sockets one control listener accepts.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct SocketLimits {
+    /// Accepted sockets held at once; further peers wait in the OS backlog.
+    pub accepted: usize,
+    /// How long one pending write, flush or shutdown may stall before the socket fails.
+    pub write_stall: Duration,
+}
+
+impl Default for SocketLimits {
+    /// The product limits: 64 sockets and a two-second write stall.
+    fn default() -> Self {
+        Self {
+            accepted: 64,
+            write_stall: Duration::from_secs(2),
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests;
 
 /// Wraps the bound control listener (the engine's authenticated Unix socket, or a test
-/// listener) with a 64-socket acceptance limit and a two-second socket write-stall limit.
+/// listener) with an acceptance limit and a socket write-stall limit.
 ///
 /// The listener retains ownership of each accepted socket. Only a pending socket write,
 /// flush or shutdown starts a deadline; waiting for a mutation to produce its response
 /// does not. Read/body deadlines remain the HTTP ingress layer's responsibility.
 #[must_use]
-pub fn bounded_listener<L: Listener>(listener: L) -> impl Listener<Addr = L::Addr> {
-    ControlListener::with_capacity(listener, MAX_ACCEPTED_CONTROL_SOCKETS)
+pub fn bounded_listener<L: Listener>(
+    listener: L,
+    limits: SocketLimits,
+) -> impl Listener<Addr = L::Addr> {
+    ControlListener::new(listener, limits)
 }
 
 struct ControlListener<L> {
     listener: L,
     accepted_slots: Arc<Semaphore>,
+    write_stall: Duration,
 }
 
 impl<L: Listener> ControlListener<L> {
-    fn with_capacity(listener: L, capacity: usize) -> Self {
+    fn new(listener: L, limits: SocketLimits) -> Self {
         Self {
             listener,
-            accepted_slots: Arc::new(Semaphore::new(capacity)),
+            accepted_slots: Arc::new(Semaphore::new(limits.accepted)),
+            write_stall: limits.write_stall,
         }
     }
 }
@@ -60,6 +81,7 @@ impl<L: Listener> Listener for ControlListener<L> {
             ControlSocket {
                 stream,
                 _accepted_slot: permit,
+                write_stall: self.write_stall,
                 stalled: None,
             },
             address,
@@ -74,6 +96,7 @@ impl<L: Listener> Listener for ControlListener<L> {
 struct ControlSocket<S> {
     stream: S,
     _accepted_slot: OwnedSemaphorePermit,
+    write_stall: Duration,
     stalled: Option<Pin<Box<Sleep>>>,
 }
 
@@ -87,9 +110,10 @@ impl<S> ControlSocket<S> {
             self.stalled = None;
             return result;
         }
+        let write_stall = self.write_stall;
         let deadline = self
             .stalled
-            .get_or_insert_with(|| Box::pin(tokio::time::sleep(WRITE_STALL_LIMIT)));
+            .get_or_insert_with(|| Box::pin(tokio::time::sleep(write_stall)));
         if deadline.as_mut().poll(cx).is_ready() {
             return Poll::Ready(Err(io::Error::new(
                 io::ErrorKind::TimedOut,

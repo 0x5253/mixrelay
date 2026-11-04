@@ -48,7 +48,12 @@ async fn blocking_requests_and_clones_reuse_one_live_driver_connection() {
         accepted: accepted.clone(),
     };
     let service = tokio::spawn(async move {
-        axum::serve(counted, crate::router(manager)).await.unwrap();
+        axum::serve(
+            counted,
+            crate::router(manager, crate::InventoryIntervals::default()),
+        )
+        .await
+        .unwrap();
     });
     let worker = client.clone();
     tokio::task::spawn_blocking(move || {

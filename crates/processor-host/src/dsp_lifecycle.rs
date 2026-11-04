@@ -11,13 +11,19 @@ use std::{
     thread::JoinHandle,
 };
 
+/// How long vendor code may keep running after the parent disconnects.
+pub(crate) const PARENT_GRACE: std::time::Duration = std::time::Duration::from_secs(2);
+
 /// Watch the worker's private stdin lifetime pipe before entering any vendor code.
 ///
 /// The parent retains the write end until it releases this worker or exits.
 /// EOF requests orderly shutdown, then terminates this isolated worker process if
-/// vendor initialization, processing, or destruction has not returned within two seconds.
-/// Returns an error if the watcher thread cannot be created.
-pub(crate) fn watch_parent(shutdown: Arc<AtomicBool>) -> std::io::Result<JoinHandle<()>> {
+/// vendor initialization, processing, or destruction has not returned within `grace`
+/// ([`PARENT_GRACE`] in the product). Returns an error if the watcher thread cannot be created.
+pub(crate) fn watch_parent(
+    shutdown: Arc<AtomicBool>,
+    grace: std::time::Duration,
+) -> std::io::Result<JoinHandle<()>> {
     std::thread::Builder::new()
         .name("mixrelay-plugin-parent-watch".to_owned())
         .spawn(move || {
@@ -26,7 +32,7 @@ pub(crate) fn watch_parent(shutdown: Arc<AtomicBool>) -> std::io::Result<JoinHan
             shutdown.store(true, Ordering::Release);
             // A native call may never observe shutdown. The process boundary owns its resources;
             // do not unwind or destroy the instance while its native code is still running.
-            std::thread::sleep(std::time::Duration::from_secs(2));
+            std::thread::sleep(grace);
             terminate_worker();
         })
 }
@@ -169,7 +175,8 @@ mod tests {
                 // isolated child. The parent kills/reaps this child if termination fails.
                 assert_eq!(unsafe { libc::atexit(blocked_vendor_exit) }, 0);
             }
-            let _watch = watch_parent(Arc::new(AtomicBool::new(false))).unwrap();
+            let _watch =
+                watch_parent(Arc::new(AtomicBool::new(false)), Duration::from_millis(50)).unwrap();
             // A vendor call cannot be cooperatively interrupted by the shutdown flag.
             loop {
                 thread::park();

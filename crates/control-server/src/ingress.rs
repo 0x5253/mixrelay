@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use crate::{ControlOperations, operations::IngressLease};
 use axum::{
     Json,
@@ -12,7 +10,6 @@ use axum::{
 use mixrelay_control_protocol::{ErrorCode, ProtocolError};
 
 const BODY_LIMIT: usize = 16 * 1024 * 1024;
-const BODY_DEADLINE: Duration = Duration::from_secs(2);
 
 /// Bound ingress before handing ownership to a mutation. Once dispatched, a native
 /// transaction or recorder finalization must complete even while the server shuts down.
@@ -41,7 +38,12 @@ pub(super) async fn read_body(
             .insert(CONNECTION, HeaderValue::from_static("close"));
         return response;
     };
-    let bytes = match tokio::time::timeout(BODY_DEADLINE, to_bytes(body, BODY_LIMIT)).await {
+    let bytes = match tokio::time::timeout(
+        operations.timings().body_deadline,
+        to_bytes(body, BODY_LIMIT),
+    )
+    .await
+    {
         Ok(Ok(bytes)) => bytes,
         Ok(Err(error)) => return rejected(StatusCode::BAD_REQUEST, &error.to_string()),
         Err(_) => {
@@ -75,7 +77,24 @@ fn rejected(status: StatusCode, reason: &str) -> Response {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
+    use std::{sync::Arc, time::Duration};
+
+    /// Short enough that deadline tests stay fast, long enough for a local request.
+    const TEST_DEADLINE: Duration = Duration::from_millis(50);
+
+    fn operations() -> crate::ControlOperations {
+        crate::ControlOperations::new(crate::tests::clock()).with_timings(crate::OperationTimings {
+            body_deadline: TEST_DEADLINE,
+            ..crate::OperationTimings::default()
+        })
+    }
+
+    fn test_limits() -> crate::SocketLimits {
+        crate::SocketLimits {
+            write_stall: TEST_DEADLINE,
+            ..crate::SocketLimits::default()
+        }
+    }
 
     use axum::{
         Router, middleware,
@@ -92,7 +111,7 @@ mod tests {
 
     #[tokio::test]
     async fn incomplete_body_cannot_hold_graceful_shutdown_open() {
-        let operations = crate::ControlOperations::new(crate::tests::clock());
+        let operations = operations();
         let entered = Arc::new(Notify::new());
         let observed = entered.clone();
         let router = crate::router(operations.clone()).layer(middleware::from_fn(
@@ -108,7 +127,7 @@ mod tests {
         let address = listener.local_addr().expect("address");
         let (shutdown, stopped) = oneshot::channel();
         let server = tokio::spawn(async move {
-            axum::serve(crate::bounded_listener(listener), router)
+            axum::serve(crate::bounded_listener(listener, test_limits()), router)
                 .with_graceful_shutdown(async {
                     let _ = stopped.await;
                 })
@@ -122,7 +141,7 @@ mod tests {
             .await
             .expect("request entered router");
         shutdown.send(()).expect("signal shutdown");
-        tokio::time::timeout(BODY_DEADLINE + Duration::from_secs(2), server)
+        tokio::time::timeout(TEST_DEADLINE + Duration::from_secs(2), server)
             .await
             .expect("shutdown must drain incomplete ingress")
             .expect("server task");
@@ -151,7 +170,7 @@ mod tests {
         async fn rejected_backend() -> StatusCode {
             panic!("rejected body reached backend")
         }
-        let operations = crate::ControlOperations::new(crate::tests::clock());
+        let operations = operations();
         let held: Vec<_> = (0..8)
             .map(|_| operations.try_acquire_ingress().expect("budget permit"))
             .collect();
@@ -177,7 +196,7 @@ mod tests {
 
     #[tokio::test]
     async fn disconnected_incomplete_body_releases_ingress() {
-        let operations = crate::ControlOperations::new(crate::tests::clock());
+        let operations = operations();
         let held: Vec<_> = (0..7)
             .map(|_| operations.try_acquire_ingress().expect("budget permit"))
             .collect();
@@ -185,7 +204,7 @@ mod tests {
         let listener = TcpListener::bind("127.0.0.1:0").await.expect("listener");
         let address = listener.local_addr().expect("address");
         let server = tokio::spawn(async move {
-            axum::serve(crate::bounded_listener(listener), router)
+            axum::serve(crate::bounded_listener(listener, test_limits()), router)
                 .await
                 .expect("server");
         });
@@ -235,9 +254,7 @@ mod tests {
                 }),
             )
             .layer(middleware::from_fn(read_body))
-            .layer(axum::Extension(crate::ControlOperations::new(
-                crate::tests::clock(),
-            )));
+            .layer(axum::Extension(operations()));
         let task = tokio::spawn(
             router.oneshot(
                 Request::post("/mutation")
@@ -246,7 +263,7 @@ mod tests {
             ),
         );
         started.notified().await;
-        tokio::time::sleep(BODY_DEADLINE + Duration::from_millis(20)).await;
+        tokio::time::sleep(TEST_DEADLINE + Duration::from_millis(20)).await;
         assert!(!task.is_finished(), "accepted work must retain its owner");
         finish.notify_one();
         assert_eq!(
@@ -257,7 +274,7 @@ mod tests {
 
     #[tokio::test]
     async fn empty_body_bypasses_full_ingress_budget() {
-        let operations = crate::ControlOperations::new(crate::tests::clock());
+        let operations = operations();
         let held: Vec<_> = (0..8)
             .map(|_| operations.try_acquire_ingress().expect("budget permit"))
             .collect();
@@ -279,7 +296,7 @@ mod tests {
 
     #[tokio::test]
     async fn detached_operation_retains_ingress_lease_until_completion() {
-        let operations = crate::ControlOperations::new(crate::tests::clock());
+        let operations = operations();
         let lease = operations.try_acquire_ingress().expect("budget permit");
         let held: Vec<_> = (0..7)
             .map(|_| operations.try_acquire_ingress().expect("budget permit"))
@@ -323,14 +340,12 @@ mod tests {
         let router = Router::new()
             .route("/large", post(|| async { vec![b'x'; 32 * 1024 * 1024] }))
             .layer(middleware::from_fn(read_body))
-            .layer(axum::Extension(crate::ControlOperations::new(
-                crate::tests::clock(),
-            )));
+            .layer(axum::Extension(operations()));
         let listener = TcpListener::bind("127.0.0.1:0").await.expect("listener");
         let address = listener.local_addr().expect("address");
         let (shutdown, stopped) = oneshot::channel();
         let mut server = tokio::spawn(async move {
-            axum::serve(crate::bounded_listener(listener), router)
+            axum::serve(crate::bounded_listener(listener, test_limits()), router)
                 .with_graceful_shutdown(async {
                     let _ = stopped.await;
                 })
@@ -361,7 +376,7 @@ mod tests {
         }
         assert!(
             !stalled,
-            "non-reading peer held graceful shutdown beyond 3 seconds"
+            "non-reading peer held graceful shutdown past its write-stall limit"
         );
     }
 
@@ -381,14 +396,12 @@ mod tests {
                 }),
             )
             .layer(middleware::from_fn(read_body))
-            .layer(axum::Extension(crate::ControlOperations::new(
-                crate::tests::clock(),
-            )));
+            .layer(axum::Extension(operations()));
         let listener = TcpListener::bind("127.0.0.1:0").await.expect("listener");
         let address = listener.local_addr().expect("address");
         let (shutdown, stopped) = oneshot::channel();
         let server = tokio::spawn(async move {
-            axum::serve(crate::bounded_listener(listener), router)
+            axum::serve(crate::bounded_listener(listener, test_limits()), router)
                 .with_graceful_shutdown(async {
                     let _ = stopped.await;
                 })
@@ -404,7 +417,7 @@ mod tests {
             .await
             .expect("mutation dispatched");
         shutdown.send(()).expect("signal shutdown");
-        tokio::time::sleep(BODY_DEADLINE + Duration::from_millis(20)).await;
+        tokio::time::sleep(TEST_DEADLINE + Duration::from_millis(20)).await;
         assert!(
             !server.is_finished(),
             "shutdown must wait for accepted mutation"

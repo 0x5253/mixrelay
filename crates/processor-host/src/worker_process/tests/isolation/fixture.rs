@@ -12,7 +12,11 @@ pub(super) fn run(mode: &str) {
     let path = std::path::PathBuf::from(std::env::var_os(PATH).unwrap());
     let directory = path.parent().unwrap();
     let (mut audio, control) = shared_transport::worker(&path).unwrap();
-    let _parent = crate::dsp_lifecycle::watch_parent(Arc::new(AtomicBool::new(false))).unwrap();
+    let _parent = crate::dsp_lifecycle::watch_parent(
+        Arc::new(AtomicBool::new(false)),
+        crate::dsp_lifecycle::PARENT_GRACE,
+    )
+    .unwrap();
     if matches!(mode, "early_exit" | "load_hang") {
         let _load = control.header().native_operation.enter(Stage::Load);
         if mode == "early_exit" {

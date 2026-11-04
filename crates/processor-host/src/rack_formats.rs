@@ -242,9 +242,10 @@ pub(crate) fn supported_formats() -> Vec<RackFormat> {
 ///
 /// Returns an error when discovery fails or its result cannot be serialized.
 pub fn run_scan(format: RackFormat, custom_paths: &[PathBuf]) -> Result<(), String> {
-    let _parent = crate::dsp_lifecycle::watch_parent(std::sync::Arc::new(
-        std::sync::atomic::AtomicBool::new(false),
-    ))
+    let _parent = crate::dsp_lifecycle::watch_parent(
+        std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
+        crate::dsp_lifecycle::PARENT_GRACE,
+    )
     .map_err(|error| error.to_string())?;
     crate::worker::prepare_plugin_process()?;
     let (infos, path_failures) = match format {
@@ -343,9 +344,10 @@ fn scan_with_paths(
 ///
 /// Returns an error when the processor cannot load, activate, or expose a supported layout.
 pub fn run_probe(locator: RackLocator) -> Result<(), String> {
-    let _parent = crate::dsp_lifecycle::watch_parent(std::sync::Arc::new(
-        std::sync::atomic::AtomicBool::new(false),
-    ))
+    let _parent = crate::dsp_lifecycle::watch_parent(
+        std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
+        crate::dsp_lifecycle::PARENT_GRACE,
+    )
     .map_err(|error| error.to_string())?;
     crate::worker::prepare_plugin_process()?;
     let record = probe(locator)?;

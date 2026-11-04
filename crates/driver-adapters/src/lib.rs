@@ -7,5 +7,5 @@ mod store;
 
 pub use client::DriverClient;
 pub use generations::SystemLatencyGenerations;
-pub use server::router;
+pub use server::{InventoryIntervals, router};
 pub use store::FileSettingsStore;

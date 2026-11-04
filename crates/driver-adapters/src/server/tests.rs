@@ -3,6 +3,11 @@ use axum::{body::Body, http::Request};
 use tower::ServiceExt as _;
 
 use super::*;
+
+const RECHECK_ONLY: InventoryIntervals = InventoryIntervals {
+    recheck: Duration::from_millis(100),
+    after_failure: Duration::from_millis(100),
+};
 use mixrelay_driver_core::{
     SettingsStore, test_backend::FakeBackend, test_settings::MemorySettings,
 };
@@ -16,6 +21,7 @@ fn app(store: &MemorySettings) -> Router {
             mixrelay_driver_core::test_runtime::runtime(),
         )
         .unwrap(),
+        InventoryIntervals::default(),
     )
 }
 
@@ -30,7 +36,7 @@ async fn snapshot_uses_independent_native_state_and_version() {
     )
     .unwrap();
     manager.set_installed_version(Some("0.1.0".into()));
-    let response = router(manager)
+    let response = router(manager, InventoryIntervals::default())
         .oneshot(
             Request::builder()
                 .uri(SNAPSHOT_ROUTE)
@@ -61,7 +67,7 @@ async fn maintenance_initializes_later_ready_inventory_without_requests() {
         )
         .unwrap(),
     ));
-    let maintenance = tokio::spawn(maintain_inventory(Arc::downgrade(&manager)));
+    let maintenance = tokio::spawn(maintain_inventory(Arc::downgrade(&manager), RECHECK_ONLY));
     assert!(store.load().unwrap().is_none());
     observed.lock().state = mixrelay_driver_core::DriverState::Ready;
     tokio::time::timeout(Duration::from_secs(3), async {
@@ -96,6 +102,7 @@ async fn unavailable_router_reports_native_state_and_releases_its_owner_on_drop(
             mixrelay_driver_core::test_runtime::runtime(),
         )
         .unwrap(),
+        InventoryIntervals::default(),
     );
     let response = app
         .clone()
@@ -143,7 +150,10 @@ async fn waiting_startup_task_exits_when_its_router_owner_is_gone() {
         .unwrap(),
     ));
     let owner = Arc::downgrade(&manager);
-    let startup = tokio::spawn(maintain_inventory(owner.clone()));
+    let startup = tokio::spawn(maintain_inventory(
+        owner.clone(),
+        InventoryIntervals::default(),
+    ));
     drop(manager);
     tokio::time::timeout(Duration::from_secs(3), startup)
         .await
@@ -170,7 +180,8 @@ async fn maintenance_recovers_failed_inventory_without_requests_and_releases_rou
         .id
         .as_str()
         .to_owned();
-    let app = router(manager);
+    // A short recheck keeps this test fast; it asserts the wait, not its product length.
+    let app = router(manager, RECHECK_ONLY);
     {
         let mut native = observed.lock();
         native.state = mixrelay_driver_core::DriverState::Unavailable;
@@ -184,7 +195,7 @@ async fn maintenance_recovers_failed_inventory_without_requests_and_releases_rou
     .await
     .expect("failed owner recovered without an API request");
     assert_eq!(observed.lock().recovered_devices, [id]);
-    tokio::time::sleep(Duration::from_millis(1100)).await;
+    tokio::time::sleep(RECHECK_ONLY.recheck + Duration::from_millis(50)).await;
     assert_eq!(observed.lock().readbacks, readbacks + 1);
     assert_eq!(store.load().unwrap(), saved);
     drop(app);
@@ -381,7 +392,7 @@ async fn runtime_route_claims_and_releases_without_persisting_inventory_revision
     )
     .unwrap();
     let revision = manager.snapshot().unwrap().revision;
-    let router = router(manager);
+    let router = router(manager, InventoryIntervals::default());
     let send = |command: mixrelay_driver_core::LatencyCommand| {
         Request::builder()
             .method(Method::PUT)
