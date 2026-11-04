@@ -6,8 +6,9 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
-use mixrelay_desktop_core::diagnostics::{self, ExportPermit, REPORT_LIMIT, ReportEnvironment};
-use mixrelay_desktop_core::diagnostics::{EditorContext, ExportAdmission};
+use mixrelay_desktop_core::diagnostics::{
+    self, EditorContext, ExportAdmission, ExportPermit, REPORT_LIMIT, ReportEnvironment,
+};
 use mixrelay_driver_core::DriverSnapshot;
 use serde_json::Value;
 use tauri::{AppHandle, Manager as _};
@@ -154,18 +155,35 @@ async fn choose_destination(app: &AppHandle, locale: Locale) -> Option<PathBuf> 
 
 /// Reads the Driver snapshot and runtime status; either may be missing from the report.
 async fn collect_sources(app: &AppHandle) -> (Option<DriverSnapshot>, Option<Value>) {
-    let driver = tokio::time::timeout(SOURCE_TIMEOUT, async {
-        mixrelay_driver_adapters::DriverClient::session()?
-            .snapshot()
-            .await
-    });
-    let runtime = tokio::time::timeout(
-        SOURCE_TIMEOUT,
+    collect(
+        async {
+            mixrelay_driver_adapters::DriverClient::session()?
+                .snapshot()
+                .await
+        },
         crate::background::dispatch(app, "control_get_status", Value::Null),
+    )
+    .await
+}
+
+/// Queries both sources at once, each within its own [`SOURCE_TIMEOUT`], so a stalled Driver
+/// does not spend the runtime's budget.
+async fn collect<D, R, DriverError, RuntimeError>(
+    driver: D,
+    runtime: R,
+) -> (Option<DriverSnapshot>, Option<Value>)
+where
+    D: Future<Output = Result<DriverSnapshot, DriverError>>,
+    R: Future<Output = Result<Value, RuntimeError>>,
+{
+    let (driver, runtime) = tokio::join!(
+        tokio::time::timeout(SOURCE_TIMEOUT, driver),
+        tokio::time::timeout(SOURCE_TIMEOUT, runtime),
     );
-    let driver = driver.await.ok().and_then(Result::ok);
-    let runtime = runtime.await.ok().and_then(Result::ok);
-    (driver, runtime)
+    (
+        driver.ok().and_then(Result::ok),
+        runtime.ok().and_then(Result::ok),
+    )
 }
 
 async fn show_save_failure(locale: Locale) {
@@ -256,6 +274,33 @@ fn save(destination: &Path, report: &Value) -> std::io::Result<()> {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[tokio::test(start_paused = true)]
+    async fn a_stalled_driver_does_not_spend_the_runtime_budget() {
+        let runtime_delay = SOURCE_TIMEOUT.saturating_sub(Duration::from_millis(1));
+        let (driver, runtime) = collect(
+            std::future::pending::<Result<DriverSnapshot, ()>>(),
+            async {
+                tokio::time::sleep(runtime_delay).await;
+                Ok::<_, ()>(json!({"running": true}))
+            },
+        )
+        .await;
+        assert!(driver.is_none());
+        assert_eq!(runtime, Some(json!({"running": true})));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn each_source_is_cut_off_at_its_own_timeout() {
+        let started = tokio::time::Instant::now();
+        let (driver, runtime) = collect(
+            std::future::pending::<Result<DriverSnapshot, ()>>(),
+            std::future::pending::<Result<Value, ()>>(),
+        )
+        .await;
+        assert_eq!((driver, runtime), (None, None));
+        assert_eq!(started.elapsed(), SOURCE_TIMEOUT);
+    }
 
     #[test]
     fn repeated_explicit_save_replaces_one_file_and_failure_leaves_no_temporary_dump() {
