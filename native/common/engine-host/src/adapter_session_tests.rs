@@ -1,15 +1,11 @@
 //! The adapter runtime status that both native services share, driven by a real
 //! `AudioWorker` thread and file-backed session preferences.
-#![allow(
-    clippy::unwrap_used,
-    clippy::expect_used,
-    reason = "test helpers outside #[test] functions; a failed setup fails the test"
-)]
 mod external_rate;
 mod format_catalog;
 mod routing;
 mod status;
 
+use crate::{AudioWorker, session_preferences::SessionPreferences};
 use mixrelay_audio_graph::RenderFormat;
 use mixrelay_audio_io::session::{
     AudioBackendKind, AudioSessionCapabilities, ClockAuthority, SessionFormat, SessionIssue,
@@ -19,7 +15,6 @@ use mixrelay_engine_core::session::*;
 use mixrelay_engine_core::{
     ProcessingControlBackend, RuntimeBackend, RuntimeStatusBackend, SessionFormatBackend,
 };
-use mixrelay_engine_host::{AudioWorker, session_preferences::SessionPreferences};
 use std::{
     sync::{
         Arc,

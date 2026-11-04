@@ -166,7 +166,7 @@ fn routing_buffer_adopts_the_hardware_clock_even_when_its_preference_cannot_be_p
     std::fs::create_dir(&path).unwrap();
     let mut status = runtime();
     status.test_set_preferences(Ok(std::sync::Arc::new(
-        mixrelay_engine_host::session_preferences::SessionPreferences::at(
+        crate::session_preferences::SessionPreferences::at(
             path.clone(),
             AudioBackendKind::CoreAudio,
         ),

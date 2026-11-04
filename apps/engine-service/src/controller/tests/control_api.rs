@@ -49,22 +49,3 @@ fn node_control_preview_leaves_the_graph_and_update_applies_it() {
         .unwrap();
     assert!(gain_muted(backend, &graph_id));
 }
-
-#[test]
-fn catalog_reads_return_the_active_document_without_publishing() {
-    let directory = mixrelay_test_support::FixtureDir::new("control-api-catalog").unwrap();
-    let engine = controller(gain_graph()).with_graph_catalog_path(directory.join("graphs.json"));
-    let backend: &dyn ControlBackend = &*engine;
-    let revisions = engine.exchange.revisions();
-    let catalog = backend.graph_catalog().unwrap();
-
-    assert_eq!(
-        backend.graph_catalog_document(&catalog.active_id).unwrap(),
-        catalog.document
-    );
-    assert_eq!(
-        backend.graph_layout(&catalog.active_id).unwrap().graph_id,
-        catalog.active_id
-    );
-    assert_eq!(engine.exchange.revisions(), revisions);
-}

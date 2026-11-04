@@ -1,4 +1,5 @@
-//! Native integration fixture for recorder and document ownership tests.
+//! Controllers composed over a fake Driver inventory of virtual endpoints, and the endpoint
+//! graph document the recorder and document ownership tests use.
 use super::*;
 use mixrelay_audio_io::{
     NativeDeviceFormats, VirtualEndpointDeviceSettings, VirtualEndpointSettings,

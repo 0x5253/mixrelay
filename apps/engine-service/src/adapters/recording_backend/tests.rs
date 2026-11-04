@@ -10,8 +10,8 @@ fn a_recording_port_rejection_preserves_the_create_new_source_and_existing_bytes
     let registry = RecorderRegistry::threaded_files();
     let tap = registry.prepare("rec", 1).unwrap();
     tap.capture(&[], 48_000);
-    let bridge = RegistryRecordingBackend(registry);
-    let failure = bridge
+    let backend = RegistryRecordingBackend(registry);
+    let failure = backend
         .command(
             "rec",
             RecorderRequest {
@@ -39,8 +39,8 @@ fn an_engine_hold_retains_the_native_take_until_the_paused_graph_releases_it() {
     let registry = RecorderRegistry::threaded_files();
     let tap = registry.prepare("rec", 1).unwrap();
     tap.capture(&[], 48_000);
-    let bridge = RegistryRecordingBackend(registry);
-    bridge
+    let backend = RegistryRecordingBackend(registry);
+    backend
         .command(
             "rec",
             RecorderRequest {
@@ -52,14 +52,14 @@ fn an_engine_hold_retains_the_native_take_until_the_paused_graph_releases_it() {
         )
         .unwrap();
     tap.capture(&[0.25, 0.5], 48_000);
-    let holds = bridge.open_take_taps();
+    let holds = backend.open_take_taps();
     drop(tap);
-    bridge.reap_unused().unwrap();
+    backend.reap_unused().unwrap();
     assert_eq!(
-        bridge.status("rec").state,
+        backend.status("rec").state,
         mixrelay_audio_io::recording::RecorderState::Recording
     );
-    let paused = bridge
+    let paused = backend
         .command(
             "rec",
             RecorderRequest {
@@ -75,7 +75,7 @@ fn an_engine_hold_retains_the_native_take_until_the_paused_graph_releases_it() {
         (mixrelay_audio_io::recording::RecorderState::Paused, 2)
     );
     drop(holds);
-    bridge.reap_unused().unwrap();
+    backend.reap_unused().unwrap();
     let mut reader = mixrelay_test_support::rf64::open(path).unwrap();
     assert_eq!(
         reader
