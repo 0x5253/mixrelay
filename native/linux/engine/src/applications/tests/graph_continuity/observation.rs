@@ -108,11 +108,7 @@ impl mixrelay_linux_pipewire::DriverProcess for LinuxGraphProcess<'_> {
         self.state.process(cycle);
         // These test-only loads borrow current owners after their normal report
         // work. No native pointer, report baseline or PCM cursor escapes.
-        let sets = [
-            self.state.captures.transfer_snapshot(),
-            self.state.endpoints.transfer_snapshot(),
-            self.state.devices.transfer_snapshot(),
-        ];
+        let sets = self.state.transfer_snapshots();
         // This exclusive DriverProcess writer publishes a fixed bundle. Markers
         // AND payload use SeqCst: ARM64 has the same SC order, with odd before
         // changed words and even after them. A reader observing changed words
@@ -127,7 +123,7 @@ impl mixrelay_linux_pipewire::DriverProcess for LinuxGraphProcess<'_> {
             .fetch_add(u64::from(cycle.frames), Ordering::SeqCst);
         self.counters.discontinuities.store(
             self.state
-                .clock_diagnostics
+                .clock_diagnostics()
                 .read_since(0)
                 .map_or(0, |read| read.event_number),
             Ordering::SeqCst,

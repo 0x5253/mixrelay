@@ -71,6 +71,7 @@ fn backend(driver: &Arc<FakeDriver>) -> Arc<LinuxVirtualEndpointBackend> {
         Arc::clone(driver) as _,
         render_format(),
         Arc::new(EndpointObservation::default()),
+        mixrelay_time::StdClock::new(),
     )
 }
 

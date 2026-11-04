@@ -22,7 +22,7 @@ mod driver_monitor;
 mod external_io;
 pub(crate) mod failure;
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkerError {
@@ -42,19 +42,19 @@ pub enum WorkerError {
 
 /// Everything the native callback owns while the graph driver runs.
 pub(crate) struct LinuxProcessState<'a> {
-    pub(crate) processor: Box<BlockProcessor>,
-    pub(crate) exchange: Arc<ProcessorExchange>,
-    pub(crate) endpoint_backend: &'a LinuxVirtualEndpointBackend,
-    pub(crate) application_recovery: RecoveryConsumer<'a, CaptureSet>,
-    pub(crate) device_recovery: RecoveryConsumer<'a, DeviceStreams>,
-    pub(crate) endpoints: Box<EndpointSet>,
-    pub(crate) captures: Box<CaptureSet>,
-    pub(crate) devices: Box<DeviceStreams>,
-    pub(crate) status: Arc<AdapterRuntimeStatus>,
-    pub(crate) timeline: clock::GraphTimeline,
-    pub(crate) clock_diagnostics: Arc<clock::DiscontinuityMailbox>,
-    pub(crate) failure: Arc<FailureMailbox>,
-    pub(crate) resource_failures: Arc<FailureMailbox>,
+    processor: Box<BlockProcessor>,
+    exchange: Arc<ProcessorExchange>,
+    endpoint_backend: &'a LinuxVirtualEndpointBackend,
+    application_recovery: RecoveryConsumer<'a, CaptureSet>,
+    device_recovery: RecoveryConsumer<'a, DeviceStreams>,
+    endpoints: Box<EndpointSet>,
+    captures: Box<CaptureSet>,
+    devices: Box<DeviceStreams>,
+    status: Arc<AdapterRuntimeStatus>,
+    timeline: clock::GraphTimeline,
+    clock_diagnostics: Arc<clock::DiscontinuityMailbox>,
+    failure: Arc<FailureMailbox>,
+    resource_failures: Arc<FailureMailbox>,
 }
 
 /// Owns native callback processing until stop and complete native drain.

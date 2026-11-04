@@ -20,6 +20,7 @@ pub(super) fn with_engine_graph<R>(
         crate::test_support::test_driver(),
         format,
         Arc::new(crate::format::EndpointObservation::default()),
+        mixrelay_time::StdClock::new(),
     );
     let processor = crate::runtime::create_initial_processor(
         document,
@@ -43,12 +44,13 @@ pub(super) fn with_engine_graph<R>(
         .reconcile(document, playback)
         .expect("stage graph resources");
     let status = active_runtime_status(format);
-    let state = prepare_graph_process_state(&backend, processor, &exchange, &status);
+    let state =
+        crate::processing::LinuxProcessState::prepared(&backend, processor, &exchange, &status);
     let processing = status
         .begin_processing()
         .expect("start engine processing lease");
     let counters = Arc::new(DriverCounters {
-        clock_diagnostics: Arc::clone(&state.clock_diagnostics),
+        clock_diagnostics: Arc::clone(state.clock_diagnostics()),
         ..DriverCounters::default()
     });
     let driver = mixrelay_linux_pipewire::GraphDriver::open(
@@ -70,50 +72,6 @@ pub(super) fn with_engine_graph<R>(
     drop(driver);
     drop(processing);
     (result, read_driver_counters(&counters))
-}
-
-pub(super) fn prepare_graph_process_state<'a>(
-    backend: &'a crate::backend::LinuxVirtualEndpointBackend,
-    processor: Box<mixrelay_render::BlockProcessor>,
-    exchange: &Arc<mixrelay_render::ProcessorExchange>,
-    status: &Arc<mixrelay_engine_core::session::AdapterRuntimeStatus>,
-) -> crate::processing::LinuxProcessState<'a> {
-    let format = processor.plan().format();
-    let mut endpoints = Box::default();
-    let mut captures = Box::default();
-    let mut devices = Box::default();
-    backend
-        .activate_pending(
-            processor.plan().revision(),
-            &mut endpoints,
-            &mut captures,
-            &mut devices,
-        )
-        .expect("activate exact source and sink streams");
-    backend.reclaim_retired();
-    let (application_mailbox, device_mailbox) = backend.recovery_mailboxes();
-    let application_recovery = application_mailbox
-        .try_consumer()
-        .expect("unique application capture recovery consumer");
-    let device_recovery = device_mailbox
-        .try_consumer()
-        .expect("unique device recovery consumer");
-    crate::processing::LinuxProcessState {
-        failure: Arc::new(crate::processing::failure::FailureMailbox::default()),
-        resource_failures: Arc::new(crate::processing::failure::FailureMailbox::default()),
-        processor,
-        exchange: Arc::clone(exchange),
-        endpoint_backend: backend,
-        application_recovery,
-        device_recovery,
-        endpoints,
-        captures,
-        devices,
-        status: Arc::clone(status),
-        timeline: crate::processing::clock::GraphTimeline::new(format.sample_rate)
-            .expect("valid graph timeline"),
-        clock_diagnostics: Arc::default(),
-    }
 }
 
 pub(super) fn active_runtime_status(

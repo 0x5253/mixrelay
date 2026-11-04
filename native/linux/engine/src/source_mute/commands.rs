@@ -4,7 +4,7 @@ use super::{
     lease::Lease,
     registry::{Host, METADATA_NAME, Registry},
 };
-use mixrelay_time::{Deadline, MonotonicClock, Sleeper, StdClock};
+use mixrelay_time::{Deadline, MonotonicClock, Sleeper};
 use std::{io::Read, time::Duration};
 
 const REGISTRY_READ_TIMEOUT: Duration = Duration::from_secs(2);
@@ -69,9 +69,9 @@ impl PipeWireSession {
         }
     }
 
-    /// The installed tools on the standard monotonic clock.
-    pub(super) fn system() -> Self {
-        Self::new(CliTools, StdClock::new())
+    /// The installed tools, timed by `timer`.
+    pub(super) fn installed(timer: impl Timer + 'static) -> Self {
+        Self::new(CliTools, timer)
     }
 
     pub(super) fn read_registry(&self) -> Result<Registry, String> {

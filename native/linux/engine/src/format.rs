@@ -5,7 +5,7 @@ use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 
 mod monitor;
 
-pub(crate) use mixrelay_audio_io::formats::{BUFFER_SIZES as BLOCKS, SAMPLE_RATES as RATES};
+pub(crate) use mixrelay_audio_io::formats::{BUFFER_SIZES, SAMPLE_RATES};
 pub use monitor::FormatMonitor;
 
 /// Callback-owned endpoint rate and quantum evidence for one native backend.
@@ -71,8 +71,8 @@ mod tests {
 
     #[test]
     fn packed_format_round_trips_every_supported_combination() {
-        for &sample_rate in RATES {
-            for &block_frames in BLOCKS {
+        for &sample_rate in SAMPLE_RATES {
+            for &block_frames in BUFFER_SIZES {
                 let format = RenderFormat {
                     sample_rate,
                     block_frames,

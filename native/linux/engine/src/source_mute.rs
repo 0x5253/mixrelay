@@ -7,6 +7,7 @@ use mixrelay_audio_graph::composition::ApplicationPlaybackIntent;
 use mixrelay_audio_io::HostAudioBackendError;
 use mixrelay_engine_core::PlaybackBindings;
 use mixrelay_render::{ProcessorExchange, ProcessorRevisions, RuntimeControlBank};
+use mixrelay_time::{MonotonicClock, Sleeper};
 use registry::Registry;
 use std::{
     collections::BTreeMap,
@@ -41,13 +42,12 @@ pub(crate) struct PlaybackController {
     session: PipeWireSession,
 }
 
-impl Default for PlaybackController {
-    fn default() -> Self {
-        Self::new(PipeWireSession::system())
-    }
-}
-
 impl PlaybackController {
+    /// Drives the installed `PipeWire` tools, with deadlines and polls timed by `timer`.
+    pub(crate) fn installed(timer: impl MonotonicClock + Sleeper + 'static) -> Self {
+        Self::new(PipeWireSession::installed(timer))
+    }
+
     fn new(session: PipeWireSession) -> Self {
         Self {
             plans: Mutex::default(),

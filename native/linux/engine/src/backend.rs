@@ -18,6 +18,7 @@ use mixrelay_engine_core::{
     resource_requirements::DeviceRequirements,
 };
 use mixrelay_linux_pipewire::{GraphInputs, StreamOwners};
+use mixrelay_time::{MonotonicClock, Sleeper};
 use std::sync::{
     Arc, Mutex, Weak,
     atomic::{AtomicBool, AtomicU64, Ordering},
@@ -33,10 +34,9 @@ mod resource_tests;
 #[cfg(test)]
 mod tests;
 
-pub(crate) use publication::{ResourceSpec, ResourceUpdate};
 pub use recovery::{DeviceRecoveryWorker, start_recovery};
 
-use publication::UpdateMailbox;
+use publication::{ResourceSpec, ResourceUpdate, UpdateMailbox};
 
 pub struct LinuxVirtualEndpointBackend {
     // First field: staged and retired native owners drop before any other state.
@@ -65,13 +65,15 @@ pub struct LinuxVirtualEndpointBackend {
 
 impl LinuxVirtualEndpointBackend {
     /// Prepares this backend's resource scope without opening native streams.
+    /// `timer` bounds the off-RT `WirePlumber` source-mute protocol.
     #[must_use]
     pub fn new(
         driver: Arc<dyn EndpointDriver>,
         format: RenderFormat,
         observation: Arc<EndpointObservation>,
+        timer: impl MonotonicClock + Sleeper + 'static,
     ) -> Arc<Self> {
-        Arc::new_cyclic(|weak| Self::prepare(weak, driver, format, observation))
+        Arc::new_cyclic(|weak| Self::prepare(weak, driver, format, observation, timer))
     }
 
     #[cfg(all(test, feature = "native-lab"))]
@@ -82,6 +84,7 @@ impl LinuxVirtualEndpointBackend {
                 crate::test_support::test_driver(),
                 crate::runtime::render_format(),
                 Arc::new(EndpointObservation::default()),
+                mixrelay_time::StdClock::new(),
             );
             backend.automatic_device_outputs = true;
             backend
@@ -93,6 +96,7 @@ impl LinuxVirtualEndpointBackend {
         driver: Arc<dyn EndpointDriver>,
         format: RenderFormat,
         observation: Arc<EndpointObservation>,
+        timer: impl MonotonicClock + Sleeper + 'static,
     ) -> Self {
         Self {
             updates: UpdateMailbox::default(),
@@ -105,7 +109,7 @@ impl LinuxVirtualEndpointBackend {
             capabilities: VirtualEndpointCapabilities {
                 max_render_channels: MAX_ENDPOINT_CHANNELS,
                 max_capture_channels: MAX_ENDPOINT_CHANNELS,
-                supported_sample_rates: format::RATES.to_vec(),
+                supported_sample_rates: format::SAMPLE_RATES.to_vec(),
                 supports_duplex: true,
                 supports_dynamic_creation: true,
             },
@@ -118,7 +122,7 @@ impl LinuxVirtualEndpointBackend {
             application_watch: Mutex::new(None),
             application_recovery: RecoveryMailbox::default(),
             graph_inputs: Mutex::new(None),
-            playback: source_mute::PlaybackController::default(),
+            playback: source_mute::PlaybackController::installed(timer),
             #[cfg(test)]
             automatic_device_outputs: false,
         }
@@ -314,12 +318,13 @@ impl LinuxVirtualEndpointBackend {
     }
 }
 
-#[cfg(all(test, feature = "native-lab"))]
+#[cfg(test)]
+#[cfg(feature = "native-lab")]
 impl LinuxVirtualEndpointBackend {
     pub(crate) fn application_watch(&self) -> Option<CaptureWatch> {
         self.application_watch
             .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .expect("live application watch")
             .clone()
     }
 }

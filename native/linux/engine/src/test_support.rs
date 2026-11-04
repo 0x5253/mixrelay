@@ -12,6 +12,7 @@ pub(crate) fn test_backend() -> Arc<LinuxVirtualEndpointBackend> {
         test_driver(),
         render_format(),
         Arc::new(EndpointObservation::default()),
+        mixrelay_time::StdClock::new(),
     )
 }
 

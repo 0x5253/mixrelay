@@ -1,6 +1,9 @@
 //! Native output completion across graph slices.
 use super::*;
 
+#[cfg(feature = "native-lab")]
+pub(crate) mod engine_graph;
+
 fn blocks() -> CycleBlocks {
     CycleBlocks::new(
         ProcessCycle {

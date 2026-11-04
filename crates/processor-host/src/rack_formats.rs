@@ -10,7 +10,7 @@
 use serde::Serialize;
 
 pub(crate) mod adapters;
-pub(crate) mod effect_layout;
+mod effect_layout;
 pub(crate) mod identity;
 pub(crate) mod layouts;
 pub(crate) mod probe;
