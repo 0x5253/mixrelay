@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import type { AudioGraphModel } from '../../core/audio-graph/model';
+import { type AudioGraphModel, graphNodeDefaultWidth } from '../../core/audio-graph/model';
 import type { RuntimeGraphDocument } from '../../core/domain/control/graph';
 import { effectTranslations } from '../../core/i18n/effects';
 import {
@@ -23,6 +23,10 @@ it.each(effectKinds)('persists %s controls, bypass and channel geometry across r
   let model = addRoutingNode(empty, { kind: 'effect', effect: kind }, { x: 10, y: 20 });
   const node = model.nodes[0];
   if (!node) throw new Error('Effect was not added');
+  expect(node.position).toEqual({ x: 10, y: 20 });
+  expect(audioGraphToRuntimeGraph(model, document).nodes[0]?.config).toMatchObject({
+    bypass: false,
+  });
   expect(node.inputPorts).toHaveLength(kind === 'pan' ? 1 : kind === 'ducking' ? 3 : 2);
   expect(node.outputPorts).toHaveLength(2);
   model = updateRoutingNodeParameter(model, node.id, 'bypass', 1);
@@ -171,4 +175,87 @@ it('limits echo modes to stereo or actual ping-pong independently from channel u
   expect(audioGraphToRuntimeGraph(changed, document).nodes[0]?.config).toMatchObject({
     effect: { parameters: { mode: 1 } },
   });
+});
+
+it.each([
+  ['karaoke', ['delay', 'reverb']],
+  ['tunnel', ['equalizer', 'delay', 'reverb']],
+  ['fishbowl', ['high_pass', 'low_pass', 'chorus', 'reverb']],
+  ['radio', ['high_pass', 'low_pass', 'compressor']],
+  ['doubleVocal', ['chorus', 'delay']],
+] as const)(
+  'inserts %s left to right after existing nodes, wired channel for channel',
+  (preset, kinds) => {
+    const existing = addRoutingNode(empty, { kind: 'limiter' }, { x: 0, y: 0 });
+    const graph = addRoutingNode(existing, { kind: 'effect_chain', preset }, { x: 44, y: 33 });
+    const saved = audioGraphToRuntimeGraph(graph, document);
+    expect(saved.nodes[0]).toEqual(audioGraphToRuntimeGraph(existing, document).nodes[0]);
+    const chain = saved.nodes.slice(1);
+    expect(
+      chain.map((node) =>
+        node.type === 'effect'
+          ? (node.config as { effect: { kind: string } }).effect.kind
+          : node.type,
+      ),
+    ).toEqual(kinds);
+    const views = graph.nodes.slice(1);
+    expect(views[0]?.position).toEqual({ x: 44, y: 33 });
+    for (let index = 1; index < chain.length; index += 1) {
+      const [previous, next] = [views[index - 1], views[index]];
+      if (!previous || !next) throw new Error('The chain is missing a node');
+      expect(
+        next.position.x - previous.position.x - graphNodeDefaultWidth(previous),
+      ).toBeGreaterThan(0);
+      const connections = saved.edges.filter(
+        (edge) =>
+          edge.source.nodeId === chain[index - 1]?.id &&
+          edge.destination.nodeId === chain[index]?.id,
+      );
+      expect(connections.map((edge) => edge.channelMapping)).toEqual([
+        { mode: 'explicit', routes: [{ sourceChannel: 0, destinationChannel: 0 }] },
+        { mode: 'explicit', routes: [{ sourceChannel: 1, destinationChannel: 1 }] },
+      ]);
+    }
+  },
+);
+
+it.each([
+  ['lowFrequencyHz', 350],
+  ['lowDb', 4.2],
+  ['lowQ', 1.234],
+  ['midFrequencyHz', 2200],
+  ['midDb', -3.1],
+  ['midQ', 2.345],
+  ['highFrequencyHz', 8800],
+  ['highDb', 5.6],
+  ['highQ', 3.456],
+] as const)('editing EQ %s changes only that value', (id, value) => {
+  const graph = addRoutingNode(empty, { kind: 'effect', effect: 'equalizer' }, { x: 0, y: 0 });
+  const nodeId = graph.nodes[0]?.id ?? '';
+  const edited = audioGraphToRuntimeGraph(
+    updateRoutingNodeParameter(graph, nodeId, id, value),
+    document,
+  );
+  expect(edited.nodes[0]?.config).toMatchObject({
+    effect: { parameters: { ...effectDefaults.equalizer, [id]: value } },
+  });
+});
+
+it.each([
+  ['en', effectTranslations.en],
+  ['ko-KR', effectTranslations.koKR],
+] as const)('names every %s channel mode with a description of its result', (_locale, labels) => {
+  const mode = effectControls(
+    'channel_utility',
+    effectDefaults.channel_utility,
+    false,
+    labels,
+  ).find((control) => control.id === 'mode');
+  expect(mode?.choices).toEqual(
+    (['unchanged', 'mono', 'left', 'right', 'swap', 'invert'] as const).map((key, value) => ({
+      value,
+      label: labels[key],
+      description: labels[`${key}Description`],
+    })),
+  );
 });
