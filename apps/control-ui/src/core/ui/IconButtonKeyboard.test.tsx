@@ -13,7 +13,6 @@ import { NodeMuteButton, NodePowerButton } from './NodeSignalControls';
 import { PathField } from './PathField';
 import { SidebarToggle } from './SidebarToggle';
 import { StateButton } from './StateButton';
-import { TextField } from './TextField';
 import { ThemePicker } from './ThemePicker';
 import { TransportButton } from './TransportButton';
 
@@ -182,38 +181,6 @@ it('names repeated delete actions by their target and skips disabled graph comma
   await user.tab();
   expect(screen.getByRole('button', { name: 'Voice: Delete' })).toHaveFocus();
   expect(screen.getByRole('button', { name: 'Music: Delete' })).toBeDisabled();
-});
-
-it('password icons identify their field, retain the value, and do not submit on Enter/Space', async () => {
-  const submit = vi.fn((event) => event.preventDefault());
-  render(
-    <MixRelayProvider>
-      <I18nProvider>
-        <form onSubmit={submit}>
-          <TextField label="Key" aria-label="Password" type="password" defaultValue="sample" />
-          <TextField label="Another key" type="password" disabled />
-          <button type="button">Next</button>
-        </form>
-      </I18nProvider>
-    </MixRelayProvider>,
-  );
-  const user = userEvent.setup();
-  await user.tab();
-  expect(screen.getByLabelText('Password')).toHaveFocus();
-  await user.tab();
-  const eye = screen.getByRole('button', { name: 'Password: Show password' });
-  expect(eye).toHaveFocus();
-  await user.keyboard('{Enter}');
-  expect(screen.getByRole('button', { name: 'Password: Hide password' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
-  await user.keyboard(' ');
-  expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'password');
-  expect(screen.getByLabelText('Password')).toHaveValue('sample');
-  expect(submit).not.toHaveBeenCalled();
-  await user.tab();
-  expect(screen.getByRole('button', { name: 'Next' })).toHaveFocus();
 });
 
 it('the icon-only dialog close runs once on Enter and once on Space', async () => {

@@ -54,7 +54,7 @@
     }
   ],
   "geometrySha256": "a27780844ba3032910fcc86b81a667d711911d7f43a7f4485f044a994f841761",
-  "illustratorMaster": "../../wordmark-study/plex/mixrelay-plex-wordmark.ai",
+  "illustratorMaster": "wordmark.ai",
   "scope": "Frozen identity assets; application screens retain their current symbol-only implementation.",
   "illustratorSha256": "36174152ec108bb539fbb13361542472110252a88911c4e68ff9045af5bfb553"
 }

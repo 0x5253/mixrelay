@@ -221,8 +221,6 @@ export const zhHans = {
   },
   common: {
     close: '关闭',
-    showPassword: '显示密码',
-    hidePassword: '隐藏密码',
     appName: 'MixRelay',
     beta: '非公开预览',
     cancel: '取消',

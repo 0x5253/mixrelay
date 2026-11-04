@@ -26,7 +26,6 @@ function SystemControls({
   const [name, setName] = useState('Studio');
   const [selected, setSelected] = useState(initiallySelected);
   const [visible, setVisible] = useState(true);
-  const [key, setKey] = useState('example-password');
   const [lastAction, setLastAction] = useState('없음');
   const [path, setPath] = useState('/Users/MixRelay/Recordings/very-long-recording-destination');
   return (
@@ -100,13 +99,6 @@ function SystemControls({
         actionLabel={t('recorder.chooseFolder')}
         disabled={disabled}
         onChoose={() => setPath('/Recordings')}
-      />
-      <TextField
-        type="password"
-        label="Password"
-        value={key}
-        disabled={disabled}
-        onChange={(event) => setKey(event.currentTarget.value)}
       />
       <PathField
         label={t('recorder.folder')}

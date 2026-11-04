@@ -4,7 +4,6 @@ import { afterEach, expect, it, vi } from 'vitest';
 
 afterEach(() => vi.restoreAllMocks());
 
-import { I18nProvider } from '../i18n';
 import { MixRelayProvider } from '../theme/MixRelayProvider';
 import { TextField } from './TextField';
 
@@ -50,73 +49,28 @@ it('names a read-only field and focuses the requested input', () => {
   expect(input).toHaveFocus();
 });
 
-it('reveals and hides a password without submitting or changing the secret', async () => {
-  const submit = vi.fn();
-  const change = vi.fn();
-  const field = (disabled = false) => (
-    <MixRelayProvider>
-      <I18nProvider>
-        <form onSubmit={submit}>
-          <TextField
-            label="Licence key"
-            type="password"
-            value="test-key"
-            onChange={change}
-            disabled={disabled}
-          />
-        </form>
-      </I18nProvider>
-    </MixRelayProvider>
-  );
-  const view = render(field());
-  const input = screen.getByLabelText('Licence key');
-  expect(input).toHaveAttribute('type', 'password');
-  fireEvent.click(await screen.findByRole('button', { name: 'Licence key: Show password' }));
-  expect(input).toHaveAttribute('type', 'text');
-  expect(screen.getByRole('button', { name: 'Licence key: Hide password' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
-  fireEvent.click(screen.getByRole('button', { name: 'Licence key: Hide password' }));
-  expect(input).toHaveAttribute('type', 'password');
-  expect(input).toHaveValue('test-key');
-  expect(change).not.toHaveBeenCalled();
-  expect(submit).not.toHaveBeenCalled();
-  view.rerender(field(true));
-  expect(input).toBeDisabled();
-  expect(screen.getByRole('button', { name: 'Licence key: Show password' })).toBeDisabled();
-});
-
-it('owns uncontrolled password defaults in the field context and retains edits across reveal and rerender without control warnings', async () => {
+it('owns uncontrolled defaults in the field context and retains edits across rerender without control warnings', async () => {
   const errors = vi.spyOn(console, 'error');
   const changed: string[] = [];
   const user = userEvent.setup();
   const field = (defaultValue: string) => (
     <MixRelayProvider>
-      <I18nProvider>
-        <TextField
-          label="Default key"
-          type="password"
-          defaultValue={defaultValue}
-          onChange={(event) => changed.push(event.currentTarget.value)}
-        />
-      </I18nProvider>
+      <TextField
+        label="Default name"
+        defaultValue={defaultValue}
+        onChange={(event) => changed.push(event.currentTarget.value)}
+      />
     </MixRelayProvider>
   );
-  const view = render(field('example-key'));
-  const input = screen.getByLabelText('Default key');
-  expect(input).toHaveValue('example-key');
-  await user.click(screen.getByRole('button', { name: 'Default key: Show password' }));
-  expect(input).toHaveAttribute('type', 'text');
+  const view = render(field('Studio'));
+  const input = screen.getByRole('textbox', { name: 'Default name' });
+  expect(input).toHaveValue('Studio');
   await user.clear(input);
-  await user.type(input, 'edited-key');
-  expect(changed.at(-1)).toBe('edited-key');
-  await user.click(screen.getByRole('button', { name: 'Default key: Hide password' }));
-  expect(input).toHaveAttribute('type', 'password');
-  expect(input).toHaveValue('edited-key');
-  view.rerender(field('different-default'));
-  expect(screen.getByLabelText('Default key')).toBe(input);
-  expect(input).toHaveValue('edited-key');
+  await user.type(input, 'Edited');
+  expect(changed.at(-1)).toBe('Edited');
+  view.rerender(field('Different default'));
+  expect(screen.getByRole('textbox', { name: 'Default name' })).toBe(input);
+  expect(input).toHaveValue('Edited');
   const controlWarnings = errors.mock.calls.filter((call) =>
     call.some(
       (part) =>

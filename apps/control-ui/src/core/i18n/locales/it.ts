@@ -242,8 +242,6 @@ export const it = {
   },
   common: {
     close: 'Chiudi',
-    showPassword: 'Mostra password',
-    hidePassword: 'Nascondi password',
     appName: 'MixRelay',
     beta: 'Anteprima privata',
     cancel: 'Annulla',

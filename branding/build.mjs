@@ -114,6 +114,5 @@ write('identity/manifest.json', JSON.stringify({
   clearSpace: '0.2 × silhouette height', minimumCanvas: { filled: 16, outline: 64, knockout: 32 },
   outlineWidth: 2, productSymbolSizes: { compact: 16, standard: 24, display: 64 },
   integratedIntoProduct: true, installedAppVerified: false,
-  research: '../logo-study/research/review.json',
 }, null, 2) + '\n');
 console.log('Brand SVG assets generated from selected geometry and Core colors.');

@@ -232,8 +232,6 @@ export const koKR = {
   },
   common: {
     close: '닫기',
-    showPassword: '비밀번호 표시',
-    hidePassword: '비밀번호 숨기기',
     appName: 'MixRelay',
     beta: '비공개 프리뷰',
     cancel: '취소',

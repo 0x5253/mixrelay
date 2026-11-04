@@ -241,8 +241,6 @@ export const ja = {
   },
   common: {
     close: '閉じる',
-    showPassword: 'パスワードを表示',
-    hidePassword: 'パスワードを隠す',
     appName: 'MixRelay',
     beta: '限定プレビュー',
     cancel: 'キャンセル',
