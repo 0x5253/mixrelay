@@ -152,6 +152,11 @@ export function qemuArguments({
     '-monitor',
     'none',
     '-no-reboot',
+    // Emulated ARM guests can finish block-device coldplug after systemd's 90 s device
+    // timeout. systemd-stub (UKI images) appends this from SMBIOS; GRUB images ignore it.
+    ...(accelerator === 'tcg'
+      ? ['-smbios', 'type=11,value=io.systemd.stub.kernel-cmdline-extra=systemd.default_device_timeout_sec=600']
+      : []),
   ];
 }
 

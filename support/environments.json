@@ -481,9 +481,9 @@
       "format": "qcow2"
     },
     "fedora-arm64": {
-      "url": "https://dl.fedoraproject.org/pub/fedora/linux/releases/45/Cloud/aarch64/images/Fedora-Cloud-Base-Generic-45-1.4.aarch64.qcow2",
+      "url": "https://dl.fedoraproject.org/pub/fedora/linux/releases/45/Cloud/aarch64/images/Fedora-Cloud-Base-UEFI-UKI-45-1.4.aarch64.qcow2",
       "algorithm": "sha256",
-      "digest": "1632acc8bc14d45b6c9596a0acc71b070d3748d1abdcf1a519be5c983bb0286c",
+      "digest": "f51f556104434e66df591d647d3e54254cc722378c5ac31c4b1c37b15075e4f1",
       "format": "qcow2"
     }
   },

@@ -173,6 +173,11 @@ test('QEMU uses the native guest CPU and binds SSH only to the hosted runner loo
   assert.throws(() => qemuArguments({ ...settings, cpuArch: 'arm64', accelerator: 'fake' }));
   const emulated = qemuArguments({ ...settings, cpuArch: 'arm64', accelerator: 'tcg', cpus: guestCpuCount('tcg', 4) });
   assert.equal(emulated[emulated.indexOf('-smp') + 1], '4');
+  assert.equal(
+    emulated[emulated.indexOf('-smbios') + 1],
+    'type=11,value=io.systemd.stub.kernel-cmdline-extra=systemd.default_device_timeout_sec=600',
+  );
+  assert.equal(x64.includes('-smbios'), false);
   assert.equal(guestCpuCount('kvm', 4), 2);
   assert.equal(guestCpuCount('tcg', 2), 2);
   assert.equal(guestCpuCount('tcg', 1), 1);
