@@ -85,7 +85,7 @@ fn preserve_committed_source(native_rate: u32, total: u32, signal_offset: u64) {
 
 /// A registry whose consumer scheduling clock stays at one instant.
 fn scheduled_registry() -> mixrelay_macos_transport::source_registry::SourceRegistry {
-    mixrelay_macos_transport::source_registry::SourceRegistry::with_clock(
+    mixrelay_macos_transport::source_registry::SourceRegistry::new(
         Box::new(SchedulingClock {
             nanos: Arc::new(std::sync::atomic::AtomicU64::new(0)),
         }),

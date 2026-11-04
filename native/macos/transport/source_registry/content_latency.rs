@@ -1,5 +1,6 @@
 //! Consumer-owned acquired-PCM age and graph readiness for application sources.
-use super::{Source, SourceRegistry};
+use super::{SourceRegistry, source::Source};
+use crate::shared_audio_buffer::mr_shared_audio_buffer_stats;
 use mixrelay_audio_io::residence::{Residence, ResidenceSnapshot};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
@@ -64,8 +65,7 @@ impl Context {
         Self {
             lease: clock.producer_lease.load(Ordering::Acquire),
             // SAFETY: the registry read pin retains this initialized mapping.
-            epoch: unsafe { super::mr_shared_audio_buffer_stats(source.mapping.buffer.as_ptr()) }
-                .epoch,
+            epoch: unsafe { mr_shared_audio_buffer_stats(source.mapping.buffer.as_ptr()) }.epoch,
             format: clock.format_word.load(Ordering::Acquire),
             acknowledged: clock.acknowledged_format.load(Ordering::Acquire),
             native_rate: clock.native_sample_rate.load(Ordering::Acquire),

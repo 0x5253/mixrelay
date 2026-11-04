@@ -1,11 +1,18 @@
-use super::*;
+//! Compatible graph replacements activate inside the callback without a rebind.
+use super::{
+    renderer::{GraphActivation, RenderSignals, Renderer, same_external_geometry},
+    tests,
+};
+use crate::macos::AudioContext;
 use mixrelay_audio_graph::{
     CompileContext, CompileLimits, GainConfig, GraphCompiler, GraphDocument, NodeConfig, NodeSpec,
     RenderFormat,
 };
 use mixrelay_engine_core::{RuntimeStatusBackend, session::AdapterRuntimeStatus};
 use mixrelay_render::ProcessorExchange;
+use mixrelay_render::{BlockProcessor, RenderPlan};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 struct ControlFixture {
     status: Arc<AdapterRuntimeStatus>,
@@ -103,22 +110,12 @@ fn internal_add_remove_keeps_callback_pcm_and_frame_epoch_continuous() {
     let signals = RenderSignals::default();
     let bindings = tests::stereo_bindings();
     let mut renderer = Renderer {
-        timebase: mixrelay_realtime::Timebase::current(),
-        processor: &mut processor,
         activation: Some(GraphActivation {
             installed: &installed,
             context: control.context(),
             rebind: &signals.rebind,
         }),
-        bindings: &bindings,
-        clock_id: 7,
-        epoch: 19,
-        native_clock: None,
-        status: &control.status,
-        position: None,
-        progress: &signals.progress,
-        failed: &signals.failed,
-        invalid: &signals.invalid,
+        ..tests::unclocked(&mut processor, &bindings, &control.status, &signals, 19)
     };
     let address = std::ptr::from_ref(&renderer);
     render_passthrough(&mut renderer);

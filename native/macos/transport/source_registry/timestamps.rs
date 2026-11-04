@@ -1,5 +1,5 @@
 //! Time-addressed reads use coordinates published with PCM, under the same lease/epoch.
-use super::{Source, SourceRegistry, stream_epoch};
+use super::{SourceRegistry, identity::stream_epoch, latency::Latency, source::Source};
 use crate::shared_audio_buffer::{SharedAudioBufferStats, mr_shared_audio_buffer_stats};
 use std::sync::atomic::Ordering;
 
@@ -251,8 +251,8 @@ pub(super) fn locate(
 pub(super) fn select(
     source: &Source,
     stats: SharedAudioBufferStats,
-    previous: super::Latency,
-    policy: &mut super::Latency,
+    previous: Latency,
+    policy: &mut Latency,
     (rate, frames, requested): (u32, u32, Option<u64>),
 ) -> Result<(), ReadMiss> {
     let Some(time) = requested else {
