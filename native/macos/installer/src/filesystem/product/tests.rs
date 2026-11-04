@@ -1,7 +1,10 @@
 //! Empty-only removal under namespace substitution and restoration conflicts.
 
 use super::*;
-use std::os::unix::fs::{MetadataExt, symlink};
+use std::{
+    fs,
+    os::unix::fs::{MetadataExt, symlink},
+};
 
 #[test]
 fn production_product_folder_refuses_non_root_and_writable_owners() {

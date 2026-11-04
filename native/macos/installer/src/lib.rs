@@ -53,8 +53,11 @@ pub use coordinated::{
 };
 #[cfg(unix)]
 pub use filesystem::{
-    FilesystemAdapter, FilesystemCommitted, FilesystemError, FilesystemLayout,
-    FilesystemRecoveryDiagnostics, FilesystemSnapshot, FilesystemStaged, TargetPresence,
+    FilesystemAdapter,
+    error::FilesystemError,
+    layout::FilesystemLayout,
+    receipt::{FilesystemCommitted, FilesystemRecoveryDiagnostics, FilesystemStaged},
+    snapshot::{FilesystemSnapshot, TargetPresence},
 };
 pub use launchd::{LaunchdConfiguration, LaunchdError, ServiceAccount};
 #[cfg(unix)]
