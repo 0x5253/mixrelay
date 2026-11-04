@@ -55,7 +55,7 @@ for (const outline of [false, true]) {
 fs.writeFileSync(path.join(output, 'manifest.json'), JSON.stringify({
   version: source.version, status: source.status, approvedAt: source.approvedAt,
   geometry: '../source/wordmark.json', symbol: '../source/symbol.json',
-  illustrator: '../../wordmark-study/plex/mixrelay-plex-wordmark.ai',
+  illustrator: '../source/wordmark.ai',
   illustratorSha256: masterHash,
   colors: 'apps/control-ui/src/core/theme/tokens.ts#brandColors', colorValues: brandColors,
   capToSymbol: 1, gapToSymbol: source.gapRatio, clearSpaceToSymbol: source.clearSpaceRatio,
