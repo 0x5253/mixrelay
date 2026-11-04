@@ -21,10 +21,13 @@ export function removeInstalled(os, format, output, run = execute, exists = exis
   try {
     if (os === 'macos') log = removeMacos(run);
     else {
-      log =
-        format === 'deb'
-          ? run('sudo', ['-n', 'apt-get', 'remove', '-y', 'mix-relay'])
-          : run('sudo', ['-n', 'pacman', '-R', '--noconfirm', 'mix-relay']);
+      const remove = {
+        deb: ['apt-get', 'remove', '-y', 'mix-relay'],
+        rpm: ['dnf', 'remove', '-y', 'mix-relay'],
+        arch: ['pacman', '-R', '--noconfirm', 'mix-relay'],
+      }[format];
+      if (!remove) throw new Error(`Unsupported Linux package format: ${format}`);
+      log = run('sudo', ['-n', ...remove]);
       run('systemctl', ['--user', 'daemon-reload']);
     }
     const owned = [

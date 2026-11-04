@@ -17,31 +17,50 @@
       "id": "macos-universal-pkg",
       "os": "macos",
       "arch": "universal",
-      "format": "pkg"
+      "format": "pkg",
+      "asset": "MixRelay-Installer-{version}.pkg"
     },
     {
       "id": "linux-x64-deb",
       "os": "linux",
       "arch": "x64",
-      "format": "deb"
+      "format": "deb",
+      "asset": "MixRelay_{version}_amd64.deb"
     },
     {
       "id": "linux-arm64-deb",
       "os": "linux",
       "arch": "arm64",
-      "format": "deb"
+      "format": "deb",
+      "asset": "MixRelay_{version}_arm64.deb"
     },
     {
       "id": "linux-x64-arch",
       "os": "linux",
       "arch": "x64",
-      "format": "arch"
+      "format": "arch",
+      "asset": "mix-relay-{version}-1-x86_64.pkg.tar.zst"
+    },
+    {
+      "id": "linux-x64-rpm",
+      "os": "linux",
+      "arch": "x64",
+      "format": "rpm",
+      "asset": "MixRelay-{version}-1.x86_64.rpm"
+    },
+    {
+      "id": "linux-arm64-rpm",
+      "os": "linux",
+      "arch": "arm64",
+      "format": "rpm",
+      "asset": "MixRelay-{version}-1.aarch64.rpm"
     },
     {
       "id": "macos-universal-streamdeck",
       "os": "macos",
       "arch": "universal",
-      "format": "streamDeckPlugin"
+      "format": "streamDeckPlugin",
+      "asset": "MixRelay-StreamDeck-{version}.streamDeckPlugin"
     }
   ],
   "codeChecks": {
@@ -58,7 +77,8 @@
         "os": "macos",
         "version": "15",
         "arch": "x64",
-        "runner": "macos-15-intel", "pullRequest": true
+        "runner": "macos-15-intel",
+        "pullRequest": true
       },
       {
         "id": "macos-26-arm64",
@@ -79,7 +99,8 @@
         "os": "macos",
         "version": "27",
         "arch": "arm64",
-        "runner": "xcode-27", "pullRequest": true
+        "runner": "xcode-27",
+        "pullRequest": true
       }
     ],
     "linuxDistributions": [
@@ -121,6 +142,16 @@
           "x64"
         ],
         "artifactFormat": "arch"
+      },
+      {
+        "id": "fedora",
+        "version": "45",
+        "image": "fedora:45@sha256:a7d72ba2745b100a3351087472e5ee7b2450af7cf331e7673007e3817612839c",
+        "architectures": [
+          "x64",
+          "arm64"
+        ],
+        "artifactFormat": "rpm"
       }
     ]
   },
@@ -282,6 +313,34 @@
         "runner": "ubuntu-24.04",
         "image": "arch-x64"
       }
+    },
+    {
+      "id": "fedora-45-x64",
+      "os": "linux",
+      "distro": "fedora",
+      "version": "45",
+      "versionMatch": "major",
+      "arch": "x64",
+      "artifact": "linux-x64-rpm",
+      "execution": {
+        "kind": "linux-vm",
+        "runner": "ubuntu-24.04",
+        "image": "fedora-x64"
+      }
+    },
+    {
+      "id": "fedora-45-arm64",
+      "os": "linux",
+      "distro": "fedora",
+      "version": "45",
+      "versionMatch": "major",
+      "arch": "arm64",
+      "artifact": "linux-arm64-rpm",
+      "execution": {
+        "kind": "linux-vm",
+        "runner": "ubuntu-24.04-arm",
+        "image": "fedora-arm64"
+      }
     }
   ],
   "scenarios": [
@@ -414,6 +473,18 @@
       "algorithm": "sha256",
       "digest": "08754e28d91b1680086c6211ef4df13559e766fff7cdb4006489b14b5d281f08",
       "format": "qcow2"
+    },
+    "fedora-x64": {
+      "url": "https://dl.fedoraproject.org/pub/fedora/linux/releases/45/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-45-1.4.x86_64.qcow2",
+      "algorithm": "sha256",
+      "digest": "50bdc5e70f6a24f540932d15411c1c6ae9fcfa40fb990d876d83c5cc823b2ad0",
+      "format": "qcow2"
+    },
+    "fedora-arm64": {
+      "url": "https://dl.fedoraproject.org/pub/fedora/linux/releases/45/Cloud/aarch64/images/Fedora-Cloud-Base-Generic-45-1.4.aarch64.qcow2",
+      "algorithm": "sha256",
+      "digest": "1632acc8bc14d45b6c9596a0acc71b070d3748d1abdcf1a519be5c983bb0286c",
+      "format": "qcow2"
     }
   },
   "artifactChecks": [
@@ -427,7 +498,8 @@
     "linux": {
       "midi": {
         "deb": "libasound2t64",
-        "arch": "alsa-lib"
+        "arch": "alsa-lib",
+        "rpm": "alsa-lib"
       }
     }
   },

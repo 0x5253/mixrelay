@@ -14,6 +14,7 @@ Download from [Releases](https://github.com/0x5253/mixrelay/releases/latest) and
 | --- | --- |
 | macOS 15+ (Apple Silicon; Intel up to macOS 26) | `MixRelay-Installer-<version>.pkg` (Universal, notarized) |
 | Debian 13, Ubuntu 26.04, Kali (x86_64, arm64) | `MixRelay_<version>_amd64.deb`, `MixRelay_<version>_arm64.deb` |
+| Fedora 45 (x86_64, arm64) | `MixRelay-<version>-1.x86_64.rpm`, `MixRelay-<version>-1.aarch64.rpm` |
 | Arch Linux (x86_64) | `mix-relay-<version>-1-x86_64.pkg.tar.zst` |
 
 Linux needs PipeWire 1.2+ and WirePlumber 0.5+ in a normal user session.

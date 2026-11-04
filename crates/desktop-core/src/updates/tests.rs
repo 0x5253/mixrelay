@@ -366,3 +366,11 @@ async fn revalidation_never_opens_a_removed_or_unsafe_download() {
         .unwrap();
     assert_eq!(*browser.0.lock().unwrap(), [accepted]);
 }
+
+#[test]
+fn release_assets_require_a_stable_version() {
+    assert!(super::release_assets("1.2.3").is_ok());
+    for version in ["1.2", "v1.2.3", "1.2.3-beta"] {
+        assert!(super::release_assets(version).is_err(), "{version}");
+    }
+}

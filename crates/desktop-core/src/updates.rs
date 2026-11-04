@@ -7,6 +7,7 @@ use url::Url;
 
 mod package;
 use package::Package;
+pub use package::ReleaseAsset;
 
 pub const MAX_RESPONSE_BYTES: usize = 4 * 1024 * 1024;
 
@@ -233,6 +234,14 @@ impl Platform {
             && (download.arch == self.arch || (self.os == "macos" && download.arch == "universal"))
             && self.package.accepts(&download.url)
     }
+}
+
+/// Every file the support contract publishes for one release version.
+/// # Errors
+/// Rejects a version that is not a stable release version.
+pub fn release_assets(version: &str) -> Result<Vec<ReleaseAsset>, UpdateError> {
+    stable_version(version)?;
+    package::release_assets(version)
 }
 
 /// # Errors

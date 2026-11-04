@@ -1,3 +1,5 @@
+import support from '../../support/environments.json' with { type: 'json' };
+
 const publicHosts = new Set([
   'rawsector.com', 'appserver.rawsector.com', 'downloads.rawsector.com',
   'support.apple.com', 'law.go.kr', 'www.law.go.kr', 'www.easylaw.go.kr',
@@ -32,10 +34,9 @@ export function assertPublicDestination(destination, surface = 'public surface')
   if (sourceRepository && url.pathname.startsWith('/0x5253/mixrelay/releases/download/')) {
     const release = url.pathname.match(new RegExp(`^/0x5253/mixrelay/releases/download/v(${version})/([^/]+)$`));
     const releaseVersion = release?.[1];
-    const assets = releaseVersion ? [
-      `MixRelay-Installer-${releaseVersion}.pkg`, `MixRelay_${releaseVersion}_amd64.deb`,
-      `MixRelay_${releaseVersion}_arm64.deb`, `mix-relay-${releaseVersion}-1-x86_64.pkg.tar.zst`,
-    ] : [];
+    // Installers only: the Stream Deck plugin is distributed through the Marketplace.
+    const assets = releaseVersion ? support.artifacts.filter(artifact => artifact.format !== 'streamDeckPlugin')
+      .map(artifact => artifact.asset.replace('{version}', releaseVersion)) : [];
     sourceRepository = assets.includes(release?.[2]) && !url.search && !url.hash;
   }
   if (url.protocol !== 'https:' || (!publicHosts.has(url.hostname) && !sourceRepository && !latestRelease)) fail();

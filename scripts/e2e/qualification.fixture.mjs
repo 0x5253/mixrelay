@@ -14,7 +14,8 @@ export function qualificationFixture(t) {
   const loaded = loadContract();
   const selections = loaded.contract.artifacts.map(artifact => {
     const names = { 'macos-universal-pkg': 'MixRelay Install.pkg', 'linux-x64-deb': 'MixRelay-x64.deb',
-      'linux-arm64-deb': 'MixRelay-arm64.deb', 'linux-x64-arch': 'MixRelay-x64.pkg.tar.zst', 'macos-universal-streamdeck': 'MixRelay-StreamDeck-1.2.3.streamDeckPlugin' };
+      'linux-arm64-deb': 'MixRelay-arm64.deb', 'linux-x64-arch': 'MixRelay-x64.pkg.tar.zst',
+      'linux-x64-rpm': 'MixRelay-x64.rpm', 'linux-arm64-rpm': 'MixRelay-arm64.rpm', 'macos-universal-streamdeck': 'MixRelay-StreamDeck-1.2.3.streamDeckPlugin' };
     const file = names[artifact.id];
     writeFileSync(join(directory, file), `Synthetic ${artifact.id} artifact fixture`);
     return `${artifact.id}:${file}`;

@@ -47,7 +47,8 @@ test('desktop updates use only the exact public release API and version-matched 
   assert.ok(source.includes(endpoint));
   assert.doesNotThrow(() => assertPublicReferences(source, 'apps/desktop-shell/src-tauri/src/updates.rs'));
   for (const file of ['MixRelay-Installer-1.2.3.pkg', 'MixRelay_1.2.3_amd64.deb',
-    'MixRelay_1.2.3_arm64.deb', 'mix-relay-1.2.3-1-x86_64.pkg.tar.zst']) {
+    'MixRelay_1.2.3_arm64.deb', 'mix-relay-1.2.3-1-x86_64.pkg.tar.zst',
+    'MixRelay-1.2.3-1.x86_64.rpm', 'MixRelay-1.2.3-1.aarch64.rpm']) {
     const url = `https://github.com/0x5253/mixrelay/releases/download/v1.2.3/${file}`;
     assert.doesNotThrow(() => assertPublicDestination(url));
     assert.throws(() => assertPublicDestination(url.replace('/v1.2.3/', '/v1.2.4/')), /unapproved/);

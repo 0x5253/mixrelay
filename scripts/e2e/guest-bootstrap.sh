@@ -6,6 +6,10 @@ source /etc/os-release
 if [[ "$ID" == arch ]]; then
   pacman -Syu --noconfirm --needed xorg-server-xvfb dbus pipewire pipewire-audio \
     pipewire-pulse wireplumber glib2 libarchive openbox sudo python-atspi python-gobject gtk3 gdb strace
+elif [[ "$ID" == fedora ]]; then
+  dnf install -y --setopt=install_weak_deps=False xorg-x11-server-Xvfb dbus-daemon dbus-x11 pipewire \
+    pipewire-utils pipewire-pulseaudio wireplumber glib2 bsdtar openbox sudo python3-pyatspi \
+    python3-gobject gtk3 gdb strace
 else
   export DEBIAN_FRONTEND=noninteractive
   apt-get update

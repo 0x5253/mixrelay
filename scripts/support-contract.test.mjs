@@ -1,14 +1,16 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
-import { loadContract, validateContract, checkGenerated, releaseInstallers } from './support-contract.mjs';
+import { loadContract, validateContract, checkGenerated, releaseAssets, releaseInstallers } from './support-contract.mjs';
 import { ciMatrices, requiredScenarios } from './core/support-targets.mjs';
 
 test('support registry drives native multi-architecture CI and checked-in generated consumers', () => {
   const { contract } = loadContract();
   checkGenerated(contract);
   const matrices = ciMatrices(contract);
-  assert.equal(matrices.linux.include.length, 7);
+  assert.equal(matrices.linux.include.length, 9);
+  assert.deepEqual(matrices.linuxBuild.include.map(t => [t.bundles, t.rpm]),
+    [['deb,rpm', 'linux-x64-rpm'], ['deb,rpm', 'linux-arm64-rpm']]);
   assert.deepEqual(new Set(matrices.macos.include.map(t => t.arch)), new Set(['x64', 'arm64']));
   assert.deepEqual(matrices.macosPullRequest.include.map(t => t.id).sort(), ['macos-15-x64', 'macos-27-arm64']);
   assert.equal(matrices.linux.include.find(t => t.id === 'debian-arm64').runner, 'ubuntu-24.04-arm');
@@ -21,7 +23,7 @@ test('Stream Deck is a required archive check, separate from installer environme
   const check = contract.artifactChecks[0];
   assert.deepEqual(requiredScenarios(contract, check).map(s => s.id), ['STREAMDECK-01']);
   assert.ok(!requiredScenarios(contract, contract.qualificationTargets[0]).some(s => s.id === 'STREAMDECK-01'));
-  assert.equal(releaseInstallers({ artifacts: contract.artifacts }, contract).length, 4);
+  assert.equal(releaseInstallers({ artifacts: contract.artifacts }, contract).length, 6);
   for (const change of [c => { c.artifactChecks = []; }, c => { c.artifactChecks[0].artifact = 'macos-universal-pkg'; },
     c => { c.artifactChecks[0].id = c.qualificationTargets[0].id; },
     c => { c.scenarios.find(s => s.id === 'STREAMDECK-01').required = false; },
@@ -65,4 +67,23 @@ test('DEB MIDI dependencies use Debian names and Arch retains its own ALSA packa
   assert.ok(!linux.deb.depends.includes('alsa-lib'), 'Arch/RPM package names cannot be installed by APT');
   const arch = readFileSync(new URL('../packaging/linux/arch/PKGBUILD.in', import.meta.url), 'utf8');
   assert.match(arch, /depends=\([\s\S]*?'alsa-lib'/);
+});
+
+test('release assets are named once per artifact with the version and the format suffix', () => {
+  const { contract } = loadContract();
+  assert.deepEqual(releaseAssets(contract, '1.2.3').map(asset => asset.file), [
+    'MixRelay-Installer-1.2.3.pkg', 'MixRelay_1.2.3_amd64.deb', 'MixRelay_1.2.3_arm64.deb',
+    'mix-relay-1.2.3-1-x86_64.pkg.tar.zst', 'MixRelay-1.2.3-1.x86_64.rpm', 'MixRelay-1.2.3-1.aarch64.rpm',
+    'MixRelay-StreamDeck-1.2.3.streamDeckPlugin',
+  ]);
+  for (const version of ['1.2', 'v1.2.3', '1.2.3-beta', '01.2.3']) assert.throws(() => releaseAssets(contract, version));
+  for (const asset of ['MixRelay-1.2.3.rpm', 'MixRelay-{version}.deb', 'MixRelay-{version}-{version}.rpm',
+    '../MixRelay-{version}.rpm', 'MixRelay {version}.rpm']) {
+    const invalid = structuredClone(contract);
+    invalid.artifacts.find(artifact => artifact.id === 'linux-x64-rpm').asset = asset;
+    assert.throws(() => validateContract(invalid), /Invalid release asset name/, asset);
+  }
+  const duplicate = structuredClone(contract);
+  duplicate.artifacts.find(artifact => artifact.id === 'linux-arm64-rpm').asset = 'MixRelay-{version}-1.x86_64.rpm';
+  assert.throws(() => validateContract(duplicate), /Duplicate release asset names/);
 });

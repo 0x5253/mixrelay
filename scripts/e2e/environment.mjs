@@ -35,7 +35,8 @@ export function observeEnvironment() {
       glibc: version(run('getconf', ['GNU_LIBC_VERSION'])),
     };
     const packages = observed.distro === 'arch' ? run('pacman', ['-Q'])
-      : run('dpkg-query', ['-W', '-f=${Package}\t${Version}\t${Architecture}\n']);
+      : observed.distro === 'fedora' ? run('rpm', ['-qa', '--queryformat', '%{NAME}\t%{VERSION}-%{RELEASE}\t%{ARCH}\n'])
+        : run('dpkg-query', ['-W', '-f=${Package}\t${Version}\t${Architecture}\n']);
     observed.packageInventorySha256 = digest(packages);
   } else throw new Error(`Unsupported qualification host: ${os}`);
   return observed;

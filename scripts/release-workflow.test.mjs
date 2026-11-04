@@ -24,8 +24,9 @@ test('official release builds only a verified version tag and publishes all chec
   assert.match(source, /git merge-base --is-ancestor "\$REVISION" origin\/main/);
   assert.match(source, /source_ref: \$\{\{ needs\.source\.outputs\.revision \}\}/);
   assert.match(source, /needs: \[source, macos, linux\]/);
-  for (const file of ['MixRelay-Installer-$RELEASE_VERSION.pkg', 'MixRelay-StreamDeck-$RELEASE_VERSION.streamDeckPlugin',
-    'MixRelay_${RELEASE_VERSION}_amd64.deb', 'MixRelay_${RELEASE_VERSION}_arm64.deb', 'mix-relay-${RELEASE_VERSION}-1-x86_64.pkg.tar.zst']) assert.ok(source.includes(file), file);
+  // Published file names come from the support contract, and exactly those are published.
+  assert.match(source, /support-contract\.mjs assets "\$RELEASE_VERSION" > expected-assets\.txt/);
+  assert.match(source, /diff <\(sort expected-assets\.txt\) <\(ls release-assets \| sort\)/);
   assert.match(source, /sha256sum --check SHA256SUMS-/);
   assert.match(source, /sha256sum \* > SHA256SUMS && sha256sum --check SHA256SUMS/);
   assert.match(source, /gh release create .*--verify-tag --draft/);
@@ -58,12 +59,16 @@ test('Linux release reuses inspected native-CPU packages and the checked Arch pa
   assert.match(source, /workflow_call:/);
   assert.match(source, /linuxBuild/);
   assert.match(source, /inputs\.source_ref \|\| github\.sha/);
-  assert.match(source, /pnpm desktop:build --bundles deb/);
+  assert.match(source, /BUNDLES: \$\{\{ matrix\.bundles \}\}/);
+  assert.match(source, /pnpm desktop:build --bundles "\$BUNDLES"/);
   assert.match(source, /dpkg-deb --field "\$package" Version/);
+  assert.match(source, /rpm -qp --queryformat %\{VERSION\} "\$package"/);
   assert.match(source, /prepare-arch-driver-package\.mjs/);
   assert.match(source, /makepkg --nodeps --noconfirm/);
   assert.match(source, /bsdtar -xOf "\$package" \.PKGINFO/);
-  assert.match(source, /sha256sum \*\.deb/);
+  assert.match(source, /sha256sum \*\.deb > SHA256SUMS-/);
+  assert.match(source, /sha256sum \*\.rpm > "SHA256SUMS-\$RPM_ID"/);
+  assert.match(source, /name: candidate-\$\{\{ matrix\.rpm \}\}/);
   assert.match(source, /sha256sum \*\.pkg\.tar\.zst/);
 });
 

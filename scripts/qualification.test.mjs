@@ -89,7 +89,7 @@ test('unqualified formats, missing candidate artifacts and symlink installers ar
 test('qualification checks major-version representatives with the product deployment minimum', t => {
   const { loaded } = qualificationFixture(t);
   const matrix = qualificationMatrix(loaded.contract).include;
-  assert.equal(matrix.length, 12);
+  assert.equal(matrix.length, 14);
   assert.ok(matrix.every(t => !t.runner.includes('self-hosted')));
   assert.equal(matrix.find(t => t.id === 'macos-15-arm64').runner, 'macos-15');
   assert.equal(matrix.find(t => t.id === 'debian-13-arm64').runner, 'ubuntu-24.04-arm');

@@ -41,6 +41,9 @@ export function validateContract(value) {
   if (!Array.isArray(value.artifactChecks)) throw new Error('Missing artifact checks');
   unique(value.artifactChecks, 'artifact check');
   unique([...value.qualificationTargets, ...value.artifactChecks], 'qualification');
+  if (new Set(value.artifacts.map(artifact => artifact.asset)).size !== value.artifacts.length) {
+    throw new Error('Duplicate release asset names');
+  }
   for (const check of value.artifactChecks) {
     if (check.kind !== 'streamdeck' || !value.artifacts.some(a => a.id === check.artifact && a.format === 'streamDeckPlugin')) {
       throw new Error(`Invalid artifact check: ${check.id}`);
@@ -49,7 +52,10 @@ export function validateContract(value) {
   for (const artifact of value.artifacts) {
     if (!(artifact.os === 'macos' && artifact.arch === 'universal' && artifact.format === 'pkg')
       && !(artifact.os === 'macos' && artifact.arch === 'universal' && artifact.format === 'streamDeckPlugin')
-      && !(artifact.os === 'linux' && ['x64', 'arm64'].includes(artifact.arch) && ['deb', 'arch'].includes(artifact.format))) throw new Error(`Invalid artifact definition: ${artifact.id}`);
+      && !(artifact.os === 'linux' && ['x64', 'arm64'].includes(artifact.arch) && ['deb', 'rpm', 'arch'].includes(artifact.format))) throw new Error(`Invalid artifact definition: ${artifact.id}`);
+    const asset = artifact.asset ?? '';
+    if (asset.split('{version}').length !== 2 || !/^[A-Za-z0-9][A-Za-z0-9._{}-]*$/.test(asset)
+      || !asset.endsWith(artifactSuffix(artifact.format))) throw new Error(`Invalid release asset name: ${artifact.id}`);
     if (!(artifact.format === 'streamDeckPlugin' ? value.artifactChecks : value.qualificationTargets)
       .some(t => t.artifact === artifact.id)) throw new Error(`Artifact has no qualification target: ${artifact.id}`);
   }
@@ -102,6 +108,18 @@ export function validateContract(value) {
   }
 }
 
+const suffixes = { pkg: '.pkg', deb: '.deb', rpm: '.rpm', arch: '.pkg.tar.zst', streamDeckPlugin: '.streamDeckPlugin' };
+export function artifactSuffix(format) {
+  if (!Object.hasOwn(suffixes, format)) throw new Error(`Unsupported artifact format: ${format}`);
+  return suffixes[format];
+}
+
+/** The published file name of every release artifact at one product version. */
+export function releaseAssets(contract, version) {
+  if (!/^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/.test(version)) throw new Error(`Invalid release version: ${version}`);
+  return contract.artifacts.map(artifact => ({ ...artifact, file: artifact.asset.replace('{version}', version) }));
+}
+
 export function qualificationMatrix(contract) {
   return { include: contract.qualificationTargets.filter(t => t.execution.kind !== 'unavailable')
     .map(target => ({ ...target, runner: target.execution.runner })) };
@@ -136,6 +154,12 @@ export function checkGenerated(contract, root = fileURLToPath(new URL('..', impo
     `pipewire (>= ${contract.minimums.linux.pipewire})`, `wireplumber (>= ${contract.minimums.linux.wireplumber})`, contract.runtimeLibraries.linux.midi.deb]) {
     if (!linux.deb.depends.includes(dependency)) throw new Error(`Linux dependency differs from support contract: ${dependency}`);
   }
+  // Tauri writes RPM requirements as bare capabilities, so glibc's floor is its versioned
+  // symbol capability; PipeWire and WirePlumber floors come from the qualified Fedora release.
+  for (const dependency of [`libc.so.6(GLIBC_${contract.minimums.linux.glibc})(64bit)`,
+    'pipewire', 'wireplumber', contract.runtimeLibraries.linux.midi.rpm]) {
+    if (!linux.rpm.depends.includes(dependency)) throw new Error(`Linux dependency differs from support contract: ${dependency}`);
+  }
   if (!readFileSync(resolve(root, 'packaging/linux/arch/PKGBUILD.in'), 'utf8').includes(`'${contract.runtimeLibraries.linux.midi.arch}'`)) throw new Error('Arch MIDI library differs from support contract');
   if (!readFileSync(resolve(root, 'native/linux/pipewire/build.rs'), 'utf8')
     .includes(`.atleast_version("${contract.minimums.linux.pipewire}")`)) throw new Error('PipeWire build floor differs from support contract');
@@ -145,13 +169,15 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   try {
     const { contract } = loadContract();
     const command = process.argv[2];
-    if (command === 'matrix') {
+    if (command === 'assets') {
+      for (const { file } of releaseAssets(contract, process.argv[3] ?? '')) console.log(file);
+    } else if (command === 'matrix') {
       const matrices = ciMatrices(contract);
       for (const name of ['macos', 'macosPullRequest', 'linux', 'linuxBuild']) console.log(`${name}=${JSON.stringify(matrices[name])}`);
     } else if (command === 'targets') console.log(JSON.stringify({ include: contract.qualificationTargets }));
     else if (command === 'sync' || command === 'check') {
       checkGenerated(contract, undefined, command === 'sync');
       console.log(`Support contract ${command} passed`);
-    } else throw new Error('Usage: node scripts/support-contract.mjs check|sync|matrix|targets');
+    } else throw new Error('Usage: node scripts/support-contract.mjs check|sync|matrix|targets|assets VERSION');
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }

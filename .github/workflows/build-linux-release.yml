@@ -44,27 +44,39 @@ jobs:
       - name: Free runner disk
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
       - run: docker compose -f infra/lab/compose.yaml build ${{ matrix.distro }}
-      - name: Build the final DEB once on its native CPU
+      - name: Build the final packages once on their native CPU
         env:
           RELEASE_ARCH: ${{ matrix.arch }}
+          BUNDLES: ${{ matrix.bundles }}
         run: >-
           docker compose -f infra/lab/compose.yaml run --name mixrelay-release-build
-          -e RELEASE_ARCH="$RELEASE_ARCH"
+          -e RELEASE_ARCH="$RELEASE_ARCH" -e BUNDLES="$BUNDLES"
           --entrypoint bash ${{ matrix.distro }}
-          -c 'set -euo pipefail; pnpm desktop:build --bundles deb;
+          -c 'set -euo pipefail; pnpm desktop:build --bundles "$BUNDLES";
           version=$(node --input-type=module -e "import {checkVersion} from \"./scripts/product-version.mjs\"; console.log(checkVersion())");
           for package in target/release/bundle/deb/*.deb; do
           test "$(dpkg-deb --field "$package" Version)" = "$version";
           done;
+          for package in target/release/bundle/rpm/*.rpm; do
+          test "$(rpm -qp --queryformat %{VERSION} "$package")" = "$version";
+          done;
           if [ "$RELEASE_ARCH" = x64 ]; then
           node scripts/prepare-arch-driver-package.mjs target/release/bundle/deb/*.deb target/arch-recipe;
           fi'
-      - name: Collect inspected final package
+      - name: Collect inspected final packages
+        env:
+          RPM_ID: ${{ matrix.rpm }}
         run: |
           mkdir -p candidate
           docker cp mixrelay-release-build:/workspace/target/release/bundle/deb/. candidate/
           git rev-parse HEAD > candidate/source-revision.txt
           (cd candidate && sha256sum *.deb > SHA256SUMS-${{ matrix.id }})
+          if [[ -n "$RPM_ID" ]]; then
+            mkdir -p candidate-rpm
+            docker cp mixrelay-release-build:/workspace/target/release/bundle/rpm/. candidate-rpm/
+            cp candidate/source-revision.txt candidate-rpm/
+            (cd candidate-rpm && sha256sum *.rpm > "SHA256SUMS-$RPM_ID")
+          fi
       - name: Prepare Arch wrapper from the same x64 DEB payload
         if: matrix.arch == 'x64'
         run: |
@@ -82,6 +94,13 @@ jobs:
           overwrite: true
           name: candidate-${{ matrix.id }}
           path: candidate/
+          if-no-files-found: error
+      - if: matrix.rpm != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          overwrite: true
+          name: candidate-${{ matrix.rpm }}
+          path: candidate-rpm/
           if-no-files-found: error
   arch:
     needs: deb

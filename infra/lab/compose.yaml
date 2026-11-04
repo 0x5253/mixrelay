@@ -33,3 +33,9 @@ services:
       <<: *build
       args:
         DISTRO_IMAGE: archlinux:base@sha256:82b1b08faae9d61e3e7e13d562f4d09114d939105b0d59ff34140f3bd418593a
+  fedora:
+    <<: *runtime
+    build:
+      <<: *build
+      args:
+        DISTRO_IMAGE: fedora:45@sha256:a7d72ba2745b100a3351087472e5ee7b2450af7cf331e7673007e3817612839c

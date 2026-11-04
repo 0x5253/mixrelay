@@ -178,6 +178,35 @@ test('same-version DEBs are reinstalled and installed executable bytes are check
   );
 });
 
+test('an RPM is extracted for comparison and installed through dnf', async (t) => {
+  const { mkdirSync, writeFileSync } = await import('node:fs');
+  const { installAndVerify } = await import('./package.mjs');
+  const root = mkdtempSync(join(tmpdir(), 'mixrelay-rpm-install-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const output = join(root, 'evidence');
+  mkdirSync(output);
+  const executable = join(root, 'installed-binary');
+  writeFileSync(executable, 'candidate payload');
+  const calls = [];
+  installAndVerify({ file: 'candidate.rpm' }, { format: 'rpm' }, root, output, 'linux', {
+    runCommand: (program, args) => {
+      calls.push([program, args]);
+      if (program === 'bsdtar') {
+        const path = join(args[3], executable.slice(1));
+        mkdirSync(join(path, '..'), { recursive: true });
+        writeFileSync(path, 'candidate payload');
+      }
+      return 'installed';
+    },
+    ticketTransport,
+    paths: [executable],
+  });
+  assert.deepEqual(calls.map(([program, args]) => [program, args[0] === '-n' ? args.slice(1) : args[0]]), [
+    ['bsdtar', '-xf'],
+    ['sudo', ['dnf', 'install', '-y', join(root, 'candidate.rpm')]],
+  ]);
+});
+
 test('a macOS postinstall rejection is fatal and preserves installer stderr', async (t) => {
   const { mkdirSync } = await import('node:fs');
   const { installAndVerify } = await import('./package.mjs');

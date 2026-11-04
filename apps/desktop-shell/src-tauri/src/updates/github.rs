@@ -1,7 +1,7 @@
 //! Public GitHub release metadata translated into the desktop update contract.
 
 use mixrelay_desktop_core::updates::{
-    Catalog, Download, MAX_RESPONSE_BYTES, Product, UpdateError, stable_version,
+    Catalog, Download, MAX_RESPONSE_BYTES, Product, UpdateError, release_assets, stable_version,
 };
 use serde::Deserialize;
 use std::collections::BTreeSet;
@@ -44,25 +44,13 @@ pub(super) fn decode_release(bytes: &[u8], product: Product) -> Result<Catalog, 
     {
         return Err(UpdateError::InvalidCatalog);
     }
-    let installers = [
-        (
-            format!("MixRelay-Installer-{version}.pkg"),
-            "macos",
-            "universal",
-        ),
-        (format!("MixRelay_{version}_amd64.deb"), "linux", "x64"),
-        (format!("MixRelay_{version}_arm64.deb"), "linux", "arm64"),
-        (
-            format!("mix-relay-{version}-1-x86_64.pkg.tar.zst"),
-            "linux",
-            "x64",
-        ),
-    ];
-    let companion = format!("MixRelay-StreamDeck-{version}.streamDeckPlugin");
+    // The support contract names every published file: installers and companions.
+    let published = release_assets(version)?;
+    let installers = published.iter().filter(|asset| asset.installer).count();
     let mut seen = BTreeSet::new();
     let mut downloads = Vec::new();
     for asset in release.assets {
-        let installer = installers.iter().find(|(name, _, _)| *name == asset.name);
+        let known = published.iter().find(|known| known.name == asset.name);
         let sha256 = asset
             .digest
             .strip_prefix("sha256:")
@@ -76,21 +64,21 @@ pub(super) fn decode_release(bytes: &[u8], product: Product) -> Result<Catalog, 
                 .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
             || asset.browser_download_url
                 != format!("{RELEASES}/download/{}/{}", release.tag_name, asset.name)
-            || (installer.is_none() && asset.name != companion && asset.name != "SHA256SUMS")
+            || (known.is_none() && asset.name != "SHA256SUMS")
         {
             return Err(UpdateError::InvalidCatalog);
         }
-        if let Some((_, os, arch)) = installer {
+        if let Some(installer) = known.filter(|known| known.installer) {
             downloads.push(Download::published(
-                os,
-                arch,
+                &installer.os,
+                &installer.arch,
                 asset.browser_download_url,
                 sha256.into(),
                 asset.size,
             )?);
         }
     }
-    if downloads.len() != installers.len() {
+    if downloads.len() != installers {
         return Err(UpdateError::InvalidCatalog);
     }
     Catalog::published(
