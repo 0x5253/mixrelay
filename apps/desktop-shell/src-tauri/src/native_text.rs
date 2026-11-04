@@ -20,6 +20,21 @@ pub(crate) enum Locale {
 }
 
 impl Locale {
+    /// Every locale in declaration order, so `ALL[locale.index()] == locale`.
+    const ALL: [Self; 11] = [
+        Self::En,
+        Self::Ko,
+        Self::Ja,
+        Self::ZhHans,
+        Self::ZhHant,
+        Self::Fr,
+        Self::De,
+        Self::Es,
+        Self::Pt,
+        Self::It,
+        Self::Ru,
+    ];
+
     pub(crate) fn index(self) -> usize {
         usize::from(self as u8)
     }
@@ -58,19 +73,10 @@ pub(crate) fn set_locale(language: &str) {
 }
 
 pub(crate) fn current_locale() -> Locale {
-    match CURRENT_LOCALE.load(Ordering::Relaxed) {
-        1 => Locale::Ko,
-        2 => Locale::Ja,
-        3 => Locale::ZhHans,
-        4 => Locale::ZhHant,
-        5 => Locale::Fr,
-        6 => Locale::De,
-        7 => Locale::Es,
-        8 => Locale::Pt,
-        9 => Locale::It,
-        10 => Locale::Ru,
-        _ => Locale::En,
-    }
+    Locale::ALL
+        .get(usize::from(CURRENT_LOCALE.load(Ordering::Relaxed)))
+        .copied()
+        .unwrap_or(Locale::En)
 }
 
 pub(crate) fn quit_failed(locale: Locale) -> (&'static str, &'static str) {
@@ -154,6 +160,14 @@ mod tests {
             ("", Locale::En),
         ] {
             assert_eq!(resolve_locale(tag), expected, "{tag}");
+        }
+    }
+
+    #[test]
+    fn every_locale_is_stored_and_tagged_by_its_own_index() {
+        for (index, locale) in Locale::ALL.into_iter().enumerate() {
+            assert_eq!(locale.index(), index);
+            assert_eq!(resolve_locale(locale.tag()), locale);
         }
     }
 

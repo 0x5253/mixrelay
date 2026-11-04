@@ -1,4 +1,6 @@
 use super::*;
+use mixrelay_midi_control::Device;
+use state::Selection;
 
 #[derive(Debug, Default)]
 pub(crate) struct MemoryPreferences(Mutex<Option<Vec<u8>>>);
@@ -11,7 +13,7 @@ impl mixrelay_desktop_core::recording::PreferencesRepository for MemoryPreferenc
         Ok(())
     }
 }
-pub(crate) fn memory_state() -> State {
+pub(in crate::midi) fn memory_state() -> State {
     State::with_repository(Arc::new(MemoryPreferences::default()))
 }
 pub(crate) fn fixture() -> (Arc<MemoryPreferences>, Midi) {

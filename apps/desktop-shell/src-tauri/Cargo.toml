@@ -69,6 +69,10 @@ mixrelay-time = { path = "../../../crates/time", features = ["test-util"] }
 # Virtual time exercises delayed native shutdown without sleeping in tests.
 tokio = { workspace = true, features = ["test-util"] }
 mixrelay-test-support = { path = "../../../crates/test-support" }
+# The route contract test serves the proxy's routes from the engine's own router.
+mixrelay-control-server = { path = "../../../crates/control-server" }
+axum.workspace = true
+tower = { workspace = true, features = ["util"] }
 
 [features]
 # Embeds the built editor UI instead of the dev server. Release builds enable it

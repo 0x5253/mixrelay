@@ -2715,6 +2715,7 @@ name = "mixrelay-desktop-shell"
 version = "0.1.0"
 dependencies = [
  "alsa",
+ "axum",
  "cc",
  "coremidi-sys",
  "libc",
@@ -2722,6 +2723,7 @@ dependencies = [
  "mixrelay-audio-graph",
  "mixrelay-audio-io",
  "mixrelay-control-protocol",
+ "mixrelay-control-server",
  "mixrelay-desktop-core",
  "mixrelay-driver-adapters",
  "mixrelay-driver-core",
@@ -2750,6 +2752,7 @@ dependencies = [
  "tempfile",
  "thiserror 2.0.21",
  "tokio",
+ "tower",
  "tracing",
  "tracing-subscriber",
 ]
@@ -2839,6 +2842,7 @@ dependencies = [
  "mixrelay-engine-core",
  "mixrelay-render",
  "mixrelay-test-support",
+ "mixrelay-time",
  "serde",
  "serde_json",
  "tokio",

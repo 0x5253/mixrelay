@@ -1,26 +1,46 @@
 //! Desktop-owned taps follow the complete engine execution manifest, never UI selection.
+//! Each capture-changing command previews its manifest, reserves the taps, submits, and
+//! settles the reservation from the answer (`engine_control::settlement`).
 use std::sync::{Arc, Weak, atomic::Ordering};
 use std::time::Duration;
 
 use mixrelay_control_protocol::{
     ApplicationCaptureManifest, GraphRuntimeStatus, NodeControlPreview,
 };
-
-use super::{
-    ControlProxyClient, ControlProxyResponse, Method, RequestDelivery, Value,
-    application_capture_error,
+use mixrelay_desktop_core::{
+    engine_control::{
+        routes,
+        settlement::{self, CAPTURES_RETAINED, Settlement, Submission},
+    },
+    timing::AsyncDelay as _,
 };
+use mixrelay_time::{Deadline, MonotonicClock as _};
+
+use super::{ControlProxyClient, ControlProxyResponse, Method, Value};
+use crate::async_time::TokioDelay;
 use crate::macos_audio::{ApplicationCaptureState, PreparedApplicationCaptures};
 
-const MANIFEST: &str = "/api/v1/application-capture/manifest";
-const PREVIEW: &str = "/api/v1/application-capture/preview";
+/// Monitor cadence while waiting for the engine to acknowledge staged captures.
+const ACKNOWLEDGEMENT_POLL: Duration = Duration::from_millis(100);
+/// Monitor cadence after an acknowledgement attempt failed.
+const ACKNOWLEDGEMENT_RETRY: Duration = Duration::from_secs(1);
+const ACKNOWLEDGEMENT_TIMEOUT: Duration = Duration::from_secs(10);
 
-#[derive(PartialEq, Eq)]
-enum Submission {
-    Graph,
-    Workspace,
-    Power,
-    NodeControl(String),
+/// Where a capture-changing submission goes.
+struct Target {
+    submission: Submission,
+    method: Method,
+    route: String,
+}
+
+impl Target {
+    fn put(submission: Submission, route: impl Into<String>) -> Self {
+        Self {
+            submission,
+            method: Method::PUT,
+            route: route.into(),
+        }
+    }
 }
 
 pub(super) async fn node_control(
@@ -32,7 +52,7 @@ pub(super) async fn node_control(
     let preview = client
         .request(
             Method::POST,
-            &format!("{route}/preview"),
+            &routes::preview(&route),
             Some(request.clone()),
         )
         .await?;
@@ -44,14 +64,8 @@ pub(super) async fn node_control(
     let Some(manifest) = preview.capture_manifest else {
         return client.request(Method::PUT, &route, Some(request)).await;
     };
-    submit_prepared(
-        client,
-        captures,
-        request,
-        manifest,
-        Submission::NodeControl(route),
-    )
-    .await
+    let target = Target::put(Submission::NodeControl, route);
+    submit_prepared(client, captures, request, manifest, target).await
 }
 
 pub(super) async fn enable(
@@ -59,7 +73,7 @@ pub(super) async fn enable(
     captures: &Arc<ApplicationCaptureState>,
 ) -> Result<ControlProxyResponse, String> {
     let preview = client
-        .request(Method::POST, "/api/v1/audio/power/preview", None)
+        .request(Method::POST, routes::AUDIO_POWER_PREVIEW, None)
         .await?;
     if !preview.is_success() {
         return Ok(preview);
@@ -69,14 +83,9 @@ pub(super) async fn enable(
         .revision
         .checked_sub(1)
         .ok_or("invalid engine power preflight revision")?;
-    submit_prepared(
-        client,
-        captures,
-        serde_json::json!({"enabled":true,"expectedRevision":expected}),
-        manifest,
-        Submission::Power,
-    )
-    .await
+    let request = serde_json::json!({"enabled":true,"expectedRevision":expected});
+    let target = Target::put(Submission::Power, routes::AUDIO_POWER);
+    submit_prepared(client, captures, request, manifest, target).await
 }
 
 pub(super) async fn power_status(
@@ -91,7 +100,7 @@ pub(super) async fn power_status(
     // not UI intent, authorizes releasing desktop-owned capture sessions.
     let _guard = client.capture_gate.lock().await;
     let graph = client
-        .request(Method::GET, "/api/v1/graph/status", None)
+        .request(Method::GET, routes::GRAPH_STATUS, None)
         .await?;
     if !graph.is_success() {
         return Ok(graph);
@@ -99,7 +108,9 @@ pub(super) async fn power_status(
     let graph: GraphRuntimeStatus = serde_json::from_value(graph.body)
         .map_err(|error| format!("invalid engine stop acknowledgement: {error}"))?;
     if captures.requires_manifest(graph.submitted_revision)? {
-        let manifest = client.request(Method::GET, MANIFEST, None).await?;
+        let manifest = client
+            .request(Method::GET, routes::CAPTURE_MANIFEST, None)
+            .await?;
         if !manifest.is_success() {
             return Ok(manifest);
         }
@@ -121,6 +132,7 @@ pub(super) async fn power_status(
     Ok(response)
 }
 
+/// After a successful read or write, stages the captures the engine's manifest now needs.
 pub(super) async fn synchronize_response(
     client: &ControlProxyClient,
     captures: &Arc<ApplicationCaptureState>,
@@ -129,14 +141,16 @@ pub(super) async fn synchronize_response(
     if !response.is_success() {
         return Ok(response);
     }
-    let manifest = client.request(Method::GET, MANIFEST, None).await?;
+    let manifest = client
+        .request(Method::GET, routes::CAPTURE_MANIFEST, None)
+        .await?;
     if !manifest.is_success() {
         return Ok(manifest);
     }
     let manifest = decode_manifest(manifest.body)?;
     let prepared = match prepare(captures, manifest).await {
         Ok(prepared) => prepared,
-        Err(error) => return Ok(application_capture_error(&error)),
+        Err(error) => return Ok(ControlProxyResponse::capture_unavailable(&error)),
     };
     stage(client, captures, prepared).await?;
     Ok(response)
@@ -148,13 +162,18 @@ pub(super) async fn apply(
     document: Value,
 ) -> Result<ControlProxyResponse, String> {
     let preview = client
-        .request(Method::POST, PREVIEW, Some(document.clone()))
+        .request(
+            Method::POST,
+            routes::CAPTURE_PREVIEW,
+            Some(document.clone()),
+        )
         .await?;
     if !preview.is_success() {
         return Ok(preview);
     }
     let manifest = decode_manifest(preview.body)?;
-    submit_prepared(client, captures, document, manifest, Submission::Graph).await
+    let target = Target::put(Submission::Graph, routes::GRAPH);
+    submit_prepared(client, captures, document, manifest, target).await
 }
 
 pub(super) async fn workspace(
@@ -165,7 +184,7 @@ pub(super) async fn workspace(
     let preview = client
         .request(
             Method::POST,
-            "/api/v1/workspace/preview",
+            routes::WORKSPACE_PREVIEW,
             Some(request.clone()),
         )
         .await?;
@@ -176,108 +195,52 @@ pub(super) async fn workspace(
         .map_err(|error| format!("invalid workspace capture preview: {error}"))?;
     request["fileDigest"] =
         serde_json::to_value(preview.file_digest).map_err(|error| error.to_string())?;
-    submit_prepared(
-        client,
-        captures,
-        request,
-        preview.manifest,
-        Submission::Workspace,
-    )
-    .await
+    let target = Target {
+        submission: Submission::Workspace,
+        method: Method::POST,
+        route: routes::WORKSPACE.to_owned(),
+    };
+    submit_prepared(client, captures, request, preview.manifest, target).await
 }
 
+/// Reserves the manifest's taps, submits, then releases, retains or accepts them.
 async fn submit_prepared(
     client: &ControlProxyClient,
     captures: &Arc<ApplicationCaptureState>,
     document: Value,
     manifest: ApplicationCaptureManifest,
-    submission: Submission,
+    target: Target,
 ) -> Result<ControlProxyResponse, String> {
     let revision = manifest.revision;
     if let Err(error) = reserve(captures, manifest).await {
-        return Ok(application_capture_error(&error));
+        return Ok(ControlProxyResponse::capture_unavailable(&error));
     }
     // A cancelled command future or lost PUT response cannot destroy its taps:
     // the reservation belongs to managed state before the request starts.
     start_monitor(client, captures);
-    let result = client
-        .request(
-            if submission == Submission::Workspace {
-                Method::POST
-            } else {
-                Method::PUT
-            },
-            match &submission {
-                Submission::Workspace => "/api/v1/workspace",
-                Submission::Graph => "/api/v1/graph",
-                Submission::Power => "/api/v1/audio/power",
-                Submission::NodeControl(route) => route,
-            },
-            Some(document),
-        )
-        .await;
-    if matches!(&result, Ok(response) if definitively_rejected(response)) {
-        reject_reserved(captures).await?;
-        return result;
+    let mut response = client
+        .request(target.method, &target.route, Some(document))
+        .await
+        .map_err(|error| format!("{error}; {CAPTURES_RETAINED}"))?;
+    let settlement = settlement::settle(
+        target.submission,
+        response.delivery,
+        response.status,
+        &response.body,
+        revision,
+    )
+    .map_err(|error| format!("{error}; {CAPTURES_RETAINED}"))?;
+    match settlement {
+        Settlement::Release => reject_reserved(captures).await?,
+        Settlement::Retain => settlement::mark_pending_confirmation(&mut response.body),
+        Settlement::Accept => accept_reserved(captures).await?,
     }
-    if !matches!(&result, Ok(response) if response.is_success()) {
-        return unresolved_result(result);
-    }
-    let response = result?;
-    let acknowledgement = match submission {
-        Submission::Workspace => &response.body["document"],
-        Submission::NodeControl(_) => &response.body["application"],
-        Submission::Graph | Submission::Power => &response.body,
-    };
-    validate_ack(acknowledgement, revision).map_err(|error| {
-        format!("{error}; application captures retained until engine confirmation")
-    })?;
-    accept_reserved(captures).await?;
     Ok(response)
-}
-
-fn unresolved_result(
-    result: Result<ControlProxyResponse, String>,
-) -> Result<ControlProxyResponse, String> {
-    match result {
-        Ok(mut response) => {
-            if let Some(parameters) = response
-                .body
-                .get_mut("parameters")
-                .and_then(Value::as_object_mut)
-            {
-                parameters.insert(
-                    "captureOutcome".into(),
-                    Value::String("pending_confirmation".into()),
-                );
-            }
-            Ok(response)
-        }
-        Err(error) => Err(format!(
-            "{error}; application captures retained until engine confirmation"
-        )),
-    }
-}
-
-fn definitively_rejected(response: &ControlProxyResponse) -> bool {
-    response.delivery == RequestDelivery::NotSent
-        || (response.delivery == RequestDelivery::ServerResponse
-            && ((400..500).contains(&response.status)
-                || response.body["parameters"]["workspaceOutcome"] == "not_applied"
-                || response.body["parameters"]["powerOutcome"] == "not_applied"
-                || response.body["parameters"]["nodeControlOutcome"] == "not_applied"))
 }
 
 fn decode_manifest(body: Value) -> Result<ApplicationCaptureManifest, String> {
     serde_json::from_value(body)
         .map_err(|error| format!("invalid application capture manifest: {error}"))
-}
-
-fn validate_ack(body: &Value, revision: u64) -> Result<(), String> {
-    if body.get("revision").and_then(Value::as_u64) != Some(revision) {
-        return Err("graph acceptance does not match prepared capture revision".into());
-    }
-    Ok(())
 }
 
 async fn prepare(
@@ -328,7 +291,8 @@ fn start_monitor(client: &ControlProxyClient, captures: &Arc<ApplicationCaptureS
     // The caller owns capture_gate. The monitor clears this flag under the same
     // gate, so a new stage cannot lose its wake-up while the previous monitor exits.
     if !captures.monitor_active.swap(true, Ordering::AcqRel) {
-        tauri::async_runtime::spawn(monitor(client.clone(), Arc::downgrade(captures)));
+        let timer = TokioDelay::new(mixrelay_time::StdClock::new());
+        tauri::async_runtime::spawn(monitor(client.clone(), Arc::downgrade(captures), timer));
     }
 }
 
@@ -342,7 +306,12 @@ async fn stage_owner(
         .map_err(|error| format!("capture staging task failed: {error}"))?
 }
 
-async fn monitor(client: ControlProxyClient, weak: Weak<ApplicationCaptureState>) {
+/// Observes engine acknowledgements until no staged or reserved capture is pending.
+async fn monitor(
+    client: ControlProxyClient,
+    weak: Weak<ApplicationCaptureState>,
+    timer: TokioDelay,
+) {
     let mut last_error = None;
     loop {
         {
@@ -361,9 +330,15 @@ async fn monitor(client: ControlProxyClient, weak: Weak<ApplicationCaptureState>
         {
             tracing::warn!(%error, "application capture activation is awaiting engine acknowledgement");
         }
-        let interval = if error.is_some() { 1000 } else { 100 };
+        let interval = if error.is_some() {
+            ACKNOWLEDGEMENT_RETRY
+        } else {
+            ACKNOWLEDGEMENT_POLL
+        };
         last_error = error;
-        tokio::time::sleep(Duration::from_millis(interval)).await;
+        timer
+            .wait_until(Deadline::after(timer.now(), interval))
+            .await;
     }
 }
 
@@ -375,8 +350,8 @@ async fn observe_ack(
         return Ok(());
     };
     let response = tokio::time::timeout(
-        Duration::from_secs(10),
-        client.request(Method::GET, "/api/v1/graph/status", None),
+        ACKNOWLEDGEMENT_TIMEOUT,
+        client.request(Method::GET, routes::GRAPH_STATUS, None),
     )
     .await
     .map_err(|_| "capture acknowledgement request timed out".to_owned())??;
@@ -396,7 +371,9 @@ async fn observe_ack(
     if captures.requires_manifest(status.submitted_revision)? {
         // Another controller may have advanced execution before this ACK. Its
         // authoritative manifest supersedes stale prepared sources, not UI state.
-        let manifest = client.request(Method::GET, MANIFEST, None).await?;
+        let manifest = client
+            .request(Method::GET, routes::CAPTURE_MANIFEST, None)
+            .await?;
         if !manifest.is_success() {
             return Err(format!("capture manifest HTTP {}", manifest.status));
         }
@@ -417,69 +394,31 @@ mod tests {
         let client = ControlProxyClient::with_socket(None);
         client.close_admission();
         let captures = Arc::new(ApplicationCaptureState::default());
-        let response = ControlProxyResponse {
-            engine: None,
-            status: 200,
-            delivery: RequestDelivery::ServerResponse,
-            body: serde_json::json!({"enginePower":{"enabled":false,"transitioning":false}}),
-        };
+        let response = ControlProxyResponse::answered(
+            None,
+            200,
+            serde_json::json!({"enginePower":{"enabled":false,"transitioning":false}}),
+        );
 
         let rejected = power_status(&client, &captures, response).await.unwrap();
         assert_eq!(rejected.status, 409);
         assert_eq!(rejected.body["code"], "control_unavailable");
-        assert_eq!(rejected.delivery, RequestDelivery::NotSent);
+        assert_eq!(
+            rejected.delivery,
+            mixrelay_desktop_core::engine_control::Delivery::NotSent
+        );
         assert!(!captures.has_pending().unwrap());
     }
 
-    #[test]
-    fn explicit_workspace_rejection_releases_reservation_but_lost_reply_does_not() {
-        let mut response = ControlProxyResponse {
-            engine: None,
-            status: 503,
-            delivery: RequestDelivery::ServerResponse,
-            body: serde_json::json!({"code":"control_unavailable", "parameters":{"workspaceOutcome":"not_applied"}}),
-        };
-        assert!(definitively_rejected(&response));
-        response.delivery = RequestDelivery::Uncertain;
-        assert!(!definitively_rejected(&response));
-        response.delivery = RequestDelivery::ServerResponse;
-        response.body = serde_json::json!({"code":"control_unavailable"});
-        assert!(!definitively_rejected(&response));
-    }
-
-    #[test]
-    fn acceptance_must_match_prepared_revision_exactly() {
-        for revision in [0, 6, 8] {
-            assert!(validate_ack(&serde_json::json!({"revision":revision}), 7).is_err());
-        }
-        assert!(validate_ack(&serde_json::json!({"revision":7}), 7).is_ok());
-        assert!(validate_ack(&serde_json::json!({}), 7).is_err());
-    }
-
-    #[test]
-    fn rejected_power_start_releases_reserved_taps_but_uncertain_reply_does_not() {
-        let mut response = ControlProxyResponse {
-            engine: None,
-            status: 503,
-            delivery: RequestDelivery::ServerResponse,
-            body: serde_json::json!({"code":"audio_session_reconfigure_failed", "parameters":{"powerOutcome":"not_applied"}}),
-        };
-        assert!(definitively_rejected(&response));
-        response.delivery = RequestDelivery::Uncertain;
-        assert!(!definitively_rejected(&response));
-    }
-
-    #[test]
-    fn rejected_node_control_releases_reservation_but_lost_response_does_not() {
-        let mut response = ControlProxyResponse {
-            engine: None,
-            status: 503,
-            delivery: RequestDelivery::ServerResponse,
-            body: serde_json::json!({"code":"node_disabled", "parameters":{"nodeControlOutcome":"not_applied"}}),
-        };
-        assert!(definitively_rejected(&response));
-        response.delivery = RequestDelivery::Uncertain;
-        assert!(!definitively_rejected(&response));
+    #[tokio::test]
+    async fn a_refused_preview_is_returned_without_reserving_taps() {
+        let client = ControlProxyClient::with_socket(None);
+        let captures = Arc::new(ApplicationCaptureState::default());
+        let refused = apply(&client, &captures, serde_json::json!({"revision":1}))
+            .await
+            .unwrap();
+        assert_eq!(refused.status, 409);
+        assert!(!captures.has_pending().unwrap());
     }
 
     #[test]

@@ -8,327 +8,291 @@ use std::{
     time::Duration,
 };
 
+use mixrelay_desktop_core::midi_commands;
 use mixrelay_midi_control::{
-    Action, Binding, Mode,
-    mailbox::{Input, InputSequence, reception_order},
-    runtime::{Coalescer, Pickup},
+    Binding, Target,
+    learn::LearnCapture,
+    mailbox::InputSequence,
+    router::{Router, Source},
 };
+use mixrelay_time::{Deadline, Instant, MonotonicClock, Sleeper};
 
 use super::{
-    State, lock,
-    native::{self, Port},
+    State,
+    admission::Admission,
+    lock,
+    native::{self, NativeError, Port},
 };
 use crate::control_proxy::local::LocalControl;
 
-pub(super) fn run(
-    state: &Mutex<State>,
-    stop: &AtomicBool,
-    control: &Arc<LocalControl>,
-    write_gate: &tokio::sync::Mutex<()>,
-    clock: &(impl mixrelay_time::MonotonicClock + mixrelay_time::Sleeper),
-) {
-    let mut ports = BTreeMap::new();
-    let capture = Arc::clone(&lock(state).capture);
-    let mut next_token = 0;
-    let sequence = Arc::default();
-    let mut gains = Coalescer::default();
-    let mut pickup = Vec::new();
-    let mut bindings = Vec::new();
-    let mut inputs = Vec::new();
-    let mut generation = u64::MAX;
-    let start = clock.now();
-    let mut scan = 0;
-    let mut snapshot = serde_json::Value::Null;
-    while !stop.load(Ordering::Acquire) {
-        let now = u64::try_from(clock.now().duration_since(start).as_millis()).unwrap_or(u64::MAX);
-        if now >= scan {
-            if refresh_ports(state, &mut ports, &capture, &mut next_token, &sequence) {
-                generation = u64::MAX;
-            }
-            snapshot = tauri::async_runtime::block_on(control.midi_snapshot())
-                .unwrap_or(serde_json::Value::Null);
-            {
-                let mut state = lock(state);
-                if let Err(error) = state.refresh_names(&snapshot) {
-                    state.unavailable = Some(error.to_string());
-                }
-                state.snapshot = snapshot.clone();
-            }
-            scan = now.saturating_add(1000);
-        }
-        let learning = refresh_settings(
-            state,
-            &mut generation,
-            &mut bindings,
-            &mut pickup,
-            &mut gains,
-        );
-        let admission = super::admission::Admission::new(state, stop, write_gate, generation);
-        if learning {
-            let _ = lock(state).observe_learn();
-        } else {
-            drain_inputs(&ports, &bindings, &mut inputs);
-            process_inputs(
-                (&bindings, &mut pickup),
-                &inputs,
-                (&mut gains, &snapshot),
-                (state, generation),
-                |binding| {
-                    tauri::async_runtime::block_on(control.midi_action(binding, None, &admission));
-                },
-            );
-            if publish_gains(&bindings, &mut pickup, &mut gains, now, |binding, value| {
-                if !admitted(state, generation) {
-                    return None;
-                }
-                let applied = tauri::async_runtime::block_on(control.midi_action(
-                    binding,
-                    Some((value, observed_gain(&snapshot, &binding.target))),
-                    &admission,
-                ));
-                Some((
-                    applied,
-                    u64::try_from(clock.now().duration_since(start).as_millis())
-                        .unwrap_or(u64::MAX),
-                ))
-            }) {
-                scan = 0;
-            }
-        }
-        // Native callbacks publish to atomics throughout this wait and all dispatch IO.
-        clock.sleep_until(mixrelay_time::Deadline::after(
-            clock.now(),
-            Duration::from_millis(5),
-        ));
+/// Ports are rescanned and node names refreshed this often, and after every gain write.
+const SCAN_INTERVAL_MS: u64 = 1000;
+/// Native callbacks publish to atomics throughout this wait and all dispatch IO.
+const TICK: Duration = Duration::from_millis(5);
+
+/// Opens and closes native input ports as devices come and go.
+pub(super) trait Inputs {
+    type Connection;
+
+    fn reconcile(
+        &mut self,
+        ports: &mut BTreeMap<String, Port<Self::Connection>>,
+        capture: &Arc<LearnCapture>,
+        sequence: &Arc<InputSequence>,
+    ) -> Result<(), NativeError>;
+}
+
+/// `CoreMIDI` or ALSA sequencer inputs.
+#[derive(Default)]
+pub(super) struct NativeInputs {
+    next_token: u32,
+}
+
+impl Inputs for NativeInputs {
+    type Connection = midir::MidiInputConnection<Arc<mixrelay_midi_control::mailbox::Mailbox>>;
+
+    fn reconcile(
+        &mut self,
+        ports: &mut BTreeMap<String, Port<Self::Connection>>,
+        capture: &Arc<LearnCapture>,
+        sequence: &Arc<InputSequence>,
+    ) -> Result<(), NativeError> {
+        native::reconcile(ports, capture, &mut self.next_token, sequence)
     }
 }
 
-fn publish_gains(
-    bindings: &[Binding],
-    pickup: &mut [Pickup],
-    gains: &mut Coalescer,
-    now: u64,
-    mut send: impl FnMut(&Binding, f32) -> Option<(bool, u64)>,
-) -> bool {
-    let mut attempted = false;
-    for binding in bindings
-        .iter()
-        .filter(|binding| binding.action == Action::Volume)
-    {
-        if let Some(value) = gains.take(&binding.target, now) {
-            let Some((applied, completed)) = send(binding, value) else {
-                gains.clear();
-                break;
-            };
-            gains.complete(&binding.target, completed);
-            if !applied {
-                for (other, pickup) in bindings.iter().zip(&mut *pickup) {
-                    if other.target == binding.target {
-                        *pickup = Pickup::default();
-                    }
-                }
-            }
-            attempted = true;
-        }
-    }
-    attempted
+/// The engine the worker reads node state from and sends mapped actions to.
+pub(super) trait Engine {
+    fn snapshot(&self) -> Option<serde_json::Value>;
+
+    /// Sends one action, or a gain with the level it was computed from. Returns whether
+    /// the engine applied it.
+    fn act(
+        &self,
+        binding: &Binding,
+        gain: Option<(f32, Option<f32>)>,
+        admission: &Admission<'_>,
+    ) -> bool;
 }
 
-fn refresh_ports(
-    state: &Mutex<State>,
-    ports: &mut BTreeMap<String, Port>,
-    capture: &Arc<mixrelay_midi_control::learn::LearnCapture>,
-    next_token: &mut u32,
-    sequence: &Arc<InputSequence>,
-) -> bool {
-    let previous: Vec<_> = ports
-        .values()
-        .map(|port| (port.device.id.clone(), port.token))
-        .collect();
-    let unavailable = native::reconcile(ports, capture, next_token, sequence).err();
-    let changed = previous
-        != ports
+impl Engine for LocalControl {
+    fn snapshot(&self) -> Option<serde_json::Value> {
+        tauri::async_runtime::block_on(self.midi_snapshot())
+    }
+
+    fn act(
+        &self,
+        binding: &Binding,
+        gain: Option<(f32, Option<f32>)>,
+        admission: &Admission<'_>,
+    ) -> bool {
+        tauri::async_runtime::block_on(self.midi_action(binding, gain, admission))
+    }
+}
+
+/// State shared with the editor commands and shutdown.
+#[derive(Clone, Copy)]
+pub(super) struct Shared<'a> {
+    pub(super) state: &'a Mutex<State>,
+    pub(super) stop: &'a AtomicBool,
+    pub(super) write_gate: &'a tokio::sync::Mutex<()>,
+}
+
+pub(super) struct Worker<'a, I: Inputs, E, C> {
+    shared: Shared<'a>,
+    inputs: I,
+    engine: &'a E,
+    clock: &'a C,
+    start: Instant,
+    ports: BTreeMap<String, Port<I::Connection>>,
+    capture: Arc<LearnCapture>,
+    sequence: Arc<InputSequence>,
+    router: Router,
+    /// The binding generation the router holds; `u64::MAX` forces a reload.
+    generation: u64,
+    next_scan_ms: u64,
+    snapshot: serde_json::Value,
+}
+
+impl<'a, I, E, C> Worker<'a, I, E, C>
+where
+    I: Inputs,
+    E: Engine,
+    C: MonotonicClock + Sleeper,
+{
+    pub(super) fn new(shared: Shared<'a>, inputs: I, engine: &'a E, clock: &'a C) -> Self {
+        let capture = Arc::clone(&lock(shared.state).capture);
+        Self {
+            shared,
+            inputs,
+            engine,
+            clock,
+            start: clock.now(),
+            ports: BTreeMap::new(),
+            capture,
+            sequence: Arc::default(),
+            router: Router::default(),
+            generation: u64::MAX,
+            next_scan_ms: 0,
+            snapshot: serde_json::Value::Null,
+        }
+    }
+
+    /// Ticks until shutdown is requested.
+    pub(super) fn run(&mut self) {
+        while !self.shared.stop.load(Ordering::Acquire) {
+            self.tick();
+            self.clock
+                .sleep_until(Deadline::after(self.clock.now(), TICK));
+        }
+    }
+
+    fn tick(&mut self) {
+        let now = elapsed_ms(self.clock, self.start);
+        if now >= self.next_scan_ms {
+            self.scan();
+            self.next_scan_ms = now.saturating_add(SCAN_INTERVAL_MS);
+        }
+        if self.reload_settings() {
+            // Map mode: inputs belong to learn capture, not to bindings.
+            let _ = lock(self.shared.state).observe_learn();
+            return;
+        }
+        self.dispatch_inputs();
+        if self.publish_gains(now) {
+            self.next_scan_ms = 0;
+        }
+    }
+
+    /// Reconciles ports, then refreshes the engine snapshot and remembered node names.
+    fn scan(&mut self) {
+        if self.refresh_ports() {
+            // A reconnected port starts a fresh generation: faders pick up again.
+            self.generation = u64::MAX;
+        }
+        self.snapshot = self.engine.snapshot().unwrap_or(serde_json::Value::Null);
+        let mut state = lock(self.shared.state);
+        if let Err(error) = state.refresh_names(&self.snapshot) {
+            state.unavailable = Some(error.to_string());
+        }
+        state.snapshot = self.snapshot.clone();
+    }
+
+    /// Publishes the open ports to learn and status. Returns whether any port changed.
+    fn refresh_ports(&mut self) -> bool {
+        let previous = self.port_identities();
+        let unavailable = self
+            .inputs
+            .reconcile(&mut self.ports, &self.capture, &self.sequence)
+            .err();
+        let changed = previous != self.port_identities();
+        let mut state = lock(self.shared.state);
+        state.mailboxes = self
+            .ports
+            .values()
+            .map(|port| Arc::clone(&port.mailbox))
+            .collect();
+        state.ports = self
+            .ports
+            .values()
+            .map(|port| (port.token, port.device.clone()))
+            .collect();
+        state.devices = self
+            .ports
+            .values()
+            .map(|port| port.device.clone())
+            .collect();
+        state.unavailable = state
+            .preferences_error
+            .clone()
+            .or_else(|| unavailable.map(|error| error.to_string()));
+        changed
+    }
+
+    fn port_identities(&self) -> Vec<(String, u32)> {
+        self.ports
             .values()
             .map(|port| (port.device.id.clone(), port.token))
-            .collect::<Vec<_>>();
-    let mut state = lock(state);
-    state.mailboxes = ports
-        .values()
-        .map(|port| Arc::clone(&port.mailbox))
-        .collect();
-    state.ports = ports
-        .values()
-        .map(|port| (port.token, port.device.clone()))
-        .collect();
-    state.devices = ports.values().map(|port| port.device.clone()).collect();
-    state.unavailable = state
-        .preferences_error
-        .clone()
-        .or_else(|| unavailable.map(|error| error.to_string()));
-    changed
-}
-
-fn refresh_settings(
-    state: &Mutex<State>,
-    generation: &mut u64,
-    bindings: &mut Vec<Binding>,
-    pickup: &mut Vec<Pickup>,
-    gains: &mut Coalescer,
-) -> bool {
-    let mut state = lock(state);
-    if let Err(error) = state.observe_learn() {
-        state.unavailable = Some(error.to_string());
+            .collect()
     }
-    if *generation != state.store.generation() {
-        *generation = state.store.generation();
-        bindings.clear();
-        bindings.extend_from_slice(state.store.bindings());
-        pickup.clear();
-        pickup.extend((0..bindings.len()).map(|_| Pickup::default()));
-        gains.clear();
-    }
-    state.map_mode
-}
 
-fn drain_inputs<C>(
-    ports: &BTreeMap<String, Port<C>>,
-    bindings: &[Binding],
-    inputs: &mut Vec<(usize, Input)>,
-) {
-    drain_inputs_with(ports, bindings, inputs, |_| {});
-}
-
-fn drain_inputs_with<C>(
-    ports: &BTreeMap<String, Port<C>>,
-    bindings: &[Binding],
-    inputs: &mut Vec<(usize, Input)>,
-    mut before_presses: impl FnMut(&str),
-) {
-    inputs.clear();
-    let Some(boundary) = ports.values().next().map(|port| port.mailbox.boundary()) else {
-        return;
-    };
-    if ports.values().any(|port| port.mailbox.is_publishing()) {
-        return;
-    }
-    for port in ports.values() {
-        for (index, binding) in bindings.iter().enumerate() {
-            if binding.action != Action::Volume || binding.control.device.id != port.device.id {
-                continue;
-            }
-            // Drain each hardware slot once, then fan out the same batch to every volume mapping.
-            if bindings[..index].iter().any(|other| {
-                other.action == Action::Volume && other.control.matches(&binding.control)
-            }) {
-                continue;
-            }
-            if let Some(input) = port.mailbox.take(
-                binding.control.channel,
-                binding.control.kind,
-                binding.control.number,
-            ) {
-                for (other, mapping) in bindings.iter().enumerate() {
-                    if mapping.action == Action::Volume && mapping.control.matches(&binding.control)
-                    {
-                        inputs.push((other, input));
-                    }
-                }
-            }
+    /// Observes learn progress and loads changed bindings. Returns whether map mode is on.
+    fn reload_settings(&mut self) -> bool {
+        let mut state = lock(self.shared.state);
+        if let Err(error) = state.observe_learn() {
+            state.unavailable = Some(error.to_string());
         }
-        let presses = port.mailbox.take_presses_before(boundary);
-        before_presses(&port.device.id);
-        for input in presses {
-            for (index, binding) in bindings.iter().enumerate() {
-                if binding.action != Action::Volume
-                    && binding.control.device.id == port.device.id
-                    && binding.control.channel == input.channel
-                    && binding.control.kind == input.kind
-                    && binding.control.number == input.number
-                {
-                    inputs.push((index, input));
-                }
-            }
+        if self.generation != state.store.generation() {
+            self.generation = state.store.generation();
+            self.router.load(state.store.bindings());
         }
+        state.map_mode
     }
-    inputs.sort_by(|(left, a), (right, b)| {
-        reception_order(a.sequence(&bindings[*left]), b.sequence(&bindings[*right]))
-    });
-}
 
-fn process_inputs(
-    binding_states: (&[Binding], &mut [Pickup]),
-    inputs: &[(usize, Input)],
-    gain_state: (&mut Coalescer, &serde_json::Value),
-    admission: (&Mutex<State>, u64),
-    mut send: impl FnMut(&Binding),
-) {
-    let (bindings, pickup) = binding_states;
-    let (gains, snapshot) = gain_state;
-    for (index, input) in inputs {
-        if !admitted(admission.0, admission.1) {
-            gains.clear();
-            break;
-        }
-        apply(
-            (&bindings[*index], &mut pickup[*index]),
-            *input,
-            gains,
-            snapshot,
+    fn admission(&self) -> Admission<'a> {
+        Admission::new(
+            self.shared.state,
+            self.shared.stop,
+            self.shared.write_gate,
+            self.generation,
+        )
+    }
+
+    fn dispatch_inputs(&mut self) {
+        let admission = self.admission();
+        let (state, generation) = (self.shared.state, self.generation);
+        let engine = self.engine;
+        let snapshot = &self.snapshot;
+        self.router.drain(self.ports.values().map(|port| Source {
+            device_id: &port.device.id,
+            mailbox: &port.mailbox,
+        }));
+        self.router.dispatch(
+            |target| ready_gain(snapshot, target),
+            || admitted(state, generation),
             |binding| {
-                if admitted(admission.0, admission.1) {
-                    send(binding);
-                }
+                engine.act(binding, None, &admission);
             },
         );
     }
-    if !admitted(admission.0, admission.1) {
-        gains.clear();
+
+    /// Returns whether a gain was attempted.
+    fn publish_gains(&mut self, now: u64) -> bool {
+        let admission = self.admission();
+        let (state, generation) = (self.shared.state, self.generation);
+        let engine = self.engine;
+        let snapshot = &self.snapshot;
+        let (clock, start) = (self.clock, self.start);
+        self.router.publish_gains(now, |binding, value| {
+            if !admitted(state, generation) {
+                return None;
+            }
+            let observed = observed_gain(snapshot, &binding.target);
+            let applied = engine.act(binding, Some((value, observed)), &admission);
+            Some((applied, elapsed_ms(clock, start)))
+        })
     }
 }
 
+fn elapsed_ms(clock: &impl MonotonicClock, start: Instant) -> u64 {
+    u64::try_from(clock.now().duration_since(start).as_millis()).unwrap_or(u64::MAX)
+}
+
+/// Bindings still match the router's generation and the editor is not mapping.
 fn admitted(state: &Mutex<State>, generation: u64) -> bool {
     let state = lock(state);
     state.store.generation() == generation && !state.map_mode
 }
 
-fn apply(
-    binding_state: (&Binding, &mut Pickup),
-    input: Input,
-    gains: &mut Coalescer,
-    snapshot: &serde_json::Value,
-    mut send: impl FnMut(&Binding),
-) {
-    let (binding, pickup) = binding_state;
-    if binding.action == Action::Volume {
-        if !mixrelay_desktop_core::midi_commands::volume_ready(snapshot, &binding.target) {
-            *pickup = Pickup::default();
-            return;
-        }
-        let observed = mixrelay_desktop_core::midi_commands::node(snapshot, &binding.target)
-            .and_then(|node| serde_json::from_value::<f32>(node["gainDb"].clone()).ok());
-        let current = if binding.mode == Mode::Absolute {
-            observed
-        } else {
-            gains.desired(&binding.target).or(observed)
-        };
-        if let Some(current) = current
-            && let Some(value) = pickup.map(binding, input, current)
-        {
-            gains.push(binding.target.clone(), value);
-        }
-    } else {
-        // Dispatch each captured press once; uncertain writes are never replayed.
-        for _ in 0..input.presses {
-            send(binding);
-        }
+fn ready_gain(snapshot: &serde_json::Value, target: &Target) -> Option<f32> {
+    if !midi_commands::volume_ready(snapshot, target) {
+        return None;
     }
+    observed_gain(snapshot, target)
 }
 
-fn observed_gain(
-    snapshot: &serde_json::Value,
-    target: &mixrelay_midi_control::Target,
-) -> Option<f32> {
-    mixrelay_desktop_core::midi_commands::node(snapshot, target)
+fn observed_gain(snapshot: &serde_json::Value, target: &Target) -> Option<f32> {
+    midi_commands::node(snapshot, target)
         .and_then(|node| serde_json::from_value(node["gainDb"].clone()).ok())
 }
 

@@ -17,3 +17,6 @@ pub mod crash_guard;
 pub mod identity;
 
 pub mod latency_maintenance;
+
+#[cfg(test)]
+mod adapter_session_tests;

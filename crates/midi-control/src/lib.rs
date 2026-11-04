@@ -3,6 +3,7 @@
 pub mod learn;
 pub mod mailbox;
 mod relative;
+pub mod router;
 pub mod runtime;
 
 use serde::{Deserialize, Serialize};

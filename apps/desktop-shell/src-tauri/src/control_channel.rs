@@ -73,3 +73,48 @@ pub(crate) const fn failure_platform() -> mixrelay_control_protocol::ControlPlat
         mixrelay_control_protocol::ControlPlatform::Linux
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::Arc;
+
+    fn window(sequence: u64, peak: f32) -> ControlTelemetry {
+        ControlTelemetry {
+            engine_incarnation: "engine".into(),
+            sequence,
+            meters: mixrelay_control_protocol::MeterSnapshot {
+                protocol_version: 1,
+                revision: 1,
+                nodes: vec![mixrelay_control_protocol::NodeMeterSnapshot {
+                    node_id: "n".into(),
+                    port_id: "out".into(),
+                    peaks: vec![peak],
+                    dynamics: None,
+                }],
+            },
+            state: None,
+        }
+    }
+
+    #[tokio::test]
+    async fn a_mailbox_folds_undelivered_windows_and_ends_after_them() {
+        let mailbox = Mailbox::default();
+        mailbox.deliver(window(1, 0.9));
+        mailbox.deliver(window(2, 0.1));
+        mailbox.end("gone");
+        mailbox.end("ignored");
+        let merged = mailbox.take().await.unwrap();
+        assert_eq!(merged.sequence, 2);
+        assert_eq!(merged.meters.nodes[0].peaks, [0.9]);
+        assert_eq!(mailbox.take().await.unwrap_err(), "gone");
+        let waiting = Arc::new(Mailbox::default());
+        let reader = tokio::spawn({
+            let waiting = Arc::clone(&waiting);
+            async move { waiting.take().await.map(|window| window.sequence) }
+        });
+        tokio::task::yield_now().await;
+        waiting.deliver(window(3, 0.2));
+        assert_eq!(reader.await.unwrap(), Ok(3));
+    }
+}

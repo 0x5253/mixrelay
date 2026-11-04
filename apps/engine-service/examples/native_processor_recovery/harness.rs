@@ -14,7 +14,7 @@ use mixrelay_control_protocol::{
 };
 use mixrelay_control_server::ControlBackend;
 use mixrelay_engine_core::{FixedRuntimeStatus, default_peak_meter_bank};
-use mixrelay_engine_service::{EngineGraphController, EngineGraphControllerConfig};
+use mixrelay_engine_service::controller::{EngineGraphController, EngineGraphControllerConfig};
 use mixrelay_render::{BlockProcessor, ProcessorExchange, RenderPlan};
 
 use super::resources::{FixtureResources, SinkOrder};

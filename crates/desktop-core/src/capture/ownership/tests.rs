@@ -446,3 +446,18 @@ fn failed_successor_start_rolls_back_only_new_starts_and_keeps_owners_for_retry(
     drop(retired);
     assert_eq!(*dropped.lock().unwrap(), ["old"]);
 }
+
+#[test]
+fn a_capture_session_is_reused_only_for_the_same_forwarding_endpoint() {
+    let preserve = manifest(1, &[("app", "io.mixrelay.fixture")]).sources[0]
+        .request
+        .clone();
+    let mut first = preserve.clone();
+    first.source_playback = mixrelay_audio_graph::SourcePlaybackPolicy::MuteWhileCaptured;
+    first.forwarding_endpoint = Some("17e59d73-42c1-4f11-a8b4-6c2d913357e0".into());
+    let mut second = first.clone();
+    second.forwarding_endpoint = Some("27e59d73-42c1-4f11-a8b4-6c2d913357e0".into());
+    assert!(same_capture_session(&first, &first));
+    assert!(!same_capture_session(&first, &second));
+    assert!(!same_capture_session(&preserve, &first));
+}

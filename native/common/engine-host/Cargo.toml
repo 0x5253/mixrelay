@@ -23,3 +23,5 @@ libc = "0.2.189"
 [dev-dependencies]
 allocation-counter = "0.8.1"
 mixrelay-test-support = { path = "../../../crates/test-support" }
+mixrelay-engine-core = { path = "../../../crates/engine-core", features = ["test-util"] }
+mixrelay-time = { path = "../../../crates/time" }

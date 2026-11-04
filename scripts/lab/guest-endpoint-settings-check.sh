@@ -8,4 +8,6 @@ cd "$workspace"
 uname -a
 cargo build --locked -p mixrelay-engine-service
 cargo test --locked -p mixrelay-engine-service --lib --bins
+# The shared adapter session status and its AudioWorker are tested in engine-host.
+cargo test --locked -p mixrelay-engine-host --lib
 cargo clippy --locked -p mixrelay-engine-service --lib --bins --tests -- -D warnings

@@ -34,27 +34,31 @@ fn fixture() -> mixrelay_test_support::FixtureDir {
 }
 
 fn backend() -> Arc<dyn ControlBackend> {
-    Arc::new(crate::EngineGraphController::new_with_configuration(
-        Arc::new(mixrelay_render::ProcessorExchange::new(1)),
-        crate::EngineGraphControllerConfig {
-            clock: Arc::new(mixrelay_time::ManualClock::default()),
-            format: mixrelay_audio_graph::RenderFormat {
-                sample_rate: 48_000,
-                block_frames: 128,
+    Arc::new(
+        crate::controller::EngineGraphController::new_with_configuration(
+            Arc::new(mixrelay_render::ProcessorExchange::new(1)),
+            crate::controller::EngineGraphControllerConfig {
+                clock: Arc::new(mixrelay_time::ManualClock::default()),
+                format: mixrelay_audio_graph::RenderFormat {
+                    sample_rate: 48_000,
+                    block_frames: 128,
+                },
+                meters: mixrelay_engine_core::default_peak_meter_bank(),
+                initial_bindings: vec![],
+                endpoint_backend: Arc::new(
+                    mixrelay_engine_core::ContractOnlyVirtualEndpointBackend::default(),
+                ),
+                required_endpoint_node_id: Some(
+                    mixrelay_engine_core::DEFAULT_ENDPOINT_NODE_ID.into(),
+                ),
+                processor_catalog: mixrelay_processor_host::ProcessorCatalog::default(),
+                graph_resources: Arc::new(mixrelay_engine_core::NoopGraphResourceBackend),
+                runtime_status: Arc::new(mixrelay_engine_core::FixedRuntimeStatus::new(
+                    mixrelay_control_protocol::DriverState::Ready,
+                )),
             },
-            meters: mixrelay_engine_core::default_peak_meter_bank(),
-            initial_bindings: vec![],
-            endpoint_backend: Arc::new(
-                mixrelay_engine_core::ContractOnlyVirtualEndpointBackend::default(),
-            ),
-            required_endpoint_node_id: Some(mixrelay_engine_core::DEFAULT_ENDPOINT_NODE_ID.into()),
-            processor_catalog: mixrelay_processor_host::ProcessorCatalog::default(),
-            graph_resources: Arc::new(mixrelay_engine_core::NoopGraphResourceBackend),
-            runtime_status: Arc::new(mixrelay_engine_core::FixedRuntimeStatus::new(
-                mixrelay_control_protocol::DriverState::Ready,
-            )),
-        },
-    ))
+        ),
+    )
 }
 
 struct BlockingPowerBackend {

@@ -1,11 +1,9 @@
 //! Native release transport and desktop commands.
 use mixrelay_desktop_core::updates::{
-    self, Catalog, CatalogSource, DownloadOpener, MAX_RESPONSE_BYTES, Platform,
+    self, Catalog, CatalogSource, DownloadOpener, MAX_RESPONSE_BYTES, Platform, Product,
+    ProductUpdate, UpdateError,
 };
-pub(crate) use mixrelay_desktop_core::updates::{
-    Download, Product, ProductUpdate, UpdateError, UpdateState,
-};
-use reqwest::Client;
+use reqwest::{Client, ClientBuilder, StatusCode};
 use std::time::Duration;
 
 mod github;
@@ -25,34 +23,42 @@ fn platform() -> Result<Platform, UpdateError> {
     )
 }
 
-fn client() -> Result<Client, UpdateError> {
+/// Bounded requests that never retry or follow a redirect.
+fn client_builder() -> ClientBuilder {
     Client::builder()
-        .https_only(true)
         .user_agent(concat!("MixRelay/", env!("CARGO_PKG_VERSION")))
         .redirect(reqwest::redirect::Policy::none())
         .retry(reqwest::retry::never())
         .timeout(Duration::from_secs(10))
         .connect_timeout(Duration::from_secs(5))
+}
+
+fn client() -> Result<Client, UpdateError> {
+    client_builder()
+        .https_only(true)
         .build()
         .map_err(|_| UpdateError::Unavailable)
 }
 
-async fn fetch_catalog(client: &Client, product: Product) -> Result<Catalog, UpdateError> {
+/// Reads the latest publication. A missing release means nothing is published yet; any
+/// other status but OK, a redirect included, fails the check.
+async fn fetch_catalog(
+    client: &Client,
+    endpoint: &str,
+    product: Product,
+) -> Result<Catalog, UpdateError> {
     let response = client
-        .get(RELEASE_ENDPOINT)
+        .get(endpoint)
         .header(reqwest::header::ACCEPT, "application/vnd.github+json")
         .header("X-GitHub-Api-Version", "2026-03-10")
         .send()
         .await
         .map_err(|_| UpdateError::Unavailable)?;
-    if response.status() == reqwest::StatusCode::NOT_FOUND {
-        return Ok(Catalog::unpublished(product));
+    match response.status() {
+        StatusCode::OK => github::decode_release(&read_response(response).await?, product),
+        StatusCode::NOT_FOUND => Ok(Catalog::unpublished(product)),
+        _ => Err(UpdateError::Unavailable),
     }
-    if response.status() != reqwest::StatusCode::OK {
-        return Err(UpdateError::Unavailable);
-    }
-    let bytes = read_response(response).await?;
-    github::decode_release(&bytes, product)
 }
 
 async fn read_response(mut response: reqwest::Response) -> Result<Vec<u8>, UpdateError> {
@@ -79,12 +85,15 @@ async fn read_response(mut response: reqwest::Response) -> Result<Vec<u8>, Updat
 struct PublicCatalog {
     client: Client,
 }
+
 impl CatalogSource for PublicCatalog {
     async fn fetch(&self, product: Product, _platform: Platform) -> Result<Catalog, UpdateError> {
-        fetch_catalog(&self.client, product).await
+        fetch_catalog(&self.client, RELEASE_ENDPOINT, product).await
     }
 }
+
 struct NativeBrowser;
+
 impl DownloadOpener for NativeBrowser {
     async fn open(&self, url: &str) -> Result<(), UpdateError> {
         let url = url.to_owned();
@@ -94,39 +103,31 @@ impl DownloadOpener for NativeBrowser {
             .map_err(|_| UpdateError::OpenFailed)
     }
 }
-/// Checks the one complete `MixRelay` release for the background status menu.
+
+/// Compares `installed` with the latest publication for this machine's platform.
+async fn check(product: Product, installed: Option<String>) -> ProductUpdate {
+    let (Ok(platform), Ok(client)) = (platform(), client()) else {
+        return updates::unavailable_product(product, installed);
+    };
+    let catalog = fetch_catalog(&client, RELEASE_ENDPOINT, product).await;
+    updates::product_update(product, installed, platform, catalog)
+}
+
+/// Checks the one complete `MixRelay` release against the installed Driver package.
 pub(crate) async fn updates_check_driver() -> ProductUpdate {
-    let product = Product::MixRelay;
     let installed =
         tauri::async_runtime::spawn_blocking(crate::driver_control::installed_mixrelay_version)
             .await
             .ok()
             .flatten();
-    let (Ok(platform), Ok(client)) = (platform(), client()) else {
-        return updates::unavailable_product(product, installed);
-    };
-    updates::product_update(
-        product,
-        installed,
-        platform,
-        fetch_catalog(&client, product).await,
-    )
+    check(Product::MixRelay, installed).await
 }
 
 /// Checks the complete product without transmitting devices or audio state.
 #[tauri::command]
 pub(crate) async fn updates_check(app: tauri::AppHandle) -> Vec<ProductUpdate> {
-    let product = Product::MixRelay;
     let installed = Some(app.package_info().version.to_string());
-    let (Ok(platform), Ok(client)) = (platform(), client()) else {
-        return vec![updates::unavailable_product(product, installed)];
-    };
-    vec![updates::product_update(
-        product,
-        installed,
-        platform,
-        fetch_catalog(&client, product).await,
-    )]
+    vec![check(Product::MixRelay, installed).await]
 }
 
 /// Opens a user-selected package after checking the current publication.
@@ -149,5 +150,4 @@ pub(crate) async fn updates_open_download(
 }
 
 #[cfg(test)]
-#[path = "updates_tests.rs"]
 mod tests;
