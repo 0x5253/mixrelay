@@ -3,6 +3,8 @@ use crate::timing::AsyncDelay;
 use mixrelay_time::Deadline;
 use std::{future::Future, time::Duration};
 
+pub mod shutdown;
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum Watch {
     Running,
@@ -50,6 +52,76 @@ impl Absence {
     }
 }
 
+/// The controller's view of an engine the OS starts on demand and never restarts itself.
+pub trait OnDemandEngine {
+    type Error;
+    /// The controller confirmed its shutdown; the watch ends.
+    fn shutdown_finished(&self) -> bool;
+    /// A stop was requested; the engine is no longer wanted, even if teardown is retried.
+    fn stop_requested(&self) -> bool;
+    /// # Errors
+    /// Returns why the engine's state could not be observed.
+    fn is_running(&self) -> Result<bool, Self::Error>;
+    fn observation_failed(&self, error: Self::Error);
+    /// The engine is gone; reported once per outage.
+    fn lost(&self, unexpected: bool) -> impl Future<Output = ()> + Send;
+    fn wake(&self);
+    /// The engine runs again after an outage.
+    fn recovered(&self);
+}
+
+/// Checks the engine once a second while the controller wants it running. An observation
+/// failure is never taken as an absent engine.
+pub async fn watch_on_demand_engine<E: OnDemandEngine>(timer: &impl AsyncDelay, engine: &E) {
+    let mut absence = Absence::default();
+    loop {
+        timer
+            .wait_until(Deadline::after(timer.now(), Duration::from_secs(1)))
+            .await;
+        if engine.shutdown_finished() {
+            return;
+        }
+        if engine.stop_requested() {
+            continue;
+        }
+        let running = match engine.is_running() {
+            Ok(running) => running,
+            Err(error) => {
+                engine.observation_failed(error);
+                continue;
+            }
+        };
+        match absence.observe(running) {
+            Watch::Running | Watch::Waiting => {}
+            Watch::Lost { unexpected } => engine.lost(unexpected).await,
+            Watch::Wake => engine.wake(),
+            Watch::Recovered => engine.recovered(),
+        }
+    }
+}
+
+/// Runs `attempt` until it succeeds, at most `attempts` times, waiting `interval` after
+/// each failure. Returns whether an attempt succeeded.
+///
+/// Like [`await_engine_exit`] and [`supervise`], this takes a closure returning a future
+/// rather than an async closure, so a spawned caller's future can be proven `Send`.
+pub async fn retry<R: Future<Output = bool>>(
+    timer: &impl AsyncDelay,
+    attempts: u32,
+    interval: Duration,
+    mut attempt: impl FnMut() -> R,
+) -> bool {
+    for _ in 0..attempts {
+        if attempt().await {
+            return true;
+        }
+        timer
+            .wait_until(Deadline::after(timer.now(), interval))
+            .await;
+    }
+    false
+}
+
 /// Native teardown keeps ownership until both the lease and service socket have ended.
 pub enum ExitObservation<T> {
     Pending,
@@ -83,9 +155,9 @@ impl ExitNotice {
 /// Waits for confirmed native teardown; observation failures preserve pending ownership.
 /// # Errors
 /// Returns an observation failure while keeping native exit unconfirmed.
-pub async fn await_engine_exit<T, E>(
+pub async fn await_engine_exit<T, E, R: Future<Output = Result<ExitObservation<T>, E>>>(
     timer: &impl AsyncDelay,
-    mut observe: impl AsyncFnMut() -> Result<ExitObservation<T>, E>,
+    mut observe: impl FnMut() -> R,
     mut waiting: impl FnMut(),
 ) -> Result<T, E> {
     let mut notice = ExitNotice::new(timer);

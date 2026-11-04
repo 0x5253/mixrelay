@@ -1,6 +1,8 @@
+//! The macOS controller owns audio while it runs: launchd starts the engine on demand,
+//! and this controller wakes it again if it dies, until Quit confirms teardown.
 use std::{
     sync::{
-        Mutex,
+        Arc, Mutex,
         atomic::{AtomicBool, Ordering},
     },
     time::Duration,
@@ -10,6 +12,9 @@ use crate::native_text::{
     Locale, current_locale,
     dialogs::{Text, detail, text},
 };
+use mixrelay_desktop_core::lifecycle::{
+    ExitObservation, OnDemandEngine, is_app_owned_configuration, shutdown::ShutdownGate,
+};
 use mixrelay_macos_transport::app_lifecycle::{
     CONTROLLER_LEASE, ENGINE_LEASE, EngineWake, ProcessLease, engine_exit_record, is_owned,
 };
@@ -18,13 +23,12 @@ use tauri::Manager;
 /// Background controller ownership, independent of window visibility and graph power state.
 pub(crate) struct EngineLifecycle {
     owner: Mutex<Option<ControllerOwner>>,
-    quitting: AtomicBool,
-    finished: AtomicBool,
+    shutdown: Arc<ShutdownGate>,
     driver_transition: tokio::sync::Mutex<()>,
-    driver_start_cancelled: AtomicBool,
     watching: AtomicBool,
 }
 
+/// Dropping the owner cancels the engine wake request, then releases the controller lease.
 struct ControllerOwner {
     wake: Option<EngineWake>,
     lease: Option<ProcessLease>,
@@ -46,19 +50,22 @@ impl EngineLifecycle {
             return Err(text(current_locale(), Text::AudioServerShuttingDownRetry).into());
         }
         let wake = EngineWake::start().map_err(|error| error.to_string())?;
-        Ok(Self {
-            owner: Mutex::new(Some(ControllerOwner {
-                wake: Some(wake),
-                lease: Some(lease),
-            })),
-            quitting: AtomicBool::new(false),
-            finished: AtomicBool::new(false),
-            driver_transition: tokio::sync::Mutex::const_new(()),
-            driver_start_cancelled: AtomicBool::new(false),
-            watching: AtomicBool::new(false),
-        })
+        Ok(Self::owning(Some(ControllerOwner {
+            wake: Some(wake),
+            lease: Some(lease),
+        })))
     }
 
+    fn owning(owner: Option<ControllerOwner>) -> Self {
+        Self {
+            owner: Mutex::new(owner),
+            shutdown: Arc::default(),
+            driver_transition: tokio::sync::Mutex::const_new(()),
+            watching: AtomicBool::new(false),
+        }
+    }
+
+    /// Activates the Driver unless a stop was requested before this start got its turn.
     pub(crate) async fn restore_driver(
         &self,
         prepare: impl FnOnce() -> Result<
@@ -67,7 +74,7 @@ impl EngineLifecycle {
         > + Send,
     ) -> Result<Option<mixrelay_driver_core::DriverSnapshot>, String> {
         let _transition = self.driver_transition.lock().await;
-        if self.driver_start_cancelled.load(Ordering::Acquire) {
+        if self.shutdown.requested() {
             return Ok(None);
         }
         prepare()
@@ -79,43 +86,35 @@ impl EngineLifecycle {
     }
 
     pub(crate) fn exit_requested(&self, app: &tauri::AppHandle, api: &tauri::ExitRequestApi) {
-        if self.finished.load(Ordering::Acquire) {
+        crate::engine_exit::on_exit_requested(
+            app,
+            api,
+            &self.shutdown,
+            || {
+                app.state::<crate::status_menu::StatusMenu>()
+                    .set_runtime_stopping(true);
+                app.state::<crate::control_proxy::ControlProxyClient>()
+                    .close_admission();
+                let app = app.clone();
+                async move { finish_local_controls(&app).await }
+            },
+            "audio server exit is not confirmed",
+        );
+    }
+
+    fn wake_engine(&self) {
+        let Ok(mut owner) = self.owner.lock() else {
             return;
-        }
-        api.prevent_exit();
-        if self.quitting.swap(true, Ordering::AcqRel) {
+        };
+        // Rechecked under the owner lock; a completed quit has already taken the owner.
+        let Some(owner) = owner.as_mut().filter(|_| !self.shutdown.requested()) else {
             return;
+        };
+        match EngineWake::start() {
+            // The previous connection is cancelled only after the new request is queued.
+            Ok(wake) => owner.wake = Some(wake),
+            Err(error) => tracing::error!(%error, "could not start the audio engine again"),
         }
-        self.driver_start_cancelled.store(true, Ordering::Release);
-        app.state::<crate::status_menu::StatusMenu>()
-            .set_runtime_stopping(true);
-        app.state::<crate::control_proxy::ControlProxyClient>()
-            .close_admission();
-        let app = app.clone();
-        tauri::async_runtime::spawn(async move {
-            match finish_local_controls(&app).await {
-                Ok(warning) => {
-                    if let Some(warning) = warning {
-                        rfd::AsyncMessageDialog::new()
-                            .set_title("MixRelay")
-                            .set_description(&warning)
-                            .set_level(rfd::MessageLevel::Error)
-                            .set_buttons(rfd::MessageButtons::OkCustom(
-                                text(current_locale(), Text::Ok).into(),
-                            ))
-                            .show()
-                            .await;
-                    }
-                    app.state::<Self>().finished.store(true, Ordering::Release);
-                    app.exit(0);
-                }
-                Err(error) => {
-                    app.state::<Self>().quitting.store(false, Ordering::Release);
-                    tracing::error!(%error, "audio server exit is not confirmed");
-                    crate::status_menu::shutdown_failed(&app).await;
-                }
-            }
-        });
     }
 }
 
@@ -131,67 +130,55 @@ pub(crate) fn monitor(app: &tauri::AppHandle) {
     {
         return;
     }
-    let app = app.clone();
+    let engine = WatchedEngine { app: app.clone() };
     tauri::async_runtime::spawn(async move {
-        let mut absence = Absence::default();
-        loop {
-            tokio::time::sleep(Duration::from_secs(1)).await;
-            let lifecycle = app.state::<EngineLifecycle>();
-            if lifecycle.finished.load(Ordering::Acquire) {
-                return;
-            }
-            if lifecycle.stopping() {
-                continue;
-            }
-            let owned = match is_owned(ENGINE_LEASE) {
-                Ok(owned) => owned,
-                Err(error) => {
-                    tracing::warn!(%error, "could not observe the audio engine");
-                    continue;
-                }
-            };
-            match absence.observe(owned) {
-                Watch::Running | Watch::Waiting => {}
-                Watch::Lost { unexpected } => {
-                    if unexpected {
-                        tracing::warn!("audio engine stopped unexpectedly; starting it again");
-                    }
-                    if let Err(error) =
-                        crate::control_proxy::release_lost_engine_captures(&app).await
-                    {
-                        tracing::error!(%error, "could not release captures of the lost engine");
-                    }
-                }
-                Watch::Wake => lifecycle.wake_engine(),
-                Watch::Recovered => {
-                    tracing::info!("audio engine is running; restoring app captures");
-                    crate::setup::restore_captures(&app);
-                }
-            }
-        }
+        mixrelay_desktop_core::lifecycle::watch_on_demand_engine(
+            &crate::async_time::TokioDelay::new(mixrelay_time::StdClock::new()),
+            &engine,
+        )
+        .await;
     });
 }
 
-impl EngineLifecycle {
-    /// A stop request, even one whose shutdown failed and may be retried, means the
-    /// engine is no longer wanted.
-    fn stopping(&self) -> bool {
-        self.quitting.load(Ordering::Acquire) || self.driver_start_cancelled.load(Ordering::Acquire)
+struct WatchedEngine {
+    app: tauri::AppHandle,
+}
+
+impl OnDemandEngine for WatchedEngine {
+    type Error = std::io::Error;
+
+    fn shutdown_finished(&self) -> bool {
+        self.app.state::<EngineLifecycle>().shutdown.finished()
     }
 
-    fn wake_engine(&self) {
-        let Ok(mut owner) = self.owner.lock() else {
-            return;
-        };
-        // Rechecked under the owner lock; a completed quit has already taken the owner.
-        let Some(owner) = owner.as_mut().filter(|_| !self.stopping()) else {
-            return;
-        };
-        match EngineWake::start() {
-            // The previous connection is cancelled only after the new request is queued.
-            Ok(wake) => owner.wake = Some(wake),
-            Err(error) => tracing::error!(%error, "could not start the audio engine again"),
+    fn stop_requested(&self) -> bool {
+        self.app.state::<EngineLifecycle>().shutdown.requested()
+    }
+
+    fn is_running(&self) -> Result<bool, Self::Error> {
+        is_owned(ENGINE_LEASE)
+    }
+
+    fn observation_failed(&self, error: Self::Error) {
+        tracing::warn!(%error, "could not observe the audio engine");
+    }
+
+    async fn lost(&self, unexpected: bool) {
+        if unexpected {
+            tracing::warn!("audio engine stopped unexpectedly; starting it again");
         }
+        if let Err(error) = crate::control_proxy::release_lost_engine_captures(&self.app).await {
+            tracing::error!(%error, "could not release captures of the lost engine");
+        }
+    }
+
+    fn wake(&self) {
+        self.app.state::<EngineLifecycle>().wake_engine();
+    }
+
+    fn recovered(&self) {
+        tracing::info!("audio engine is running; restoring app captures");
+        crate::background::restore_captures(&self.app);
     }
 }
 
@@ -216,7 +203,7 @@ async fn finish_local_controls(app: &tauri::AppHandle) -> Result<Option<String>,
     let _transition = lifecycle.driver_transition.lock().await;
     tracing::info!(phase = "driver", "stopping audio for Quit");
     crate::driver_control::stop_driver().await?;
-    app.state::<EngineLifecycle>()
+    lifecycle
         .owner
         .lock()
         .map_err(|_| text(current_locale(), Text::DesktopLifecycleLockFailed).to_owned())?
@@ -244,10 +231,6 @@ fn validate_installation() -> Result<(), String> {
     Ok(())
 }
 
-use mixrelay_desktop_core::lifecycle::{
-    Absence, ExitObservation, Watch, is_app_owned_configuration,
-};
-
 async fn observe_engine_exit() -> Result<ExitObservation<String>, String> {
     let owned = is_owned(ENGINE_LEASE).map_err(|error| error.to_string())?;
     // A connectable engine socket means the service is still serving its teardown.
@@ -269,23 +252,15 @@ async fn observe_engine_exit() -> Result<ExitObservation<String>, String> {
 }
 
 async fn wait_for_engine_exit(app: &tauri::AppHandle) -> Result<Option<String>, String> {
-    await_engine_exit(observe_engine_exit, || {
-        tracing::warn!("waiting for native audio server teardown; exit remains pending");
-        if let Some(window) = app.get_webview_window("main") {
-            let _ = window.set_title(text(current_locale(), Text::EngineStoppingTitle));
-        }
-    })
-    .await
-}
-
-async fn await_engine_exit(
-    observe: impl AsyncFnMut() -> Result<ExitObservation<String>, String>,
-    waiting: impl FnMut(),
-) -> Result<Option<String>, String> {
     let record = mixrelay_desktop_core::lifecycle::await_engine_exit(
         &crate::async_time::TokioDelay::new(mixrelay_time::StdClock::new()),
-        observe,
-        waiting,
+        observe_engine_exit,
+        || {
+            tracing::warn!("waiting for native audio server teardown; exit remains pending");
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.set_title(text(current_locale(), Text::EngineStoppingTitle));
+            }
+        },
     )
     .await?;
     Ok(exit_warning(&record))
@@ -312,14 +287,7 @@ mod tests {
 
     #[tokio::test(start_paused = true)]
     async fn queued_start_cannot_revive_driver_after_a_stop_even_if_stop_needs_retry() {
-        let lifecycle = EngineLifecycle {
-            owner: Mutex::new(None),
-            quitting: AtomicBool::new(false),
-            finished: AtomicBool::new(false),
-            driver_transition: tokio::sync::Mutex::const_new(()),
-            driver_start_cancelled: AtomicBool::new(false),
-            watching: AtomicBool::new(false),
-        };
+        let lifecycle = EngineLifecycle::owning(None);
         let in_flight = lifecycle.driver_transition.lock().await;
         let queued =
             lifecycle.restore_driver(|| panic!("cancelled start must not create a client"));
@@ -329,12 +297,10 @@ mod tests {
                 .await
                 .is_err()
         );
-        lifecycle
-            .driver_start_cancelled
-            .store(true, Ordering::Release);
-        // The quit-in-progress flag resets on a failed stop, allowing retry.
-        // That must not restore permission for the old queued startup.
-        lifecycle.quitting.store(false, Ordering::Release);
+        lifecycle.shutdown.request_exit();
+        // A failed stop reopens Quit for a retry. That must not restore permission for
+        // the old queued startup.
+        lifecycle.shutdown.attempt_failed();
         drop(in_flight);
         assert!(queued.await.unwrap().is_none());
     }

@@ -46,3 +46,27 @@ impl PreferencesRepository for AtomicPreferences {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_missing_document_reads_as_none_until_the_first_replacement() {
+        let directory = tempfile::tempdir().unwrap();
+        let preferences = AtomicPreferences::new(directory.path().join("new/prefs.json"), 64);
+        assert!(preferences.read().unwrap().is_none());
+        preferences.replace(b"{\"first\":true}").unwrap();
+        preferences.replace(b"{}").unwrap();
+        assert_eq!(preferences.read().unwrap().unwrap(), b"{}");
+    }
+
+    #[test]
+    fn an_oversized_document_reads_one_byte_past_the_limit() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("prefs.json");
+        fs::write(&path, [b'x'; 32]).unwrap();
+        let read = AtomicPreferences::new(path, 8).read().unwrap().unwrap();
+        assert_eq!(read.len(), 9);
+    }
+}
