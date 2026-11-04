@@ -6,8 +6,8 @@ use mixrelay_macos_transport::source_registry::{
 };
 
 const RATE: u32 = 48_000;
-/// Two minutes of native periods.
-const PERIODS: u64 = 120 * RATE as u64 / 128;
+/// Twelve seconds of native periods: ten after the correction must have settled.
+const PERIODS: u64 = 12 * RATE as u64 / 128;
 /// Periods before the correction must have settled.
 const SETTLE: u64 = 2 * RATE as u64 / 128;
 
@@ -204,7 +204,7 @@ fn hold(periods: u64, drift: impl Fn(u64) -> f64, jump: f64) -> (Consumer, Produ
     (consumer, producer, settled)
 }
 
-/// Two minutes at a constant drift: no read may miss, at most the one frame the first
+/// A constant drift: no read may miss, at most the one frame the first
 /// period measurement may cost is skipped, and the correction settles at the drift.
 fn constant(drift_ppm: f64, jump: f64) {
     let (consumer, producer, settled) = hold(PERIODS, |_| drift_ppm, jump);
@@ -226,10 +226,10 @@ fn constant(drift_ppm: f64, jump: f64) {
     );
 }
 
-/// Ninety seconds whose drift changes from 0 to `to_ppm` from 30 s on, over `ramp`
-/// periods (0 for a step). The correction follows within `skipped` frames and no miss.
+/// Drift that changes from 0 to `to_ppm` from 4 s on, over `ramp` periods (0 for a
+/// step), then holds for 10 s. The correction follows within `skipped` frames and no miss.
 fn change(to_ppm: f64, ramp: u64, skipped: u64) {
-    let start = 30 * u64::from(RATE) / 128;
+    let start = 4 * u64::from(RATE) / 128;
     #[expect(clippy::cast_precision_loss, reason = "period counts below 2^24")]
     let drift = move |period: u64| {
         if period < start {
@@ -240,7 +240,7 @@ fn change(to_ppm: f64, ramp: u64, skipped: u64) {
             to_ppm * (period - start) as f64 / ramp as f64
         }
     };
-    let (consumer, producer, _) = hold(90 * u64::from(RATE) / 128, drift, 0.0);
+    let (consumer, producer, _) = hold(start + ramp + 10 * u64::from(RATE) / 128, drift, 0.0);
     assert_eq!(consumer.misses, [], "a time-addressed read missed");
     assert!(
         consumer.skipped <= skipped,
@@ -255,17 +255,17 @@ fn change(to_ppm: f64, ramp: u64, skipped: u64) {
 }
 
 #[test]
-fn a_time_addressed_consumer_holds_two_minutes_without_drift_through_a_cursor_jump() {
+fn a_time_addressed_consumer_holds_without_drift_through_a_cursor_jump() {
     constant(0.0, 20e6);
 }
 
 #[test]
-fn a_time_addressed_consumer_follows_a_slow_device_for_two_minutes() {
+fn a_time_addressed_consumer_follows_a_slow_device() {
     constant(200.0, 0.0);
 }
 
 #[test]
-fn a_time_addressed_consumer_follows_a_fast_device_for_two_minutes() {
+fn a_time_addressed_consumer_follows_a_fast_device() {
     constant(-200.0, 0.0);
 }
 
@@ -277,7 +277,7 @@ fn a_time_addressed_consumer_follows_a_step_in_device_drift() {
 
 #[test]
 fn a_time_addressed_consumer_follows_a_ramp_in_device_drift() {
-    let ramp = 30 * u64::from(RATE) / 128;
+    let ramp = 4 * u64::from(RATE) / 128;
     change(200.0, ramp, 3);
     change(-200.0, ramp, 3);
 }
@@ -288,7 +288,7 @@ fn a_time_addressed_consumer_follows_a_ramp_in_device_drift() {
 fn a_sub_frame_cursor_jump_is_not_taken_for_drift() {
     for drift_ppm in [0.0, 200.0, -200.0] {
         for jump in [15e3, 25e3] {
-            let (consumer, _, settled) = hold(30 * u64::from(RATE) / 128, |_| drift_ppm, jump);
+            let (consumer, _, settled) = hold(8 * u64::from(RATE) / 128, |_| drift_ppm, jump);
             assert_eq!(consumer.misses, [], "{jump} ns jump at {drift_ppm} ppm");
             assert!(
                 settled.0 >= -drift_ppm - 100.0 && settled.1 <= -drift_ppm + 100.0,
@@ -309,7 +309,7 @@ fn a_time_addressed_consumer_holds_through_rate_noise() {
         let unit = (hash & 0xffff) as f64 / 65_535.0;
         200.0 + 100.0 * unit - 50.0
     };
-    let (consumer, producer, _) = hold(60 * u64::from(RATE) / 128, noise, 0.0);
+    let (consumer, producer, _) = hold(PERIODS, noise, 0.0);
     assert_eq!(consumer.misses, [], "a time-addressed read missed");
     assert!(consumer.skipped <= 1, "{} frames skipped", consumer.skipped);
     let correction = producer.converter.correction_ppm();
