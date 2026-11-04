@@ -3,7 +3,7 @@ import type { RecorderStatus } from '../../core/domain/control/recorder';
 import {
   type RecorderControlInputs,
   recorderControlState,
-  recordingRateOptions,
+  recordingRates,
 } from './domain/recorderControlState';
 
 const stopped: RecorderStatus = {
@@ -55,6 +55,12 @@ it('a running take can pause and stop, locks its format and shows its own values
     true,
   ]);
   expect(running.record.active).toBe(true);
+  // A graph that stops routing in cannot end a running take's controls.
+  expect(buttons({ ...ready, status: take('recording'), enabled: false })).toEqual([
+    false,
+    true,
+    true,
+  ]);
   expect(running.fieldsLocked).toBe(true);
   expect([running.sampleRate, running.encoding]).toEqual([96000, 'float32']);
 });
@@ -104,14 +110,7 @@ it('shows the saved settings while stopped and falls back to the source rate and
 });
 
 it('offers the product rates plus a nonstandard rate a take actually uses', () => {
-  expect(recordingRateOptions(null).map(({ value }) => value)).toEqual([
-    '44100',
-    '48000',
-    '88200',
-    '96000',
-    '176400',
-    '192000',
-  ]);
-  expect(recordingRateOptions(32000).at(-1)).toEqual({ value: '32000', label: '32 kHz' });
-  expect(recordingRateOptions(48000)).toHaveLength(6);
+  expect(recordingRates(null)).toEqual([44100, 48000, 88200, 96000, 176400, 192000]);
+  expect(recordingRates(32000).at(-1)).toBe(32000);
+  expect(recordingRates(48000)).toHaveLength(6);
 });

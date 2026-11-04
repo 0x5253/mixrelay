@@ -56,6 +56,11 @@ const preview = () => within(screen.getByRole('list', { name: 'Preview' }));
 
 it('previews every pair and skipped channel, then commits only the accepted pairs', () => {
   const { onConnect } = renderDialog();
+  expect(screen.getByRole('dialog', { name: 'Connect channels' })).toHaveTextContent('From Music');
+  expect(screen.getByRole('status')).toHaveTextContent(
+    'Choose a destination and channels to preview the connections.',
+  );
+  expect(screen.queryByRole('list', { name: 'Preview' })).toBeNull();
   const connect = screen.getByRole('button', { name: 'Connect' });
   expect(connect).toBeDisabled();
   fireEvent.submit(connect.closest('form') as HTMLFormElement);

@@ -153,6 +153,13 @@ it('offers a boundary self-connection that dragging allows, but no other self-lo
   expect(form({}, model, undefined, 'fx').targets.map(({ value }) => value)).toEqual(['virtual']);
 });
 
+it('plans nothing once the source leaves the graph while the form is open', () => {
+  const without = { ...graph(), nodes: graph().nodes.slice(1) };
+  expect(
+    form({ targetNodeId: 'mon-a', range: { startPortId: 'out1', count: 4 } }, without).request,
+  ).toBeNull();
+});
+
 it('has no channels or request for a source that is not in the graph', () => {
   const gone = form({ targetNodeId: 'mon-a' }, graph(), undefined, 'gone');
   expect(gone.sourceTitle).toBe('gone');

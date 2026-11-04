@@ -6,11 +6,8 @@ import type {
 
 /** What the recorder node shows and allows, from its native status and the graph. */
 export interface RecorderControlState {
-  /** A recording exists (running or paused); its format cannot change. */
-  locked: boolean;
-  /** No command can be sent: a request is in flight, status is unknown, or the node is off. */
-  disabled: boolean;
-  /** Folder, channel, rate and encoding fields cannot change. */
+  /** Folder, channel, rate and encoding fields cannot change: a take exists (its format is
+   * fixed), a request is in flight, status is unknown, the node is off, or nothing routes in. */
   fieldsLocked: boolean;
   record: { enabled: boolean; resumes: boolean; active: boolean };
   pause: { enabled: boolean };
@@ -34,12 +31,12 @@ export interface RecorderControlInputs {
 
 export function recorderControlState(inputs: RecorderControlInputs): RecorderControlState {
   const { status, settings } = inputs;
+  // A take exists (running or paused); its format cannot change.
   const locked = status?.state === 'recording' || status?.state === 'paused';
+  // No command can be sent while a request is in flight, status is unknown or the node is off.
   const disabled = inputs.busy || !status || !inputs.poweredOn;
   const canStart = inputs.enabled && !!settings && !inputs.settingsError;
   return {
-    locked,
-    disabled,
     fieldsLocked: disabled || locked || !inputs.enabled || !settings,
     record: {
       enabled:
@@ -60,9 +57,6 @@ export function recorderControlState(inputs: RecorderControlInputs): RecorderCon
 const sampleRates = [44100, 48000, 88200, 96000, 176400, 192000];
 
 /** The product rates, plus a rate the running recording uses that is not among them. */
-export function recordingRateOptions(observed: number | null): { value: string; label: string }[] {
-  return [...new Set([...sampleRates, ...(observed ? [observed] : [])])].map((rate) => ({
-    value: String(rate),
-    label: `${rate / 1000} kHz`,
-  }));
+export function recordingRates(observed: number | null): number[] {
+  return [...new Set([...sampleRates, ...(observed ? [observed] : [])])];
 }

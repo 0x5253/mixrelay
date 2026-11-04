@@ -66,7 +66,7 @@ export function channelConnectionForm(
   choices: ChannelConnectionChoices,
 ): ChannelConnectionForm {
   const source = model.nodes.find((node) => node.id === sourceNodeId);
-  const outputs = sourceOutputs(model, sourceNodeId);
+  const outputs = source ? namedAudioPorts(source.outputPorts) : [];
   const selection = outputs.filter(({ port }) => sourcePortIds?.includes(port.id));
   const target = model.nodes.find((node) => node.id === choices.targetNodeId);
   const inputs = target ? namedAudioPorts(target.inputPorts) : [];
@@ -110,7 +110,9 @@ export function rangeFromSelection(
   outputs: readonly NamedPort[],
   selection: readonly NamedPort[],
 ): ChannelRange {
-  const indexes = selection.map((entry) => outputs.indexOf(entry));
+  const indexes = selection.map(({ port }) =>
+    outputs.findIndex((output) => output.port.id === port.id),
+  );
   const first = Math.min(...indexes);
   return {
     startPortId: (outputs[first] as NamedPort).port.id,
@@ -135,14 +137,14 @@ export function availableChannels(outputs: readonly NamedPort[], range: ChannelR
 }
 
 /** The outputs a range covers; empty when its first channel no longer exists. */
-export function rangePorts(outputs: readonly NamedPort[], range: ChannelRange): NamedPort[] {
+function rangePorts(outputs: readonly NamedPort[], range: ChannelRange): NamedPort[] {
   const start = outputs.findIndex(({ port }) => port.id === range.startPortId);
   return start < 0 ? [] : outputs.slice(start, start + range.count);
 }
 
 /** Nodes with inputs a connection could reach; repeated titles get an ordinal so each
  * option is distinct. */
-export function targetOptions(
+function targetOptions(
   model: AudioGraphModel,
   sourceNodeId: string,
 ): { value: string; label: string }[] {

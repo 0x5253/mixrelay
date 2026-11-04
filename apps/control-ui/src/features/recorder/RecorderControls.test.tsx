@@ -385,3 +385,32 @@ it('keeps Stop available and shows actual take format when canonical preferences
     expect(write).toHaveBeenCalledExactlyOnceWith('graph-a', 'recorder-1', { action: 'stop' }, 1),
   );
 });
+
+// Which command each input allows is unit-tested in recorderControlState.test.ts; this checks
+// that the node's playback, power and routing props reach those rules.
+it.each([{ playbackPaused: true }, { poweredOn: false }])(
+  'keeps a paused take from resuming when the node is given %o',
+  async (options) => {
+    const { port, write } = fixture();
+    vi.spyOn(port, 'recorderStatus').mockResolvedValue({
+      ...stopped,
+      state: 'paused',
+      path: '/take.wav',
+    });
+    render(recorderView(port, options));
+    expect(await screen.findByRole('button', { name: 'Resume' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Stop' })).toHaveProperty(
+      'disabled',
+      options.poweredOn === false,
+    );
+    expect(write).not.toHaveBeenCalled();
+  },
+);
+
+it('does not start a take for a node whose graph routes nothing in', async () => {
+  const { port, write } = fixture();
+  render(recorderView(port, { enabled: false }));
+  await waitFor(() => expect(port.recorderStatus).toHaveBeenCalled());
+  expect(screen.getByRole('button', { name: 'Record' })).toBeDisabled();
+  expect(write).not.toHaveBeenCalled();
+});

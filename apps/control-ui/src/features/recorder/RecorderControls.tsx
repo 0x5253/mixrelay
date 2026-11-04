@@ -14,7 +14,7 @@ import { RecorderController } from './application/RecorderController';
 import {
   type RecorderControlState,
   recorderControlState,
-  recordingRateOptions,
+  recordingRates,
 } from './domain/recorderControlState';
 import { recordingDuration } from './domain/recording';
 import styles from './RecorderControls.module.css';
@@ -44,7 +44,6 @@ export function RecorderControls(props: RecorderNodeInputs) {
     poweredOn: props.poweredOn !== false,
     playbackPaused: props.playbackPaused === true,
   });
-  const fieldsLocked = view.fieldsLocked;
   return (
     <div className={styles.root}>
       <NodeTransportRow
@@ -69,14 +68,14 @@ export function RecorderControls(props: RecorderNodeInputs) {
       >
         <ChannelsField
           channels={props.channels}
-          disabled={fieldsLocked}
+          disabled={view.fieldsLocked}
           onChange={props.onChannelsChange}
         />
         <PathField
           label={t('recorder.folder')}
           value={settings?.folder ?? ''}
           actionLabel={recorderActionLabel(props.name, t('recorder.chooseFolder'))}
-          disabled={fieldsLocked}
+          disabled={view.fieldsLocked}
           onChoose={
             props.controlPort.selectRecordingFolder
               ? () => {
@@ -88,10 +87,13 @@ export function RecorderControls(props: RecorderNodeInputs) {
         <SelectField
           label={t('recorder.sampleRate')}
           value={String(view.sampleRate ?? 'auto')}
-          disabled={fieldsLocked}
+          disabled={view.fieldsLocked}
           data={[
             { value: 'auto', label: t('recorder.sourceRate') },
-            ...recordingRateOptions(view.sampleRate),
+            ...recordingRates(view.sampleRate).map((rate) => ({
+              value: String(rate),
+              label: `${rate / 1000} kHz`,
+            })),
           ]}
           onChange={(value) =>
             controller.saveSettings(
@@ -102,7 +104,7 @@ export function RecorderControls(props: RecorderNodeInputs) {
         />
         <EncodingField
           value={view.encoding}
-          disabled={fieldsLocked}
+          disabled={view.fieldsLocked}
           onChange={(encoding) => controller.saveSettings({ encoding }, props.expectedRevision)}
         />
       </NodeOptionsSection>

@@ -83,7 +83,7 @@ const band = {
   label: 'Mid',
   frequency: control('midFrequencyHz', 1000, 1, 20, 20_000),
   gain: control('midDb', 0, 0.1, -24, 24),
-  q: control('midQ', 0.707, 0.001, 0.1, 10),
+  q: control('midQ', 0.7, 0.001, 0.1, 10),
 };
 
 it('steps frequency with Left/Right and gain with Up/Down by one control step, within range', () => {
