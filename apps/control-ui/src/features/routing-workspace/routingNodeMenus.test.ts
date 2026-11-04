@@ -4,6 +4,7 @@ import type { AudioGraphModel, AudioGraphNode } from '../../core/audio-graph/mod
 import type { CapturableApplication } from '../../core/domain/control/inventory';
 import type { AudioSessionStatus } from '../../core/domain/control/status';
 import { i18n } from '../../core/i18n';
+import { routingNodeRequest } from './nodeRequests';
 import { createNodeMenuItems } from './routingNodeMenus';
 import { unknownNativeFormats, virtualPolicy, virtualSpec } from './virtualEndpointFixtures';
 
@@ -216,4 +217,18 @@ it('offers honest empty hardware placeholders and ignores incomplete discovered 
   expect(item(menus, 'no-output-devices').disabled).toBe(true);
   expect(item(menus, 'application:["bundle","org.example.valid"]').disabled).toBe(false);
   expect(item(menus, 'virtual-new-input').disabled).toBe(true);
+});
+
+it('every built-in effect and chain the menu offers resolves to the node it names', () => {
+  const value = options();
+  const flatten = (items: readonly AudioGraphNodeMenuItem[]): AudioGraphNodeMenuItem[] =>
+    items.flatMap((entry) => [entry, ...flatten(entry.children ?? [])]);
+  const ids = flatten(createNodeMenuItems(value))
+    .map((entry) => entry.id)
+    .filter((id) => id.startsWith('builtin:') || id.startsWith('effect-chain:'));
+  expect(ids).toHaveLength(17);
+  for (const id of ids)
+    expect(routingNodeRequest(id, { ...value, processors: [] }), id).toMatchObject({
+      kind: id.startsWith('builtin:') ? 'effect' : 'effect_chain',
+    });
 });

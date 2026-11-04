@@ -1,8 +1,10 @@
-/** A node's Off and Mute state as the engine reports it. */
-export interface SignalControlState {
-  enabled: boolean;
-  muted: boolean;
-}
+import type { GraphNodeControls, NodeControlState } from '../../core/domain/control/graph';
+
+/** Which of Off and Mute the engine can switch for a node. */
+export type SignalControlCapabilities = Pick<
+  GraphNodeControls['nodes'][number]['capabilities'],
+  'power' | 'mute'
+>;
 
 /** Which of Off and Mute a node shows. */
 export interface SignalControlVisibility {
@@ -25,8 +27,8 @@ export function usesRecoveryControls(runtimeType: string | undefined, mapping: b
  * A control appears only where the engine reports the capability.
  */
 export function signalControlVisibility(
-  capabilities: SignalControlVisibility | undefined,
-  control: SignalControlState,
+  capabilities: SignalControlCapabilities | undefined,
+  control: NodeControlState,
   recoveryOnly: boolean,
 ): SignalControlVisibility | null {
   if (recoveryOnly && control.enabled && !control.muted) return null;

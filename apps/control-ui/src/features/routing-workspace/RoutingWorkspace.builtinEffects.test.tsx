@@ -357,6 +357,26 @@ it('uses translated effect names and parameter labels after changing the workspa
   view.unmount();
 });
 
+// Every mode's name and description is unit-tested; this covers the choice control's
+// focus after the graph applies, and Undo/Redo of that single choice.
+it('keeps focus on the channel mode choice after it applies, and undoes only that choice', async () => {
+  const { apply, view } = fixture();
+  await ready();
+  await addFromMenu('Channel utility');
+  const original = lastDocument(apply).nodes;
+  await choose('Channel mode', 'Duplicate left');
+  const select = screen.getByRole('button', { name: /Channel mode$/ });
+  expect(select).toHaveAccessibleDescription('Send the left input to both outputs (L → L/R).');
+  await waitFor(() => expect(select).toHaveFocus());
+  const selected = lastDocument(apply).nodes;
+  expect(selected[0]?.config).toMatchObject({ effect: { parameters: { mode: 2 } } });
+  await history();
+  expect(lastDocument(apply).nodes).toEqual(original);
+  await history(true);
+  expect(lastDocument(apply).nodes).toEqual(selected);
+  view.unmount();
+});
+
 // Chain contents, wiring and spacing are unit-tested in builtinEffects.test.ts; this
 // covers the real submenu and one-step Undo/Redo of the whole insertion.
 it.each([['Karaoke', ['delay', 'reverb']]] as const)(
@@ -383,24 +403,6 @@ it.each([['Karaoke', ['delay', 'reverb']]] as const)(
       ),
     ).toEqual(kinds);
     expect(inserted.edges).toHaveLength((kinds.length - 1) * 2);
-    for (let index = 1; index < chain.length; index += 1) {
-      const previous = harness.canvas?.model.nodes.find((node) => node.id === chain[index - 1]?.id);
-      const next = harness.canvas?.model.nodes.find((node) => node.id === chain[index]?.id);
-      if (!previous || !next) throw new Error('The inserted chain is missing a visible node');
-      expect(
-        next.position.x - previous.position.x - graphNodeDefaultWidth(previous),
-      ).toBeGreaterThan(0);
-      const connections = inserted.edges.filter(
-        (edge) =>
-          edge.source.nodeId === chain[index - 1]?.id &&
-          edge.destination.nodeId === chain[index]?.id,
-      );
-      expect(connections).toHaveLength(2);
-      expect(connections.map((edge) => edge.channelMapping)).toEqual([
-        { mode: 'explicit', routes: [{ sourceChannel: 0, destinationChannel: 0 }] },
-        { mode: 'explicit', routes: [{ sourceChannel: 1, destinationChannel: 1 }] },
-      ]);
-    }
     await history();
     await waitFor(() => expect(lastDocument(apply).nodes).toEqual(existing.nodes));
     expect(lastDocument(apply).edges).toEqual([]);
