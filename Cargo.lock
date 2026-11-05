@@ -2625,7 +2625,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-audio-graph"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "mixrelay-audio-io",
  "serde",
@@ -2635,7 +2635,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-audio-io"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "allocation-counter",
  "audioadapter-buffers",
@@ -2648,7 +2648,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-audio-recorder"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "allocation-counter",
  "audioadapter-buffers",
@@ -2662,7 +2662,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-control-protocol"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "base64 0.23.1",
  "mixrelay-audio-graph",
@@ -2675,7 +2675,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-control-server"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "axum",
  "futures-util",
@@ -2693,7 +2693,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-desktop-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "mixrelay-audio-graph",
  "mixrelay-audio-io",
@@ -2712,7 +2712,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-desktop-shell"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "alsa",
  "axum",
@@ -2759,7 +2759,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-driver-adapters"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "axum",
  "mixrelay-audio-io",
@@ -2777,7 +2777,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-driver-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "mixrelay-audio-io",
  "mixrelay-test-support",
@@ -2791,7 +2791,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-driver-service"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -2810,7 +2810,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-engine-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "allocation-counter",
  "mixrelay-audio-graph",
@@ -2832,7 +2832,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-engine-host"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "allocation-counter",
  "libc",
@@ -2851,7 +2851,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-engine-service"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "allocation-counter",
  "axum",
@@ -2893,7 +2893,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-engine-supervisor"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "mixrelay-test-support",
  "mixrelay-time",
@@ -2904,7 +2904,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-linux-audio-io"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "base64 0.23.1",
  "gdk-pixbuf",
@@ -2919,7 +2919,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-linux-driver"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "allocation-counter",
  "mixrelay-audio-io",
@@ -2935,7 +2935,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-linux-engine"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "allocation-counter",
  "axum",
@@ -2963,7 +2963,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-linux-pipewire"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "allocation-counter",
  "cc",
@@ -2980,7 +2980,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-linux-pipewire-observer"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "allocation-counter",
  "libc",
@@ -2991,7 +2991,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-local-socket"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "axum",
  "libc",
@@ -3002,7 +3002,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-macos-audio-io"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "mixrelay-audio-io",
  "mixrelay-test-support",
@@ -3010,7 +3010,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-macos-driver"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "cc",
  "libc",
@@ -3025,7 +3025,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-macos-engine"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "allocation-counter",
  "cc",
@@ -3055,7 +3055,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-macos-hal"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "allocation-counter",
  "cc",
@@ -3067,7 +3067,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-macos-hal-bundle"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "core-foundation-sys",
  "libc",
@@ -3075,7 +3075,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-macos-installer"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "cc",
@@ -3100,7 +3100,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-macos-process-tap"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "allocation-counter",
  "cc",
@@ -3112,7 +3112,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-macos-test-support"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "cc",
  "libc",
@@ -3120,7 +3120,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-macos-transport"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "allocation-counter",
  "block2",
@@ -3136,7 +3136,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-midi-control"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "allocation-counter",
  "serde",
@@ -3153,14 +3153,14 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-pcm-ring"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "allocation-counter",
 ]
 
 [[package]]
 name = "mixrelay-processor-host"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "allocation-counter",
  "arrayvec",
@@ -3198,7 +3198,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-processor-state"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "mixrelay-test-support",
  "rustix",
@@ -3210,11 +3210,11 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-realtime"
-version = "0.1.0"
+version = "0.2.0"
 
 [[package]]
 name = "mixrelay-render"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "mixrelay-audio-graph",
  "mixrelay-audio-io",
@@ -3226,7 +3226,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-test-support"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "hound",
  "serde",
@@ -3235,7 +3235,7 @@ dependencies = [
 
 [[package]]
 name = "mixrelay-time"
-version = "0.1.0"
+version = "0.2.0"
 
 [[package]]
 name = "muda"
