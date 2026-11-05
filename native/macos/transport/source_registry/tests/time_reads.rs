@@ -58,7 +58,7 @@ fn at(nanos: u64) -> ReadTiming {
 
 #[test]
 fn time_addressed_misses_report_their_reason_without_advancing_the_cursor() {
-    let registry = SourceRegistry::with_clock(
+    let registry = SourceRegistry::new(
         Box::new(FixedClock(Instant::from_origin(std::time::Duration::ZERO))),
         timebase(),
     );
@@ -110,7 +110,7 @@ fn time_addressed_misses_report_their_reason_without_advancing_the_cursor() {
 
 #[test]
 fn a_credited_publication_bounds_the_frontier_before_a_later_window() {
-    let registry = SourceRegistry::with_clock(
+    let registry = SourceRegistry::new(
         Box::new(FixedClock(Instant::from_origin(std::time::Duration::ZERO))),
         timebase(),
     );

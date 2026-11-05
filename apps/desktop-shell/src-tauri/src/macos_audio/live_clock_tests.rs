@@ -79,7 +79,7 @@ impl RegistryOwner {
         };
         // SAFETY: the literal is a complete retained NUL-terminated source ID.
         let token = unsafe {
-            mixrelay_macos_transport::source_registry::mr_engine_source_id_token(
+            mixrelay_macos_transport::source_registry::ffi::mr_engine_source_id_token(
                 c"owned-live-clock-fixture".as_ptr(),
             )
         };

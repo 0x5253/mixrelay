@@ -63,7 +63,7 @@ mod platform {
     use x11_dl::xlib;
 
     use super::{EditorHostEvents, EditorHostFailure};
-    use crate::rack_formats::{EditorSnapshot, RackWorkerPlugin};
+    use crate::rack_formats::worker::{EditorSnapshot, RackWorkerPlugin};
 
     const DEFAULT_WIDTH: u32 = 720;
     const DEFAULT_HEIGHT: u32 = 480;

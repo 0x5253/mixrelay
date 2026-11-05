@@ -3,10 +3,15 @@
 use std::{
     fs,
     os::unix::fs::{PermissionsExt, symlink},
+    path::{Path, PathBuf},
 };
 
-use super::*;
-use crate::{InstallSources, OperationKind};
+use super::{
+    snapshot::TargetPresence,
+    tree::{copy_regular_file, copy_tree},
+    *,
+};
+use crate::{InstallSources, OperationKind, contract::LIFECYCLE_DIRECTORY};
 
 mod races;
 
@@ -214,11 +219,11 @@ fn direct_copy_rejects_special_files_and_does_not_overwrite_an_existing_inode() 
     );
     let destination = fixture.root.join("copied");
     assert!(copy_tree(&fifo, &destination).is_err());
-    assert!(super::payload::copy_regular_file(&fifo, &destination).is_err());
+    assert!(copy_regular_file(&fifo, &destination).is_err());
     assert!(!destination.exists());
     let alias = fixture.root.join("alias");
     symlink(&fixture.driver, &alias).unwrap();
-    assert!(super::payload::copy_regular_file(&alias, &destination).is_err());
+    assert!(copy_regular_file(&alias, &destination).is_err());
     assert!(!destination.exists());
     fs::write(&destination, b"keep-existing").unwrap();
     assert!(copy_tree(&fixture.driver, &destination).is_err());
@@ -360,7 +365,7 @@ fn removal_succeeds_for_every_partial_target_set_and_on_repeat() {
         for (index, target) in OwnedTarget::all().into_iter().enumerate() {
             if mask & (1 << index) != 0 {
                 let path = fixture.destination(target);
-                if target_kind(target) == TargetKind::Directory {
+                if layout::TargetKind::of(target) == layout::TargetKind::Directory {
                     write_file(&path.join("owned"), "remove");
                 } else {
                     write_file(&path, "remove");

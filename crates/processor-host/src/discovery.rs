@@ -33,7 +33,7 @@ pub(super) struct CatalogSnapshot {
 pub(super) fn rescan(catalog: &ProcessorCatalog, custom_paths: &[PathBuf]) {
     rescan_with(
         catalog,
-        &rack_formats::supported_formats(),
+        &rack_formats::adapters::supported_formats(),
         |format| scan_format(format, custom_paths),
         probe_candidate,
     );
@@ -42,8 +42,8 @@ pub(super) fn rescan(catalog: &ProcessorCatalog, custom_paths: &[PathBuf]) {
 fn rescan_with(
     catalog: &ProcessorCatalog,
     formats: &[RackFormat],
-    mut scan: impl FnMut(RackFormat) -> Result<rack_formats::RackScanReport, String>,
-    mut probe: impl FnMut(&RackLocator) -> Result<rack_formats::RackProbeRecord, String>,
+    mut scan: impl FnMut(RackFormat) -> Result<rack_formats::scan::RackScanReport, String>,
+    mut probe: impl FnMut(&RackLocator) -> Result<rack_formats::probe::RackProbeRecord, String>,
 ) {
     let _scan = catalog
         .scan_lock
@@ -114,7 +114,7 @@ fn retain_failed_path_entries(
     previous: &CatalogSnapshot,
     next: &mut CatalogSnapshot,
     format: RackFormat,
-    failures: &[rack_formats::ScanPathFailure],
+    failures: &[rack_formats::scan::ScanPathFailure],
 ) {
     for (id, entry) in previous.entries.iter().filter(|(_, entry)| {
         entry.rack.locator.format == format
@@ -132,7 +132,7 @@ fn probe_into_snapshot(
     previous: &CatalogSnapshot,
     next: &mut CatalogSnapshot,
     locator: &RackLocator,
-    probe: &mut impl FnMut(&RackLocator) -> Result<rack_formats::RackProbeRecord, String>,
+    probe: &mut impl FnMut(&RackLocator) -> Result<rack_formats::probe::RackProbeRecord, String>,
 ) {
     match probe(locator) {
         Ok(record) => {
@@ -184,7 +184,7 @@ fn same_candidate(left: &RackLocator, right: &RackLocator) -> bool {
 fn scan_format(
     format: RackFormat,
     custom_paths: &[PathBuf],
-) -> Result<rack_formats::RackScanReport, String> {
+) -> Result<rack_formats::scan::RackScanReport, String> {
     let executable =
         std::env::current_exe().map_err(|error| format!("scanner executable: {error}"))?;
     let mut command = Command::new(executable);
@@ -193,14 +193,14 @@ fn scan_format(
         .arg(format.argument())
         .args(custom_paths);
     if format == RackFormat::Lv2
-        && let Some(path) = rack_formats::lv2_search_path(custom_paths)
+        && let Some(path) = rack_formats::scan::lv2_search_path(custom_paths)
     {
         command.env("LV2_PATH", path);
     }
     capture::capture_json_child(command, SCAN_TIMEOUT)
 }
 
-fn probe_candidate(locator: &RackLocator) -> Result<rack_formats::RackProbeRecord, String> {
+fn probe_candidate(locator: &RackLocator) -> Result<rack_formats::probe::RackProbeRecord, String> {
     let executable =
         std::env::current_exe().map_err(|error| format!("probe executable: {error}"))?;
     let mut command = Command::new(executable);

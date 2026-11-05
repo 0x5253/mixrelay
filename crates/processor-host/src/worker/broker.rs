@@ -20,7 +20,7 @@ use std::{
 
 pub(super) fn run(
     shared: &Arc<WorkerControl>,
-    plugin: &Mutex<rack_formats::RackWorkerPlugin>,
+    plugin: &Mutex<rack_formats::worker::RackWorkerPlugin>,
     title: &str,
     parent_closed: &AtomicBool,
 ) -> Result<(), String> {
@@ -58,7 +58,7 @@ pub(super) fn run(
 
 pub(crate) fn service_plugin_control(
     shared: &WorkerControl,
-    plugin: &Mutex<rack_formats::RackWorkerPlugin>,
+    plugin: &Mutex<rack_formats::worker::RackWorkerPlugin>,
 ) -> Result<(), String> {
     let header = shared.header();
     let mut plugin = match plugin.try_lock() {
@@ -91,7 +91,7 @@ pub(crate) fn service_plugin_control(
 
 pub(crate) fn apply_pending_state_request(
     shared: &WorkerControl,
-    plugin: &Mutex<rack_formats::RackWorkerPlugin>,
+    plugin: &Mutex<rack_formats::worker::RackWorkerPlugin>,
 ) {
     let header = shared.header();
     let Some((request, kind)) = shared.pending_request() else {
@@ -138,7 +138,7 @@ pub(crate) fn apply_pending_state_request(
 
 fn apply_pending_editor_command(
     shared: &Arc<WorkerControl>,
-    plugin: &Mutex<rack_formats::RackWorkerPlugin>,
+    plugin: &Mutex<rack_formats::worker::RackWorkerPlugin>,
     title: &str,
     host: &mut Option<native_editor::NativeEditorHost>,
 ) {
@@ -164,7 +164,7 @@ fn apply_pending_editor_command(
             host.refresh(snapshot);
             snapshot
         } else {
-            rack_formats::EditorSnapshot::default()
+            rack_formats::worker::EditorSnapshot::default()
         };
         header
             .editor_failure
@@ -178,7 +178,7 @@ fn apply_pending_editor_command(
 
 fn open_editor(
     shared: &Arc<WorkerControl>,
-    plugin: &Mutex<rack_formats::RackWorkerPlugin>,
+    plugin: &Mutex<rack_formats::worker::RackWorkerPlugin>,
     title: &str,
     host: &mut Option<native_editor::NativeEditorHost>,
 ) {
@@ -240,7 +240,7 @@ fn open_editor(
 
 fn tick_editor(
     shared: &WorkerControl,
-    plugin: &Mutex<rack_formats::RackWorkerPlugin>,
+    plugin: &Mutex<rack_formats::worker::RackWorkerPlugin>,
     host: &mut Option<native_editor::NativeEditorHost>,
 ) {
     let Some(editor_host) = host.as_mut() else {
@@ -280,7 +280,7 @@ fn tick_editor(
 
 pub(crate) fn publish_observed_editor_snapshot(
     header: &SharedHeader,
-    snapshot: rack_formats::EditorSnapshot,
+    snapshot: rack_formats::worker::EditorSnapshot,
 ) {
     publish_editor_snapshot(header, snapshot);
     header.editor_state.store(
@@ -306,7 +306,7 @@ pub(crate) fn publish_observed_editor_snapshot(
     }
 }
 
-fn publish_editor_snapshot(header: &SharedHeader, snapshot: rack_formats::EditorSnapshot) {
+fn publish_editor_snapshot(header: &SharedHeader, snapshot: rack_formats::worker::EditorSnapshot) {
     let (width, height) = snapshot.size.unwrap_or((0, 0));
     header.editor_width.store(width, Ordering::Relaxed);
     header.editor_height.store(height, Ordering::Relaxed);
@@ -316,7 +316,7 @@ fn publish_editor_snapshot(header: &SharedHeader, snapshot: rack_formats::Editor
 }
 
 pub(crate) fn publish_editor_failure(header: &SharedHeader, failure: u32) {
-    publish_editor_snapshot(header, rack_formats::EditorSnapshot::default());
+    publish_editor_snapshot(header, rack_formats::worker::EditorSnapshot::default());
     header.editor_failure.store(failure, Ordering::Relaxed);
     header
         .editor_state
@@ -325,7 +325,7 @@ pub(crate) fn publish_editor_failure(header: &SharedHeader, failure: u32) {
 
 fn apply_pending_rack_parameter(
     header: &SharedHeader,
-    plugin: &mut rack_formats::RackWorkerPlugin,
+    plugin: &mut rack_formats::worker::RackWorkerPlugin,
 ) {
     consume_parameters(header, |id, value| {
         let _operation = header

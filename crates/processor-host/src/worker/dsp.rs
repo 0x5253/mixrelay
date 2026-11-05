@@ -61,7 +61,7 @@ impl Waiter {
 
 pub(super) fn run(
     shared: &mut WorkerAudio,
-    plugin: &Mutex<rack_formats::RackWorkerPlugin>,
+    plugin: &Mutex<rack_formats::worker::RackWorkerPlugin>,
     layout: AudioLayout,
     parent_closed: &AtomicBool,
     sample_rate: f64,
@@ -112,7 +112,7 @@ pub(super) fn run(
 
 pub(crate) fn process_packet(
     shared: &mut WorkerAudio,
-    plugin: &mut rack_formats::RackWorkerPlugin,
+    plugin: &mut rack_formats::worker::RackWorkerPlugin,
     layout: AudioLayout,
 ) {
     let Some(frames) = shared.receive(|source| copy_shared_input_to_rack(source, plugin, layout))
@@ -139,7 +139,7 @@ pub(crate) fn process_packet(
 
 fn copy_shared_input_to_rack(
     source: &[f32],
-    plugin: &mut rack_formats::RackWorkerPlugin,
+    plugin: &mut rack_formats::worker::RackWorkerPlugin,
     layout: AudioLayout,
 ) {
     let frames = source.len().checked_div(layout.inputs).unwrap_or(0);
@@ -152,7 +152,7 @@ fn copy_shared_input_to_rack(
 
 fn copy_rack_output_to_shared(
     destination: &mut [f32],
-    plugin: &rack_formats::RackWorkerPlugin,
+    plugin: &rack_formats::worker::RackWorkerPlugin,
     layout: AudioLayout,
 ) {
     let frames = destination.len().checked_div(layout.outputs).unwrap_or(0);

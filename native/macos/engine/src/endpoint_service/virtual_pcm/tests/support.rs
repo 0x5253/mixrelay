@@ -52,7 +52,7 @@ impl Worker for ManualWorker {
 }
 pub(super) type Owner = VirtualPcm<ManualWorker>;
 pub(super) fn owner() -> Rc<Owner> {
-    Rc::new(Owner::with_sources(SourceRegistry::with_clock_and_storage(
+    Rc::new(Owner::with_sources(SourceRegistry::with_storage(
         Box::new(Clock),
         mixrelay_realtime::Timebase::current(),
         storage,

@@ -41,9 +41,11 @@ pub use factory::ExternalProcessorFactory;
 pub use files::ProcessorFiles;
 pub use latency::ProcessorLatencySnapshot;
 pub use rack_formats::{
-    PROBE_ARGUMENT as PLUGIN_PROBE_ARGUMENT, RackFormat, RackLocator,
-    SCAN_ARGUMENT as PLUGIN_SCAN_ARGUMENT, WORKER_ARGUMENT as PLUGIN_WORKER_ARGUMENT,
-    run_probe as run_plugin_probe, run_scan as run_plugin_scan,
+    PROBE_ARGUMENT as PLUGIN_PROBE_ARGUMENT, SCAN_ARGUMENT as PLUGIN_SCAN_ARGUMENT,
+    WORKER_ARGUMENT as PLUGIN_WORKER_ARGUMENT,
+    identity::{RackFormat, RackLocator},
+    probe::run_probe as run_plugin_probe,
+    scan::run_scan as run_plugin_scan,
 };
 pub use reuse::ProcessorReuseTransaction;
 pub use state_blobs::{StateBlobReader, StateBlobWriter, StateBlobs, StateStorageError};

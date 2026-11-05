@@ -1,4 +1,7 @@
-use super::{Descriptor, DirectPlan, Renderer, render};
+use super::{
+    Descriptor, DirectPlan,
+    renderer::{Renderer, render},
+};
 use crate::macos_devices::direct::Registration;
 use std::{cell::UnsafeCell, pin::Pin};
 
@@ -42,9 +45,10 @@ impl<'state> PreparedRenderer<'state> {
 #[cfg(test)]
 mod tests {
     use super::super::{
-        CallbackIo,
         buffers::Buffers,
-        tests::{processor_at, stereo_bindings, stereo_list},
+        callback_io::CallbackIo,
+        supervision::RenderSignals,
+        tests::{processor_at, status, stereo_bindings, stereo_list, unclocked},
     };
     use super::*;
     use crate::macos_devices::{
@@ -58,7 +62,7 @@ mod tests {
     };
     use mixrelay_realtime::Timebase;
     use mixrelay_render::{BlockProcessor, PeakMeterBank, ProcessBlockError};
-    use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+    use std::sync::atomic::Ordering;
     use std::{sync::Arc, time::Duration};
 
     fn invoke_unpublished(owner: &PreparedRenderer<'_>) -> [f32; 64] {
@@ -86,27 +90,10 @@ mod tests {
     fn moving_the_prepared_owner_keeps_native_state_and_descriptor_stable() {
         let mut processor = processor_at(32, 48_000);
         let bindings = stereo_bindings();
-        let status = mixrelay_engine_core::session::AdapterRuntimeStatus::new(
-            crate::macos::adapter_profile(),
-            std::sync::Arc::new(mixrelay_time::ManualClock::default()),
-        );
-        let progress = AtomicU64::new(0);
-        let failed = AtomicBool::new(false);
-        let invalid = AtomicBool::new(false);
-        let owner = PreparedRenderer::new(Renderer {
-            timebase: mixrelay_realtime::Timebase::current(),
-            processor: &mut processor,
-            activation: None,
-            bindings: &bindings,
-            clock_id: 7,
-            epoch: 1,
-            native_clock: None,
-            status: &status,
-            position: None,
-            progress: &progress,
-            failed: &failed,
-            invalid: &invalid,
-        });
+        let status = status();
+        let signals = RenderSignals::default();
+        let owner =
+            PreparedRenderer::new(unclocked(&mut processor, &bindings, &status, &signals, 1));
         let state_address = owner.state.as_ref().get_ref().get();
         let descriptor_address = std::ptr::from_ref(owner.descriptor.as_ref().get_ref());
         let mut moved = vec![owner];
@@ -120,8 +107,8 @@ mod tests {
             invoke_unpublished(&owner).map(f32::to_bits),
             [0.25_f32.to_bits(); 64]
         );
-        assert_eq!(progress.load(Ordering::Acquire), 1);
-        assert!(!failed.load(Ordering::Acquire));
+        assert_eq!(signals.progress.load(Ordering::Acquire), 1);
+        assert!(!signals.failed.load(Ordering::Acquire));
         drop(owner);
         assert_eq!(processor.plan().format().sample_rate, 48_000);
     }
@@ -179,27 +166,13 @@ mod tests {
             BlockProcessor::with_peak_meters(Arc::clone(prepared.plan()), Arc::clone(&meters))
                 .unwrap(),
         );
-        let status = mixrelay_engine_core::session::AdapterRuntimeStatus::new(
-            crate::macos::adapter_profile(),
-            std::sync::Arc::new(mixrelay_time::ManualClock::default()),
-        );
-        let progress = AtomicU64::new(0);
-        let failed = AtomicBool::new(false);
-        let invalid = AtomicBool::new(false);
+        let status = status();
+        let signals = RenderSignals::default();
         let timebase = Timebase::current();
         let mut owner = PreparedRenderer::new(Renderer {
             timebase,
-            processor: &mut processor,
-            activation: None,
-            bindings: &plan.bindings,
-            clock_id: plan.clock_id,
             epoch: 19,
-            native_clock: Some((&plan, plan.discontinuities())),
-            status: &status,
-            position: None,
-            progress: &progress,
-            failed: &failed,
-            invalid: &invalid,
+            ..Renderer::for_plan(&plan, &mut processor, &status, &signals)
         });
         let installed = owner.install(&plan);
         for block in 0_u32..4 {
@@ -223,9 +196,9 @@ mod tests {
         let renderer = unsafe { &*owner.state.as_ref().get_ref().get() };
         assert_eq!(renderer.position, Some(48_128));
         assert_eq!(renderer.epoch, 19);
-        assert_eq!(progress.load(Ordering::Acquire), 4);
-        assert!(!failed.load(Ordering::Acquire));
-        assert!(!invalid.load(Ordering::Acquire));
+        assert_eq!(signals.progress.load(Ordering::Acquire), 4);
+        assert!(!signals.failed.load(Ordering::Acquire));
+        assert!(!signals.invalid.load(Ordering::Acquire));
         drop(owner);
         assert_acquisition_time_was_observed(&mut processor);
     }

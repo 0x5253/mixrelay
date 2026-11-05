@@ -243,7 +243,7 @@ impl mixrelay_time::MonotonicClock for FixedClock {
 
 #[test]
 fn plan_routes_unroute_dropped_sources_and_every_source_when_the_worker_ends() {
-    let registry: &'static SourceRegistry = Box::leak(Box::new(SourceRegistry::with_clock(
+    let registry: &'static SourceRegistry = Box::leak(Box::new(SourceRegistry::new(
         Box::new(FixedClock),
         mixrelay_realtime::Timebase::current(),
     )));

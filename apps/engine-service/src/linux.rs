@@ -61,8 +61,12 @@ fn run_bound(
         crate::startup::saved_session_preferences(AudioBackendKind::PipeWire),
     );
     let driver = Arc::new(driver::DriverEndpointControl::new());
-    let endpoint_backend =
-        LinuxVirtualEndpointBackend::new(driver.clone(), initial_format, observation);
+    let endpoint_backend = LinuxVirtualEndpointBackend::new(
+        driver.clone(),
+        initial_format,
+        observation,
+        mixrelay_time::StdClock::new(),
+    );
     let runtime_status = Arc::new(runtime_status);
     let meters = default_peak_meter_bank();
     let initial_document = GraphDocument::new(1, Vec::new(), Vec::new());

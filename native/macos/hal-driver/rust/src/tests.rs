@@ -21,8 +21,6 @@ mod inventory_tests;
 mod io_admission_tests;
 #[path = "native_tests.rs"]
 mod native_tests;
-#[path = "property_catalog_tests.rs"]
-mod property_catalog_tests;
 
 static SERIAL: Mutex<()> = Mutex::new(());
 static NEXT: AtomicUsize = AtomicUsize::new(0);
@@ -31,7 +29,7 @@ static REPLACEMENTS: AtomicUsize = AtomicUsize::new(0);
 static PREPARATIONS: AtomicUsize = AtomicUsize::new(0);
 static PREPARED_DURING_IO: AtomicUsize = AtomicUsize::new(0);
 static RELEASES: AtomicUsize = AtomicUsize::new(0);
-static FAIL_REPLACE: AtomicBool = AtomicBool::new(false);
+pub(crate) static FAIL_REPLACE: AtomicBool = AtomicBool::new(false);
 static FAIL_PREPARE_CLIENT: AtomicBool = AtomicBool::new(false);
 static FAIL_CREATE_ENDPOINT: AtomicU8 = AtomicU8::new(0);
 static PAUSE_IO: AtomicBool = AtomicBool::new(false);
@@ -271,9 +269,9 @@ fn stream_usage_reconciliation_notifies_only_actual_transitions() {
     );
 }
 
-struct Host {
-    requests: Mutex<Vec<(u32, u64)>>,
-    changes: Mutex<Vec<(u32, u32)>>,
+pub(crate) struct Host {
+    pub(crate) requests: Mutex<Vec<(u32, u64)>>,
+    pub(crate) changes: Mutex<Vec<(u32, u32)>>,
     fail: AtomicBool,
     registry: AtomicPtr<Registry>,
     replace_during_request: AtomicBool,
@@ -326,14 +324,14 @@ unsafe extern "C" fn request(
     !host.fail.load(Ordering::SeqCst)
 }
 
-struct Fixture {
-    registry: Box<Registry>,
-    host: Box<Host>,
+pub(crate) struct Fixture {
+    pub(crate) registry: Box<Registry>,
+    pub(crate) host: Box<Host>,
     directory: PathBuf,
     _serial: MutexGuard<'static, ()>,
 }
 impl Fixture {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         let serial = lock(&SERIAL);
         assert_eq!(LIVE.load(Ordering::SeqCst), 0);
         FAIL_REPLACE.store(false, Ordering::SeqCst);
@@ -403,7 +401,7 @@ impl Fixture {
         }
     }
 
-    fn fd(&self, endpoint: u8, render: u32, capture: u32) -> OwnedFd {
+    pub(crate) fn fd(&self, endpoint: u8, render: u32, capture: u32) -> OwnedFd {
         let path = self
             .directory
             .join(NEXT.fetch_add(1, Ordering::SeqCst).to_string());
@@ -419,7 +417,7 @@ impl Fixture {
         file.into()
     }
 
-    fn add(&self, endpoint: u8, rate: u32) -> u32 {
+    pub(crate) fn add(&self, endpoint: u8, rate: u32) -> u32 {
         self.registry
             .upsert(
                 [endpoint; 16],
@@ -430,23 +428,23 @@ impl Fixture {
             .unwrap()
     }
 
-    fn pending(&self) -> (u32, u64) {
+    pub(crate) fn pending(&self) -> (u32, u64) {
         *lock(&self.host.requests).last().unwrap()
     }
-    fn perform(&self) -> i32 {
+    pub(crate) fn perform(&self) -> i32 {
         let (id, generation) = self.pending();
         self.registry.perform(id, CONFIG_ACTION, generation)
     }
 
     /// Reads a property as coreaudiod itself (requester PID 0).
-    fn property<const N: usize>(
+    pub(crate) fn property<const N: usize>(
         &self,
         object: u32,
         address: &crate::properties::Address,
     ) -> [u8; N] {
         self.property_for(object, address, 0)
     }
-    fn property_for<const N: usize>(
+    pub(crate) fn property_for<const N: usize>(
         &self,
         object: u32,
         address: &crate::properties::Address,
@@ -456,7 +454,7 @@ impl Fixture {
         let mut written = 0;
         assert_eq!(
             unsafe {
-                crate::properties::mr_hal_core_property_get(
+                crate::properties::ffi::mr_hal_core_property_get(
                     (&raw const *self.registry).cast_mut(),
                     object,
                     address,
@@ -1266,7 +1264,10 @@ fn all_product_rates_are_independent_and_transport_identity_is_validated() {
 
 #[test]
 fn property_abi_exposes_per_device_stream_shape_and_partial_lists() {
-    use crate::properties::{Address, mr_hal_core_property_get, mr_hal_core_property_size};
+    use crate::properties::{
+        Address,
+        ffi::{mr_hal_core_property_get, mr_hal_core_property_size},
+    };
     let fixture = Fixture::new();
     let first = fixture.add(1, 48_000);
     let second = fixture.add(2, 96_000);
@@ -1331,7 +1332,10 @@ fn property_abi_exposes_per_device_stream_shape_and_partial_lists() {
 
 #[test]
 fn property_abi_validates_formats_and_cf_string_ownership() {
-    use crate::properties::{Address, mr_hal_core_property_get, mr_hal_core_property_set};
+    use crate::properties::{
+        Address,
+        ffi::{mr_hal_core_property_get, mr_hal_core_property_set},
+    };
     unsafe extern "C" {
         fn CFRelease(value: *const c_void);
     }

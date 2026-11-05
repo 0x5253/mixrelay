@@ -1,12 +1,9 @@
 //! Owns one activated native instance, its bounded planar scratch and native processing contract.
 
-use super::{CHANNEL_SLOTS, EditorSnapshot, RackLocator, layout_channels, layouts, load_plugin};
+use std::mem::ManuallyDrop;
 
-// Native event producers have a fixed per-block budget, reserved before activation.
-const OUTPUT_EVENT_CAPACITY: usize = 4096;
 use arrayvec::ArrayVec;
 use mixrelay_audio_graph::ProviderPorts;
-use std::mem::ManuallyDrop;
 use truce_rack_core::{
     Plugin, WindowHandle,
     buffer::{AudioBuffer, BusRange},
@@ -14,10 +11,28 @@ use truce_rack_core::{
     plugin::{MainThreadUpdate, ProcessContext, ProcessStatus},
 };
 
-#[cfg(test)]
-#[path = "channel_tests.rs"]
-mod channel_tests;
+use super::{
+    adapters,
+    effect_layout::{CHANNEL_SLOTS, layout_channels},
+    identity::RackLocator,
+    layouts,
+};
 
+// Native event producers have a fixed per-block budget, reserved before activation.
+const OUTPUT_EVENT_CAPACITY: usize = 4096;
+
+#[cfg(test)]
+mod tests;
+
+/// Native editor visibility and size as last reported by the instance.
+#[derive(Debug, Clone, Copy, Default)]
+pub(crate) struct EditorSnapshot {
+    pub open: bool,
+    pub size: Option<(u32, u32)>,
+    pub resizable: bool,
+}
+
+/// Format-erased plugin instance owned exclusively by one DSP worker process.
 pub(crate) struct RackWorkerPlugin {
     pub(super) plugin: Box<dyn Plugin<f32>>,
     editor_allowed: bool,
@@ -89,7 +104,7 @@ impl RackWorkerPlugin {
         initial: &crate::state::InitialState,
     ) -> Result<Self, String> {
         Self::activate(
-            load_plugin(locator, selected)?,
+            adapters::load_worker_plugin(locator, selected)?,
             selected,
             &WorkerActivation {
                 editor_allowed: locator.has_editor,
@@ -112,8 +127,8 @@ impl RackWorkerPlugin {
         let (input_channels, output_channels) = layout_channels(&layout)?;
         let input_ranges = bus_ranges(&layout.inputs);
         let output_ranges = bus_ranges(&layout.outputs);
-        let dry_mapping =
-            crate::dry_delay::dry_channel_mapping(selected).map_err(|error| error.to_string())?;
+        let dry_mapping = crate::dry_delay::channel_map::main_bus_map(selected)
+            .map_err(|error| error.to_string())?;
         let input_storage = planar_storage(usize::from(input_channels), activation.max_block_size)?;
         let output_storage =
             planar_storage(usize::from(output_channels), activation.max_block_size)?;

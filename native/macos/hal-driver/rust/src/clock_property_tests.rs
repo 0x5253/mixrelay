@@ -1,6 +1,9 @@
 use super::Fixture;
 use crate::abi::OK;
-use crate::properties::{Address, mr_hal_core_property_get, mr_hal_core_property_settable};
+use crate::properties::{
+    Address,
+    ffi::{mr_hal_core_property_get, mr_hal_core_property_settable},
+};
 
 #[test]
 fn host_clock_metadata_is_unfiltered_read_only_and_available_during_control_freeze() {

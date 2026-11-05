@@ -1,7 +1,10 @@
 //! Empty-only removal under namespace substitution and restoration conflicts.
 
 use super::*;
-use std::os::unix::fs::{MetadataExt, symlink};
+use std::{
+    fs,
+    os::unix::fs::{MetadataExt, symlink},
+};
 
 #[test]
 fn production_product_folder_refuses_non_root_and_writable_owners() {
@@ -48,8 +51,8 @@ fn removal_race_preserves_substituted_empty_directory_and_symlink() {
         };
         assert_eq!(fs::metadata(unrelated).unwrap().ino(), before.ino());
         assert_eq!(
-            fs::metadata(retained).unwrap().ino(),
-            expected.unwrap().inode
+            identity(&fs::metadata(retained).unwrap()),
+            expected.unwrap()
         );
         assert_eq!(
             fs::symlink_metadata(&folder)
@@ -80,10 +83,7 @@ fn removal_restores_a_validated_folder_that_became_nonempty() {
             fs::write(folder.join("keep"), b"user content").unwrap();
         })
         .unwrap();
-    assert_eq!(
-        fs::metadata(&folder).unwrap().ino(),
-        expected.unwrap().inode
-    );
+    assert_eq!(identity(&fs::metadata(&folder).unwrap()), expected.unwrap());
     assert_eq!(fs::read(folder.join("keep")).unwrap(), b"user content");
 }
 
@@ -112,11 +112,8 @@ fn restoration_conflict_retains_captured_content_outside_transaction_staging() {
         b"captured content"
     );
     assert_eq!(
-        fs::metadata(&captured).unwrap().ino(),
-        expected.unwrap().inode
+        identity(&fs::metadata(&captured).unwrap()),
+        expected.unwrap()
     );
-    assert_ne!(
-        fs::metadata(&folder).unwrap().ino(),
-        expected.unwrap().inode
-    );
+    assert_ne!(identity(&fs::metadata(&folder).unwrap()), expected.unwrap());
 }

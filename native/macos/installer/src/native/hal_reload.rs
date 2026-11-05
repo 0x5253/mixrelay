@@ -8,7 +8,7 @@ use std::{
 
 use super::{
     NativeError,
-    launchctl::{self, ChildOutput},
+    command::{self, ChildOutput},
 };
 
 const PS: &str = "/bin/ps";
@@ -17,6 +17,7 @@ const PGREP: &str = "/usr/bin/pgrep";
 const HOST_PATTERN: &str = r"Core Audio Driver \(MixRelayHAL\.driver\)";
 const LSOF: &str = "/usr/sbin/lsof";
 const KILL: &str = "/bin/kill";
+const COREAUDIO_RELOAD_PROGRAM: &str = "/usr/bin/killall";
 const HOST_NAME: &str = "Core Audio Driver (MixRelayHAL.driver)";
 const EXIT_TIMEOUT: Duration = Duration::from_secs(3);
 
@@ -48,7 +49,7 @@ pub(super) trait HostProcesses {
 /// Capture before commit (or before file rollback), never after the move.
 /// Uncertain observations disable targeted reload without preventing full reload.
 pub(super) fn capture(bundles: &[PathBuf]) -> Option<CapturedHosts> {
-    match capture_hosts(&mut CommandHosts(launchctl::run_command), bundles) {
+    match capture_hosts(&mut CommandHosts(command::run_command), bundles) {
         Ok(hosts) => Some(hosts),
         Err(error) => {
             tracing::warn!(%error, "HAL host snapshot unavailable; full CoreAudio reload required");
@@ -81,13 +82,23 @@ pub(super) fn reload_and_wait(
     bundles: &[PathBuf],
     mut ready: impl FnMut() -> Result<(), NativeError>,
 ) -> Result<(), NativeError> {
-    let mut processes = CommandHosts(launchctl::run_command);
+    let mut processes = CommandHosts(command::run_command);
     reload_with_readiness(
         captured,
         bundles,
         &mut processes,
-        launchctl::reload_coreaudio,
+        reload_coreaudio,
         &mut ready,
+    )
+}
+
+/// Force-terminates only the OS-owned Core Audio server so launchd reloads the HAL.
+/// The lifecycle requires explicit audio-interruption approval before this call.
+pub(super) fn reload_coreaudio() -> Result<(), NativeError> {
+    tracing::info!(strategy = ?ReloadStrategy::FullCoreAudio, "Reloading CoreAudio; active system audio will be interrupted");
+    command::run_mutation(
+        COREAUDIO_RELOAD_PROGRAM,
+        &["-KILL", "-u", "_coreaudiod", "coreaudiod"],
     )
 }
 

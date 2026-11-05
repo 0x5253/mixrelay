@@ -42,13 +42,11 @@ impl Worker for RetryOnce {
     fn finish(self) {}
 }
 fn owner<W: Worker>() -> Arc<VirtualPcm<W>> {
-    Arc::new(VirtualPcm::with_test_sources(
-        SourceRegistry::with_clock_and_storage(
-            Box::new(Clock),
-            mixrelay_realtime::Timebase::current(),
-            super::super::virtual_pcm::test_storage::create,
-        ),
-    ))
+    Arc::new(VirtualPcm::with_test_sources(SourceRegistry::with_storage(
+        Box::new(Clock),
+        mixrelay_realtime::Timebase::current(),
+        super::super::virtual_pcm::test_storage::create,
+    )))
 }
 fn snapshot(channels: Option<u32>) -> ClientPcmSnapshot {
     let mut snapshot = ClientPcmSnapshot::new().unwrap();

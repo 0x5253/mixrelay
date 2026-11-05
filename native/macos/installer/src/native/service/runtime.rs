@@ -54,7 +54,7 @@ impl crate::activation::DriverReadiness for NativeReadiness {
             .snapshot_blocking()
             .map_err(|error| NativeError::Activation(format!("Driver snapshot: {error}")))?;
         // Observe launchd after the response so a stale owner cannot satisfy readiness.
-        let registration = launchctl::inspect_registration()?;
+        let registration = launchctl::inspect(&launchctl::DRIVER)?;
         let registered_pid = match registration {
             RegistrationState::Loaded { pid } => pid,
             RegistrationState::Absent => None,
@@ -76,9 +76,16 @@ pub(super) fn wait_for_driver_ready(version: &str, home: &Path) -> Result<(), Na
         .map_err(|error| NativeError::Activation(error.to_string()))
 }
 
+/// Boots out the Driver job and waits for the process it was running to exit.
+pub(super) fn stop_driver(state: &RegistrationState) -> Result<(), NativeError> {
+    let process = capture_service_process(state)?;
+    launchctl::bootout(&launchctl::DRIVER)?;
+    wait_for_service_exit(process)
+}
+
 /// Identifies the loaded Driver process before it is stopped, so the exit wait cannot
 /// adopt a process that reuses its PID afterwards.
-pub(super) fn capture_service_process(
+fn capture_service_process(
     state: &RegistrationState,
 ) -> Result<Option<ProcessIdentity>, NativeError> {
     let RegistrationState::Loaded { pid: Some(pid) } = state else {
@@ -89,7 +96,7 @@ pub(super) fn capture_service_process(
         .map_err(|_| NativeError::LaunchdState("Driver process state is unavailable"))
 }
 
-pub(super) fn wait_for_service_exit(process: Option<ProcessIdentity>) -> Result<(), NativeError> {
+fn wait_for_service_exit(process: Option<ProcessIdentity>) -> Result<(), NativeError> {
     let Some(process) = process else {
         return Ok(());
     };

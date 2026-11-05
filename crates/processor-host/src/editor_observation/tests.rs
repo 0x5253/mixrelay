@@ -48,9 +48,9 @@ impl Fixture {
     fn observed(&self, open: bool) {
         publish_observed_editor_snapshot(
             self.worker.header(),
-            rack_formats::EditorSnapshot {
+            rack_formats::worker::EditorSnapshot {
                 open,
-                ..rack_formats::EditorSnapshot::default()
+                ..rack_formats::worker::EditorSnapshot::default()
             },
         );
     }
@@ -263,14 +263,14 @@ fn close_reopen_close_during_export_does_not_checkpoint_old_reuse_identity() {
         // A second observed close makes the original token stale before capture completes.
         publish_observed_editor_snapshot(
             worker_control.header(),
-            rack_formats::EditorSnapshot {
+            rack_formats::worker::EditorSnapshot {
                 open: true,
-                ..rack_formats::EditorSnapshot::default()
+                ..rack_formats::worker::EditorSnapshot::default()
             },
         );
         publish_observed_editor_snapshot(
             worker_control.header(),
-            rack_formats::EditorSnapshot::default(),
+            rack_formats::worker::EditorSnapshot::default(),
         );
     });
 

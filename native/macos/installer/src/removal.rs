@@ -16,6 +16,7 @@ use std::{
 
 use crate::{
     REMOVAL_LAUNCHD_PATH, ReleasePayloadVerifier, ServiceAccount, SigningTeam, UNINSTALLER_PATH,
+    native::{REMOVAL_HELPER, RegistrationState, bootout, bootstrap, inspect},
     require_root,
 };
 use anyhow::{Context, Result, ensure};
@@ -190,7 +191,7 @@ fn register_verified_helper() -> Result<()> {
         "could not register removal operation authorization: {status}"
     );
     if !helper_is_registered()? {
-        crate::native::bootstrap_removal_helper()?;
+        bootstrap(&REMOVAL_HELPER)?;
     }
     Ok(())
 }
@@ -201,7 +202,7 @@ fn register_verified_helper() -> Result<()> {
 pub fn unregister_helper() -> Result<()> {
     require_root()?;
     if helper_is_registered()? {
-        crate::native::bootout_removal_helper()?;
+        bootout(&REMOVAL_HELPER)?;
     }
     Ok(())
 }
@@ -221,7 +222,10 @@ pub fn remove_right() -> Result<()> {
 }
 
 fn helper_is_registered() -> Result<bool> {
-    crate::native::removal_helper_is_registered().map_err(Into::into)
+    Ok(matches!(
+        inspect(&REMOVAL_HELPER)?,
+        RegistrationState::Loaded { .. }
+    ))
 }
 
 /// Verifies the root-owned installed app, embedded CLI and exact launchd definition.
