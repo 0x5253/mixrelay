@@ -66,13 +66,23 @@ for (const os of ["linux", "darwin"]) {
     assert.equal(prepare, -1);
     assert.equal(buildPlan(os, "build").some(c => c.includes("test")), false);
   });
+  test(`${os} legs that repeat a lint result still build and test`, () => {
+    const plan = buildPlan(os, "test", { lint: false });
+    assert.equal(plan.some(c => c[1] === "clippy" || c[1] === "fmt"), false);
+    assert.deepEqual(plan.filter(c => c[1] !== "clippy" && c[1] !== "fmt"),
+      buildPlan(os, "test").filter(c => c[1] !== "clippy" && c[1] !== "fmt"));
+    assert.ok(plan.some(c => c.join(" ") === "cargo build --locked --workspace"));
+    assert.ok(plan.some(c => c.join(" ") === "cargo test --locked --workspace --lib --bins"));
+  });
   test(`${os} runs tests without installing a driver`, () => {
     const plan = buildPlan(os, "test");
     assert.ok(plan.some(c => c.includes("test")));
     const clippy = plan.findIndex(c => c[1] === "clippy");
     assert.ok(plan.some(c => c[1] === "fmt" && c.includes("--check")));
     assert.ok(clippy >= 0 && plan[clippy].includes("warnings"));
+    assert.ok(clippy < plan.findIndex(c => c.join(" ") === "cargo build --locked --workspace"), "lints gate before the build");
     assert.ok(clippy < plan.findIndex(c => c[1] === "test"), "lints gate before tests");
+    assert.equal(plan.some(c => c.includes("vitest")), false, "the UI workflow runs web tests once");
     assert.ok(plan.some(c => c.join(" ") === "cargo test --locked --workspace --lib --bins"));
     assert.equal(plan.some(c => c.join(" ").includes("install-")), false);
     assert.equal(plan.some(c => c.join(" ") === "pnpm check:native"), os === "darwin");

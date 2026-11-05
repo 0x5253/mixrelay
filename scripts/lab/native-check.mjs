@@ -7,6 +7,7 @@ import { desktopCodeCheckEnvironment } from "../core/desktop-build-policy.mjs";
 import { loadContract } from '../support-contract.mjs';
 import { observeEnvironment } from '../e2e/environment.mjs';
 import { validateCodeCheckEnvironment } from '../core/environment-policy.mjs';
+import { lintsCodeCheckTarget } from '../core/support-targets.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -82,7 +83,12 @@ function nativeFixtureEnvironment(command, args, run, env) {
   return prepared;
 }
 
-export function buildPlan(os, mode) {
+/**
+ * `lint` is off on CI legs that only repeat another leg's lint result; see
+ * `lintsCodeCheckTarget`. Web tests are not here: the UI workflow runs them once, since
+ * they use the same JavaScript runtime on every leg.
+ */
+export function buildPlan(os, mode, { lint = true } = {}) {
   if (!["darwin", "linux"].includes(os)) throw new Error(`Unsupported OS: ${os}`);
   if (!["build", "test"].includes(mode)) throw new Error("Expected build or test");
   const commands = [
@@ -93,7 +99,6 @@ export function buildPlan(os, mode) {
     ["pnpm", "check:crate-layers"],
     ["pnpm", "build"],
   ];
-  commands.push(["cargo", "build", "--locked", "--workspace"]);
   if (mode === "test") {
     const platformManifest = `vendor/truce-rack-${os === "darwin" ? "au" : "lv2"}/Cargo.toml`;
     // These platform crates are excluded workspace dependencies. Their own locks
@@ -101,11 +106,15 @@ export function buildPlan(os, mode) {
     const platformOptions = ["--locked", "--manifest-path", platformManifest,
       "--target-dir", "target", "--config",
       `patch.crates-io.truce-rack-core.path=${JSON.stringify(resolve(root, "vendor/truce-rack-core"))}`];
-    // Style and lints gate before tests, so CI enforces what the Rust rules document claims.
-    commands.push(["cargo", "fmt", "--all", "--check"]);
-    commands.push(["cargo", "fmt", "--manifest-path", platformManifest, "--check"]);
-    commands.push(["cargo", "clippy", "--locked", "--workspace", "--all-targets", "--", "-D", "warnings"]);
-    commands.push(["cargo", "clippy", ...platformOptions, "--all-targets", "--", "-D", "warnings"]);
+    // Style and lints gate before the build, so CI enforces what the Rust rules document
+    // claims and a style failure reports in seconds.
+    if (lint) {
+      commands.push(["cargo", "fmt", "--all", "--check"]);
+      commands.push(["cargo", "fmt", "--manifest-path", platformManifest, "--check"]);
+      commands.push(["cargo", "clippy", "--locked", "--workspace", "--all-targets", "--", "-D", "warnings"]);
+      commands.push(["cargo", "clippy", ...platformOptions, "--all-targets", "--", "-D", "warnings"]);
+    }
+    commands.push(["cargo", "build", "--locked", "--workspace"]);
     commands.push(["cargo", "test", "--locked", "-p", "truce-rack-vst3", "-p", "truce-rack-clap", "--lib"]);
     commands.push(os === "darwin"
       ? ["cargo", "test", ...platformOptions, "--lib"]
@@ -116,7 +125,6 @@ export function buildPlan(os, mode) {
     if (os === "linux") {
       commands.push(["bash", "native/linux/pipewire/tests/run-stream-buffer-metadata.sh"]);
     }
-    commands.push(["pnpm", "--filter", "@mixrelay/control-ui", "exec", "vitest", "run"]);
     if (os === "darwin") {
       commands.push(["pnpm", "check:native"]);
       // The round-trip probe's analysis is checked on synthetic recordings; no device is opened.
@@ -130,11 +138,13 @@ export function buildPlan(os, mode) {
       commands.push(LAUNCHD_FIXTURES);
     }
     commands.push(["bash", "scripts/check-pcm-native.sh"]);
+  } else {
+    commands.push(["cargo", "build", "--locked", "--workspace"]);
   }
   return commands;
 }
 
-export function runChecks(os, mode, run, env = process.env) {
+export function runChecks(os, mode, run, env = process.env, plan = {}) {
   let cargoEnv = desktopCodeCheckEnvironment(env);
   let fixturesPrepared = false;
   const steps = [];
@@ -146,7 +156,7 @@ export function runChecks(os, mode, run, env = process.env) {
       "installed plugin discovery/PCM/parameter/state recall/removal",
       "hardware latency/dropouts", "memory endurance", "release packaging"],
   };
-  for (const [command, ...args] of buildPlan(os, mode)) {
+  for (const [command, ...args] of buildPlan(os, mode, plan)) {
     if (os === "darwin" && command === "cargo" && !fixturesPrepared && needsNativeFixtures(args)) {
       try {
         cargoEnv = nativeFixtureEnvironment(cargoExecutable(cargoEnv), args, run, cargoEnv);
@@ -261,7 +271,7 @@ function main() {
   const result = runChecks(platform(), mode, (command, args, options) => {
     console.log(`\n> ${command} ${args.join(" ")}`);
     return spawnSync(command, args, options);
-  }, process.env);
+  }, process.env, { lint: lintsCodeCheckTarget(loadContract().contract, process.env.MIXRELAY_CI_TARGET) });
   const sourceRevision = process.env.MIXRELAY_SOURCE_REVISION
     ?? spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).stdout?.trim();
   const report = { startedAt, endedAt: new Date().toISOString(), mode,

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { loadContract, validateContract, checkGenerated, releaseAssets, releaseInstallers } from './support-contract.mjs';
-import { ciMatrices, requiredScenarios } from './core/support-targets.mjs';
+import { ciMatrices, lintsCodeCheckTarget, requiredScenarios } from './core/support-targets.mjs';
 
 test('support registry drives native multi-architecture CI and checked-in generated consumers', () => {
   const { contract } = loadContract();
@@ -95,4 +95,12 @@ test('release assets are named once per artifact with the version and the format
   const duplicate = structuredClone(contract);
   duplicate.artifacts.find(artifact => artifact.id === 'linux-arm64-rpm').asset = 'MixRelay-{version}-1.x86_64.rpm';
   assert.throws(() => validateContract(duplicate), /Duplicate release asset names/);
+});
+
+test('CI lints once per target that can change a lint result', () => {
+  const { contract } = loadContract();
+  const lints = target => lintsCodeCheckTarget(contract, target);
+  assert.equal(lints(undefined), true, 'local runs lint everything');
+  assert.deepEqual(ciMatrices(contract).linux.include.map(leg => leg.id).filter(lints), ['debian-x64', 'debian-arm64']);
+  assert.deepEqual(ciMatrices(contract).macosPullRequest.include.map(leg => leg.id).filter(lints), ['macos-27-arm64']);
 });

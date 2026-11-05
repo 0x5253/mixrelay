@@ -65,6 +65,9 @@ test('Linux release reuses inspected native-CPU packages and the checked Arch pa
   assert.match(source, /inputs\.source_ref \|\| github\.sha/);
   assert.match(source, /BUNDLES: \$\{\{ matrix\.bundles \}\}/);
   assert.match(source, /pnpm desktop:build --bundles "\$BUNDLES"/);
+  // Official releases omit the input, so their packages keep the release profile.
+  assert.match(source, /review_build:\n\s+required: false\n\s+type: boolean\n\s+default: false/);
+  assert.match(source, /if \[ "\$REVIEW_BUILD" = true \]; then export CARGO_PROFILE_RELEASE_LTO=off/);
   assert.match(source, /dpkg-deb --field "\$package" Version/);
   assert.match(source, /rpm -qp --queryformat %\{VERSION\} "\$package"/);
   assert.match(source, /prepare-arch-driver-package\.mjs/);
@@ -120,6 +123,10 @@ test('pull requests build every product unsigned and never reach signing or nota
   assert.match(build, /APPLE_SIGNING_IDENTITY: '-'\n\s+MIXRELAY_CODESIGN_IDENTITY: '-'/);
   assert.match(build, /zsh scripts\/build-macos-universal-app\.sh/);
   assert.match(build, /mixrelay-macos-hal-bundle/);
+  // Reviews skip whole-program optimization; the release workflow must not.
+  assert.match(build, /CARGO_PROFILE_RELEASE_LTO: "off"/);
+  assert.match(linux, /review_build: true/);
+  assert.doesNotMatch(workflow('release'), /review_build|CARGO_PROFILE_RELEASE/);
   for (const source of [linux, macos]) {
     const code = source.split('\n').filter(line => !line.trimStart().startsWith('#')).join('\n');
     assert.doesNotMatch(code, /secrets\.|vars\.|environment:|prepare-ci-macos-signing|release-macos|notar|productbuild|contents: write/i);

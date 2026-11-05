@@ -22,6 +22,18 @@ export function ciMatrices(contract) {
   };
 }
 
+/**
+ * Rust lints depend on the source, compiler and target, not the Linux distribution. CI lints
+ * on the Linux build distribution for each CPU and on the marked macOS leg, because the only
+ * CPU-specific macOS code is a storage alignment constant. Local runs have no target and
+ * lint everything.
+ */
+export function lintsCodeCheckTarget(contract, targetId) {
+  if (targetId === undefined) return true;
+  return contract.codeChecks.macos.some(target => target.id === targetId && target.lint)
+    || targetId.startsWith(`${contract.build.linuxDistribution}-`);
+}
+
 const runners = { x64: 'ubuntu-24.04', arm64: 'ubuntu-24.04-arm' };
 const pacmanArchitectures = { x64: 'x86_64', arm64: 'aarch64' };
 const linuxArtifacts = (contract, format) => contract.artifacts.filter(a => a.os === 'linux' && a.format === format);
