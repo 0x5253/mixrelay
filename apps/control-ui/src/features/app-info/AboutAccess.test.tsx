@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { expect, it } from 'vitest';
 import sourceLicense from '../../../../../LICENSE.txt?raw';
+import { version } from '../../../package.json';
 import { I18nProvider, i18n } from '../../core/i18n';
 import { MixRelayProvider } from '../../core/theme/MixRelayProvider';
 import { AboutAccess } from './AboutAccess';
@@ -22,7 +23,7 @@ it('opens product information from the version and restores focus when closed', 
     </MixRelayProvider>,
   );
   const trigger = screen.getByRole('button', { name: 'About MixRelay' });
-  expect(trigger).toHaveTextContent('0.1.0');
+  expect(trigger).toHaveTextContent(version);
   expect(trigger).toHaveAttribute('aria-haspopup', 'dialog');
   trigger.focus();
   fireEvent.click(trigger);
