@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -166,6 +166,19 @@ test('the workflow CLI emits the selected matrix and missing-baseline summary wi
   assert.equal(matrix.include[0].id, 'arch-rolling-x64');
   assert.match(matrix.include[0].baseline, /MISSING baseline artifact/);
   assert.match(readFileSync(summary, 'utf8'), /arch-rolling-x64: MISSING baseline artifact/);
+});
+
+test('only the workflow CLI writes the step summary, so tests cannot publish fixture data', (t) => {
+  const f = fixture(t);
+  const summary = join(f.inputs, 'summary.md');
+  const previous = process.env.GITHUB_STEP_SUMMARY;
+  t.after(() => {
+    if (previous === undefined) delete process.env.GITHUB_STEP_SUMMARY;
+    else process.env.GITHUB_STEP_SUMMARY = previous;
+  });
+  process.env.GITHUB_STEP_SUMMARY = summary;
+  selectBaseline(f.inputs, f.output, f.candidate, f.comparison);
+  assert.equal(existsSync(summary), false);
 });
 
 test('ambiguous installers and inconsistent package versions fail baseline selection', (t) => {
