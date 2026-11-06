@@ -7,6 +7,11 @@ on:
       source_ref:
         required: true
         type: string
+      # Reviews check that packages compile, link and bundle without whole-program optimization.
+      review_build:
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -49,11 +54,14 @@ jobs:
         env:
           ARCH_PACKAGE: ${{ matrix.archPackage }}
           BUNDLES: ${{ matrix.bundles }}
+          REVIEW_BUILD: ${{ inputs.review_build }}
         run: >-
           docker compose -f infra/lab/compose.yaml run --name mixrelay-release-build
-          -e ARCH_PACKAGE="$ARCH_PACKAGE" -e BUNDLES="$BUNDLES"
+          -e ARCH_PACKAGE="$ARCH_PACKAGE" -e BUNDLES="$BUNDLES" -e REVIEW_BUILD="$REVIEW_BUILD"
           --entrypoint bash ${{ matrix.distro }}
-          -c 'set -euo pipefail; pnpm desktop:build --bundles "$BUNDLES";
+          -c 'set -euo pipefail;
+          if [ "$REVIEW_BUILD" = true ]; then export CARGO_PROFILE_RELEASE_LTO=off CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16; fi;
+          pnpm desktop:build --bundles "$BUNDLES";
           version=$(node --input-type=module -e "import {checkVersion} from \"./scripts/product-version.mjs\"; console.log(checkVersion())");
           for package in target/release/bundle/deb/*.deb; do
           test "$(dpkg-deb --field "$package" Version)" = "$version";

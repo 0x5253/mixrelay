@@ -26,7 +26,7 @@ RUN node /usr/local/lib/node_modules/npm/bin/npm-cli.js install --global pnpm@11
 WORKDIR /workspace
 COPY --chown=lab:lab . .
 USER lab
-ENV CARGO_HOME=/home/lab/.cargo CARGO_BUILD_JOBS=2 CI=true
+ENV CARGO_HOME=/home/lab/.cargo CI=true
 RUN pnpm install --frozen-lockfile
 ENTRYPOINT ["node", "scripts/lab/native-check.mjs"]
 CMD ["build"]

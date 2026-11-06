@@ -5,6 +5,9 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { selectCandidate } from './select-candidate.mjs';
 import { validateCandidate } from '../qualification.mjs';
+import { checkVersion } from '../product-version.mjs';
+
+const streamDeckPlugin = `MixRelay-StreamDeck-${checkVersion()}.streamDeckPlugin`;
 
 function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), 'mixrelay-selection-'));
@@ -17,7 +20,7 @@ function fixture(t) {
   writeFileSync(join(inputs, 'build-run.json'), JSON.stringify(run));
   writeFileSync(join(inputs, 'macos/source-revision.txt'), source);
   writeFileSync(join(inputs, 'macos/MixRelay.pkg'), 'Synthetic macOS package fixture');
-  writeFileSync(join(inputs, 'macos/MixRelay-StreamDeck-0.1.0.streamDeckPlugin'), 'plugin fixture');
+  writeFileSync(join(inputs, `macos/${streamDeckPlugin}`), 'plugin fixture');
   for (const [id, file] of [['linux-x64-deb', 'x64.deb'], ['linux-arm64-deb', 'arm64.deb'], ['linux-x64-arch', 'x64.pkg.tar.zst'],
     ['linux-arm64-arch', 'arm64.pkg.tar.zst'],
     ['linux-x64-rpm', 'x64.rpm'], ['linux-arm64-rpm', 'arm64.rpm']]) {
@@ -48,7 +51,7 @@ test('rejects an installer built from a different macOS source', t => {
 
 test('selection cannot omit the Stream Deck package from the macOS release', t => {
   const { inputs, output } = fixture(t);
-  rmSync(join(inputs, 'macos/MixRelay-StreamDeck-0.1.0.streamDeckPlugin'));
+  rmSync(join(inputs, `macos/${streamDeckPlugin}`));
   assert.throws(() => selectCandidate(inputs, output), /Expected exactly one macos-universal-streamdeck/);
 });
 

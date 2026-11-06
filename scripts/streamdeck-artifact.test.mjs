@@ -10,7 +10,9 @@ import { buildStreamDeckArtifact, qualifyStreamDeckArtifact, validatePackedStrea
 import { qualificationFixture } from './e2e/qualification.fixture.mjs';
 import { createCandidate, evaluateQualification, readReports } from './qualification.mjs';
 import { digest } from './support-contract.mjs';
+import { productVersion } from './product-version.mjs';
 
+const version = productVersion();
 const plugin = fileURLToPath(new URL('../apps/streamdeck-plugin/', import.meta.url));
 const require = createRequire(join(plugin, 'package.json'));
 const cli = join(dirname(require.resolve('@elgato/cli/package.json')), 'bin/streamdeck.mjs');
@@ -24,14 +26,14 @@ before(() => {
 after(() => rmSync(temporary, { recursive: true, force: true }));
 
 test('the packed distribution passes the actual CLI and uses the product identity, DRM and runtime', () => {
-  const { manifest, output } = validatePackedStreamDeck(archive, '0.1.0');
+  const { manifest, output } = validatePackedStreamDeck(archive, version);
   assert.equal(output, '✔ Validation successful');
   for (const change of [m => { m.SDKVersion = 2; }, m => { m.Software.MinimumVersion = '6.6'; },
     m => { m.OS[0].MinimumVersion = '14.9'; }, m => { m.OS[0].MinimumVersion = '16.0'; },
     m => { m.Nodejs.Version = '20'; }, m => { m.UUID = 'io.mixrelay.streamdeck'; },
-    m => { m.Version = '0.1.0.7'; }, m => { m.Actions[0].UUID = 'com.rawsector.mixrelay.node'; }]) {
+    m => { m.Version = `${version}.7`; }, m => { m.Actions[0].UUID = 'com.rawsector.mixrelay.node'; }]) {
     const invalid = structuredClone(manifest); change(invalid);
-    assert.throws(() => validateStreamDeckManifest(invalid, '0.1.0'));
+    assert.throws(() => validateStreamDeckManifest(invalid, version));
   }
 });
 
@@ -45,12 +47,12 @@ test('archive paths, duplicate entries and CLI warnings cannot pass qualificatio
   for (const listing of ['../escape', 'com.rawsector.mixrelay.sdPlugin/../../escape',
     '/absolute', 'com.rawsector.mixrelay.sdPlugin/bin/[wildcard]',
     'com.rawsector.mixrelay.sdPlugin/manifest.json\ncom.rawsector.mixrelay.sdPlugin/manifest.json']) {
-    assert.throws(() => validatePackedStreamDeck(archive, '0.1.0', () => listing), /Unsafe|Duplicate/);
+    assert.throws(() => validatePackedStreamDeck(archive, version, () => listing), /Unsafe|Duplicate/);
   }
   const run = (program, args, options) => program === process.execPath
     ? '✔ Validation successful\n1 warning'
     : execFileSync(program, args, { encoding: 'utf8', ...options });
-  assert.throws(() => validatePackedStreamDeck(archive, '0.1.0', run), /warning/);
+  assert.throws(() => validatePackedStreamDeck(archive, version, run), /warning/);
 });
 
 test('release build names and hashes the exact package and refuses to overwrite it or use a different version', () => {
@@ -61,12 +63,12 @@ test('release build names and hashes the exact package and refuses to overwrite 
     if (program !== 'pnpm') return execFileSync(program, args, { encoding: 'utf8', ...options });
     cpSync(archive, join(plugin, 'dist/com.rawsector.mixrelay.streamDeckPlugin'));
   };
-  const result = buildStreamDeckArtifact(output, '0.1.0', run);
-  assert.equal(result.file, 'MixRelay-StreamDeck-0.1.0.streamDeckPlugin');
+  const result = buildStreamDeckArtifact(output, version, run);
+  assert.equal(result.file, `MixRelay-StreamDeck-${version}.streamDeckPlugin`);
   assert.equal(result.sha256, digest(readFileSync(archive)));
   assert.equal(result.size, readFileSync(archive).length);
   assert.deepEqual(calls[0], ['pnpm', ['--filter', '@mixrelay/streamdeck-plugin', 'run', 'pack']]);
-  assert.throws(() => buildStreamDeckArtifact(output, '0.1.0', run), /EEXIST/);
+  assert.throws(() => buildStreamDeckArtifact(output, version, run), /EEXIST/);
   assert.throws(() => buildStreamDeckArtifact(output, '2.0.0', run), /product version/);
 });
 

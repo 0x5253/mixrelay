@@ -36,10 +36,12 @@ const lockedVersion = (lock, name) => lock.match(new RegExp(`^name = "${name}"\\
 test('one version command updates app, HAL and locked workspace crate metadata together', t => {
   const { directory } = versionFixture(t);
   const lockBefore = readFileSync(join(directory, 'Cargo.lock'), 'utf8');
-  assert.equal(setVersion('0.2.0', directory), '0.2.0');
-  assert.equal(checkVersion(directory), '0.2.0');
+  const current = productVersion(directory);
+  const next = '98.0.0';
+  assert.equal(setVersion(next, directory), next);
+  assert.equal(checkVersion(directory), next);
   const hal = readFileSync(join(directory, 'native/macos/hal-driver/driver/Info.plist'), 'utf8');
-  assert.match(hal, /<key>CFBundleShortVersionString<\/key>\s*<string>0\.2\.0<\/string>/);
+  assert.match(hal, /<key>CFBundleShortVersionString<\/key>\s*<string>98\.0\.0<\/string>/);
   const lockAfter = readFileSync(join(directory, 'Cargo.lock'), 'utf8');
   const before = lockBefore.split('\n');
   const after = lockAfter.split('\n');
@@ -47,12 +49,12 @@ test('one version command updates app, HAL and locked workspace crate metadata t
   const crates = productCrates(directory);
   const changed = before.flatMap((line, index) => line === after[index] ? [] : [after[index - 1].match(/^name = "([^"]+)"$/)?.[1]]);
   assert.deepEqual(changed.toSorted(), crates.toSorted(), 'only the version line of each crate that inherits the product version changes');
-  for (const name of crates) assert.equal(lockedVersion(lockAfter, name), '0.2.0');
-  // A fixture with its own version, vendored crates and a registry crate at the old number keep theirs.
+  for (const name of crates) assert.equal(lockedVersion(lockAfter, name), next);
+  // A fixture with its own version, vendored crates and a registry crate keep theirs.
   assert.equal(lockedVersion(lockAfter, 'mixrelay-native-clap-fixture'), '0.1.0');
   assert.equal(lockedVersion(lockAfter, 'truce-rack-core'), '1.1.5');
   assert.match(lockAfter, /^name = "vswhom"\nversion = "0\.1\.0"\nsource = "registry\+/m);
-  assert.equal(setVersion('0.1.0', directory), '0.1.0');
+  assert.equal(setVersion(current, directory), current);
   assert.equal(readFileSync(join(directory, 'Cargo.lock'), 'utf8'), lockBefore);
 });
 

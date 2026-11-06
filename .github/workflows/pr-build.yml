@@ -22,6 +22,7 @@ jobs:
     uses: ./.github/workflows/build-linux-release.yml
     with:
       source_ref: ${{ github.sha }}
+      review_build: true
 
   passed:
     # The one required check for this workflow; skipped work (chore, ci, docs) passes.

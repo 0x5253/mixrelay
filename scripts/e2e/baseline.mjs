@@ -112,11 +112,6 @@ export function selectBaseline(inputs, output, candidate, comparison, loaded = l
       ? 'available'
       : `MISSING baseline artifact: ${target.artifact}`,
   }));
-  if (process.env.GITHUB_STEP_SUMMARY)
-    appendFileSync(
-      process.env.GITHUB_STEP_SUMMARY,
-      `\n## Upgrade baseline ${sourceRevision}\n\n${matrix.include.map((target) => `- ${target.id}: ${target.baseline}`).join('\n')}\n`,
-    );
   return matrix;
 }
 
@@ -135,6 +130,13 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     JSON.parse(readFileSync(values.candidate)),
     JSON.parse(readFileSync(values.comparison)),
   );
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    const { sourceRevision } = JSON.parse(readFileSync(join(values.output, 'baseline.json')));
+    appendFileSync(
+      process.env.GITHUB_STEP_SUMMARY,
+      `\n## Upgrade baseline ${sourceRevision}\n\n${matrix.include.map((target) => `- ${target.id}: ${target.baseline}`).join('\n')}\n`,
+    );
+  }
   const ids = (process.env.TARGET_IDS ?? '')
     .split(',')
     .map((id) => id.trim())

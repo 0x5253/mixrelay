@@ -107,7 +107,8 @@
         "version": "27",
         "arch": "arm64",
         "runner": "xcode-27",
-        "pullRequest": true
+        "pullRequest": true,
+        "lint": true
       }
     ],
     "linuxDistributions": [

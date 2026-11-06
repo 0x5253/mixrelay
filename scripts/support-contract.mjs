@@ -93,6 +93,9 @@ export function validateContract(value) {
   if (!pullRequestArchitectures.has('arm64') || !pullRequestArchitectures.has('x64')) {
     throw new Error('Pull request macOS checks must cover arm64 and x64');
   }
+  if (value.codeChecks.macos.filter(t => t.pullRequest && t.lint === true).length !== 1) {
+    throw new Error('Exactly one pull request macOS check must lint');
+  }
   for (const distro of value.codeChecks.linuxDistributions) {
     // A distribution without a registry image for its CPU is imported from a pinned rootfs.
     const pinned = distro.rootfs
